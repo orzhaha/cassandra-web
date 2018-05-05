@@ -1,0 +1,11 @@
+version: '3'
+
+services:
+  web:
+    image: golangxnode:1.9.1
+    environment:
+      TZ: Asia/Taipei
+    volumes:
+      - .:/go/src/cassanndra
+    ports:
+      - 80:80

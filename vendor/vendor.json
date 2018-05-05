@@ -1,0 +1,86 @@
+{
+	"comment": "",
+	"ignore": "test",
+	"package": [
+		{
+			"checksumSHA1": "0L6fIXv+GTXzJtbxfDtets4iRdk=",
+			"path": "github.com/labstack/echo",
+			"revision": "d36ff729613dd8e825455c504bea0586c43ac03d",
+			"revisionTime": "2018-05-01T09:18:55Z"
+		},
+		{
+			"checksumSHA1": "Z4RJDS6OGKqUBS4CzbgKMg6Ip7M=",
+			"path": "github.com/labstack/echo/middleware",
+			"revision": "d36ff729613dd8e825455c504bea0586c43ac03d",
+			"revisionTime": "2018-05-01T09:18:55Z"
+		},
+		{
+			"checksumSHA1": "wU6PVQ8WWtivzAsfEkTYJOjND3o=",
+			"path": "github.com/labstack/gommon/bytes",
+			"revision": "588f4e8bddc6cb45c27b448e925c7fd6a5545434",
+			"revisionTime": "2018-04-26T01:44:45Z"
+		},
+		{
+			"checksumSHA1": "R6DzcBLEP0BONPpsyr+11N7xh5w=",
+			"path": "github.com/labstack/gommon/color",
+			"revision": "588f4e8bddc6cb45c27b448e925c7fd6a5545434",
+			"revisionTime": "2018-04-26T01:44:45Z"
+		},
+		{
+			"checksumSHA1": "BUBgFOra7z3F8YQTUEnOgHHIe/0=",
+			"path": "github.com/labstack/gommon/log",
+			"revision": "588f4e8bddc6cb45c27b448e925c7fd6a5545434",
+			"revisionTime": "2018-04-26T01:44:45Z"
+		},
+		{
+			"checksumSHA1": "iPlSnDjuur4cK1G/7mJM/7frIm4=",
+			"path": "github.com/labstack/gommon/random",
+			"revision": "588f4e8bddc6cb45c27b448e925c7fd6a5545434",
+			"revisionTime": "2018-04-26T01:44:45Z"
+		},
+		{
+			"checksumSHA1": "SEnjvwVyfuU2xBaOfXfwPD5MZqk=",
+			"path": "github.com/mattn/go-colorable",
+			"revision": "efa589957cd060542a26d2dd7832fd6a6c6c3ade",
+			"revisionTime": "2018-03-10T13:32:14Z"
+		},
+		{
+			"checksumSHA1": "w5RcOnfv5YDr3j2bd1YydkPiZx4=",
+			"path": "github.com/mattn/go-isatty",
+			"revision": "6ca4dbf54d38eea1a992b3c722a76a5d1c4cb25c",
+			"revisionTime": "2017-11-07T05:05:31Z"
+		},
+		{
+			"checksumSHA1": "LTOa3BADhwvT0wFCknPueQALm8I=",
+			"origin": "github.com/valyala/fasttemplate/vendor/github.com/valyala/bytebufferpool",
+			"path": "github.com/valyala/bytebufferpool",
+			"revision": "dcecefd839c4193db0d35b88ec65b4c12d360ab0",
+			"revisionTime": "2017-02-24T21:24:29Z"
+		},
+		{
+			"checksumSHA1": "gtG8jeB0fcTmKZf+6Vbcoa6nfec=",
+			"path": "github.com/valyala/fasttemplate",
+			"revision": "dcecefd839c4193db0d35b88ec65b4c12d360ab0",
+			"revisionTime": "2017-02-24T21:24:29Z"
+		},
+		{
+			"checksumSHA1": "zHLlCNnnX/KNVue2tHr+FWxbszA=",
+			"path": "golang.org/x/crypto/acme",
+			"revision": "4ec37c66abab2c7e02ae775328b2ff001c3f025a",
+			"revisionTime": "2018-05-05T00:22:42Z"
+		},
+		{
+			"checksumSHA1": "6NdRp9OYL38e71vEtcQtSkN/ZbA=",
+			"path": "golang.org/x/crypto/acme/autocert",
+			"revision": "4ec37c66abab2c7e02ae775328b2ff001c3f025a",
+			"revisionTime": "2018-05-05T00:22:42Z"
+		},
+		{
+			"checksumSHA1": "+juscVyopcUmEez08ei4bcOoET4=",
+			"path": "golang.org/x/sys/unix",
+			"revision": "cbbc999da32df943dac6cd71eb3ee39e1d7838b9",
+			"revisionTime": "2018-04-27T04:24:54Z"
+		}
+	],
+	"rootPath": "cassandra-web"
+}
