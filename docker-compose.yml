@@ -9,3 +9,8 @@ services:
       - .:/go/src/cassanndra
     ports:
       - 80:80
+  cassandra:
+    image: scylladb/scylla:latest
+    environment:
+      TZ: Asia/Taipei
+    command: ["--experimental", "1", "--smp", "1", "--cpuset", "1", "--overprovisioned", "1", "--listen-address", "cassandra"]

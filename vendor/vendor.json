@@ -3,6 +3,48 @@
 	"ignore": "test",
 	"package": [
 		{
+			"checksumSHA1": "4772zXrOaPVeDeSgdiV7Vp4KEjk=",
+			"path": "github.com/dgrijalva/jwt-go",
+			"revision": "06ea1031745cb8b3dab3f6a236daf2b0aa468b7e",
+			"revisionTime": "2018-03-08T23:13:08Z"
+		},
+		{
+			"checksumSHA1": "FWjgsLFD9XAD3R5r0ij2TYYlY+s=",
+			"path": "github.com/gocql/gocql",
+			"revision": "4ba1af8a026b230ce3c646e594865c07ce01b541",
+			"revisionTime": "2018-04-22T11:22:07Z"
+		},
+		{
+			"checksumSHA1": "7RlYIbPYgPkxDDCSEuE6bvYEEeU=",
+			"path": "github.com/gocql/gocql/internal/lru",
+			"revision": "4ba1af8a026b230ce3c646e594865c07ce01b541",
+			"revisionTime": "2018-04-22T11:22:07Z"
+		},
+		{
+			"checksumSHA1": "puCAbQOdeajpTEFssPsgeskXB+8=",
+			"path": "github.com/gocql/gocql/internal/murmur",
+			"revision": "4ba1af8a026b230ce3c646e594865c07ce01b541",
+			"revisionTime": "2018-04-22T11:22:07Z"
+		},
+		{
+			"checksumSHA1": "tZQDfMMTKrYMXqen0zjJWLtOf1A=",
+			"path": "github.com/gocql/gocql/internal/streams",
+			"revision": "4ba1af8a026b230ce3c646e594865c07ce01b541",
+			"revisionTime": "2018-04-22T11:22:07Z"
+		},
+		{
+			"checksumSHA1": "p/8vSviYF91gFflhrt5vkyksroo=",
+			"path": "github.com/golang/snappy",
+			"revision": "553a641470496b2327abcac10b36396bd98e45c9",
+			"revisionTime": "2017-02-15T23:32:05Z"
+		},
+		{
+			"checksumSHA1": "O0r0hj4YL+jSRNjnshkeH4GY+4s=",
+			"path": "github.com/hailocab/go-hostpool",
+			"revision": "e80d13ce29ede4452c43dea11e79b9bc8a15b478",
+			"revisionTime": "2016-01-25T11:53:50Z"
+		},
+		{
 			"checksumSHA1": "0L6fIXv+GTXzJtbxfDtets4iRdk=",
 			"path": "github.com/labstack/echo",
 			"revision": "d36ff729613dd8e825455c504bea0586c43ac03d",
@@ -80,7 +122,13 @@
 			"path": "golang.org/x/sys/unix",
 			"revision": "cbbc999da32df943dac6cd71eb3ee39e1d7838b9",
 			"revisionTime": "2018-04-27T04:24:54Z"
+		},
+		{
+			"checksumSHA1": "COfXAfInbcFT/YRsvLUQnNKHzF0=",
+			"path": "gopkg.in/inf.v0",
+			"revision": "d2d2541c53f18d2a059457998ce2876cc8e67cbf",
+			"revisionTime": "2018-03-26T17:23:32Z"
 		}
 	],
-	"rootPath": "cassandra-web"
+	"rootPath": "cassanndra"
 }
