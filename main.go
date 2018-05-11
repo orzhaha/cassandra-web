@@ -2,7 +2,7 @@ package main
 
 import (
 	"net/http"
-	// "strconv"
+	"strconv"
 
 	"github.com/gocql/gocql"
 	"github.com/labstack/echo"
@@ -89,20 +89,61 @@ func getAllRowByTable(c echo.Context) error {
 
 	defer session.Close()
 
+	data := make(map[string]interface{})
+
 	if err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
 	}
 
 	table := c.QueryParam("table")
-	// page, err := strconv.Atoi(c.QueryParam("page"))
+	tokenKey := c.QueryParam("token_key")
+	nextToken := c.QueryParam("next_token")
+	prevToken := c.QueryParam("prev_token")
+	limit, err := strconv.Atoi(c.QueryParam("limit"))
 
-	iter := session.Query(`SELECT * FROM ` + table).Iter()
-
-	ret, err := iter.SliceMap()
+	countIter := session.Query(`SELECT COUNT(*) FROM ` + table).Iter()
+	countRet, err := countIter.SliceMap()
 
 	if err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
 	}
 
-	return c.JSON(http.StatusOK, ret)
+	data["count"] = countRet[0]["count"]
+
+	if nextToken != "" {
+		rowIter := session.Query(`SELECT * FROM `+table+` WHERE token(`+tokenKey+`) > token('`+nextToken+`') LIMIT ? ALLOW FILTERING`, limit).Iter()
+		rowRet, err := rowIter.SliceMap()
+
+		if err != nil {
+			return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
+		}
+
+		data["row"] = rowRet
+
+		return c.JSON(http.StatusOK, data)
+	}
+
+	if prevToken != "" {
+		rowIter := session.Query(`SELECT * FROM `+table+` WHERE token(`+tokenKey+`) < token('`+prevToken+`') LIMIT ? ALLOW FILTERING`, limit).Iter()
+		rowRet, err := rowIter.SliceMap()
+
+		if err != nil {
+			return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
+		}
+
+		data["row"] = rowRet
+
+		return c.JSON(http.StatusOK, data)
+	}
+
+	rowIter := session.Query(`SELECT * FROM `+table+` LIMIT ? ALLOW FILTERING`, limit).Iter()
+	rowRet, err := rowIter.SliceMap()
+
+	if err != nil {
+		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
+	}
+
+	data["row"] = rowRet
+
+	return c.JSON(http.StatusOK, data)
 }
