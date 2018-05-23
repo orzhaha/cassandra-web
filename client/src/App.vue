@@ -1,6 +1,6 @@
 <template lang="pug">
   div#app
-    router-view(v-loading="true")
+    router-view(v-loading="false")
 </template>
 
 <script>
@@ -17,4 +17,5 @@ body
   -webkit-font-smoothing: antialiased
   -moz-osx-font-smoothing: grayscale
   color: #2c3e50
+  height: 100%
 </style>

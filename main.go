@@ -9,14 +9,26 @@ import (
 	"github.com/labstack/echo/middleware"
 )
 
+const (
+	SystemSchemaKey = "system_schema"
+)
+
 func main() {
 	// Echo instance
 	e := echo.New()
 
 	e.Use(middleware.Logger())
 
+	// 跨網域用
+	e.Use(middleware.CORSWithConfig(middleware.CORSConfig{
+		AllowOrigins: []string{"http://localhost:8080", "http://localhost:80"},
+		AllowHeaders: []string{echo.HeaderOrigin, echo.HeaderContentType, echo.HeaderAccept},
+	}))
+
 	e.Static("/static", "client/dist/static")
 	e.File("/", "client/dist/index.html")
+
+	e.POST("/query", postQuery)
 
 	e.GET("/allkeyspace", getAllKeySpace)
 	e.GET("/alltablebykeyspace", getAllTableByKeySpace)
@@ -26,10 +38,36 @@ func main() {
 	e.Logger.Fatal(e.Start(":80"))
 }
 
+func postQuery(c echo.Context) error {
+	cluster := gocql.NewCluster("cassandra")
+	cluster.Port = 9042
+	cluster.Consistency = gocql.One
+
+	session, err := cluster.CreateSession()
+
+	defer session.Close()
+
+	if err != nil {
+		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
+	}
+
+	query := c.FormValue("query")
+
+	iter := session.Query(query).Iter()
+
+	ret, err := iter.SliceMap()
+
+	if err != nil {
+		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
+	}
+
+	return c.JSON(http.StatusOK, ret)
+}
+
 func getAllKeySpace(c echo.Context) error {
 	cluster := gocql.NewCluster("cassandra")
 	cluster.Port = 9042
-	cluster.Keyspace = "system_schema"
+	cluster.Keyspace = SystemSchemaKey
 	cluster.Consistency = gocql.One
 
 	session, err := cluster.CreateSession()
@@ -54,7 +92,7 @@ func getAllKeySpace(c echo.Context) error {
 func getAllTableByKeySpace(c echo.Context) error {
 	cluster := gocql.NewCluster("cassandra")
 	cluster.Port = 9042
-	cluster.Keyspace = "system_schema"
+	cluster.Keyspace = SystemSchemaKey
 	cluster.Consistency = gocql.One
 
 	session, err := cluster.CreateSession()
@@ -81,7 +119,7 @@ func getAllTableByKeySpace(c echo.Context) error {
 func getAllRowByTable(c echo.Context) error {
 	cluster := gocql.NewCluster("cassandra")
 	cluster.Port = 9042
-	cluster.Keyspace = "system_schema"
+	cluster.Keyspace = SystemSchemaKey
 	cluster.Consistency = gocql.One
 
 	session, err := cluster.CreateSession()
@@ -112,10 +150,10 @@ func getAllRowByTable(c echo.Context) error {
 
 	if nextToken != "" {
 		rowIter := session.Query(`SELECT * FROM `+table+` WHERE token(`+tokenKey+`) > token('`+nextToken+`') LIMIT ? ALLOW FILTERING`, limit).Iter()
-		rowRet, err := rowIter.SliceMap()
+		rowRet, nextErr := rowIter.SliceMap()
 
-		if err != nil {
-			return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
+		if nextErr != nil {
+			return echo.NewHTTPError(http.StatusInternalServerError, nextErr.Error())
 		}
 
 		data["row"] = rowRet
@@ -125,10 +163,10 @@ func getAllRowByTable(c echo.Context) error {
 
 	if prevToken != "" {
 		rowIter := session.Query(`SELECT * FROM `+table+` WHERE token(`+tokenKey+`) < token('`+prevToken+`') LIMIT ? ALLOW FILTERING`, limit).Iter()
-		rowRet, err := rowIter.SliceMap()
+		rowRet, prevErr := rowIter.SliceMap()
 
-		if err != nil {
-			return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
+		if prevErr != nil {
+			return echo.NewHTTPError(http.StatusInternalServerError, prevErr.Error())
 		}
 
 		data["row"] = rowRet
