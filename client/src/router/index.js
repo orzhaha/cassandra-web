@@ -11,23 +11,25 @@ export default new Router({
   routes: [
     {
       path: '/',
-      name: 'Home',
+      name: 'home',
       component: Home,
     },
     {
       path: '/keyspace',
       name: 'keyspace',
       component: Keyspace,
-    },
-    {
-      path: '/table',
-      name: 'table',
-      component: Table,
-    },
-    {
-      path: '/row',
-      name: 'row',
-      component: Row,
+      children: [
+        {
+          path: ':keyspace/table',
+          name: 'table',
+          component: Table,
+        },
+        {
+          path: ':table/row',
+          name: 'row',
+          component: Row,
+        }
+      ]
     },
   ],
 });

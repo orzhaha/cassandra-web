@@ -1,7 +1,8 @@
 <template lang="pug">
-  div#home
-    h1 HOME
+  router-link(to="/keyspace") KeySpace
 </template>
+<style>
+</style>
 
 <script>
 import api from '@/api'
@@ -10,14 +11,10 @@ const service = api.make('root')
 
 export default {
   name: 'Home',
-  async created() {
-    try {
-      const res = await service.request('allKeySpace')
-
-      console.log(res)
-    } catch (error) {
-      console.log('[error]', error)
-    }
-  }
+  data() {
+    return {}
+  },
+  created() {},
+  methods: {}
 };
 </script>

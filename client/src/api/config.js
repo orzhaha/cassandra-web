@@ -1,21 +1,21 @@
 // const domain = window.location.origin
-const domain = "http://localhost:80"
+const domain = 'http://localhost:8081'
 
 const config = {
-    root: {
-        allKeySpace: {
-            type: 'GET',
-            url: `${domain}/allkeyspace`
-        },
-        alltablebykeyspace: {
-            type: 'GET',
-            url: `${domain}/alltablebykeyspace`
-        },
-        allrowbytable: {
-            type: 'GET',
-            url: `${domain}/allrowbytable`
-        },
-    }
+  root: {
+    keyspace: {
+      type: 'GET',
+      url: `${domain}/keyspace`
+    },
+    table: {
+      type: 'GET',
+      url: `${domain}/table`
+    },
+    row: {
+      type: 'GET',
+      url: `${domain}/row`
+    },
+  }
 }
 
 export default config

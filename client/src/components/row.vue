@@ -1,6 +1,5 @@
 <template lang="pug">
   el-table(
-    @row-click='click'
     :data="rowdata"
     stripe
     style="width: 100%")
@@ -17,7 +16,7 @@ import api from '@/api'
 const service = api.make('root')
 
 export default {
-  name: 'Home',
+  name: 'Row',
   data() {
     return {
       keys: [],
@@ -27,17 +26,19 @@ export default {
   created() {
     this.fetch()
   },
+  watch: {
+    $route() {
+      this.fetch()
+    }
+  },
   methods: {
-    click: function(row, event, column) {
-        // this.$router.push('/row?table='+row.table_name)
-    },
     async fetch() {
       try {
-        const res = await service.request('allrowbytable', {
-            query: {
-                "limit": 200,
-                "table": this.$route.query.table_name
-            }
+        const res = await service.request('row', {
+          query: {
+            'limit': 200,
+            'table': this.$route.params.table
+          }
         })
 
         const rows = res.get('row')
@@ -45,11 +46,8 @@ export default {
         this.keys = Object.keys(rows[0])
         this.rowdata = rows
       } catch (error) {
-        console.error('[error]', error)
       }
     }
   }
 };
-
-
 </script>
