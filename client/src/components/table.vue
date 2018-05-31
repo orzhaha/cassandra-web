@@ -2,7 +2,9 @@
   el-table(
     @row-click='click'
     :data="tabledata"
+    empty-text="empty data"
     stripe
+    :row-style="rowStyle"
     style="width: 100%"
   )
     el-table-column(
@@ -48,13 +50,22 @@ export default {
       try {
         const res = await service.request('table', {
           query: {
-            'keyspace': this.$route.params.keyspace
+            keyspace: this.$route.params.keyspace
           }
         })
         this.tabledata = res.get()
       } catch (error) {
+        this.$message({
+          type: 'error',
+          showClose: true,
+          duration: 0,
+          message: error
+        });
       }
-    }
+    },
+    rowStyle() {
+      return { cursor: 'pointer' }
+    },
   }
 };
 </script>

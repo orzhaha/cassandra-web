@@ -1,13 +1,43 @@
 <template lang="pug">
-  router-link(to="/keyspace") KeySpace
+  div(class="container")
+    div(class="content")
+      div(class="title")
+        router-link(to="/keyspace") Cassandra-Web
 </template>
 <style>
+  html {
+    height: 100%;
+  }
+  body {
+    margin: 0;
+    padding: 0;
+    width: 100%;
+    height: 100%;
+    color: #B0BEC5;
+    display: table;
+  }
+  .container {
+    text-align: center;
+    display: table-cell;
+    vertical-align: middle;
+  }
+  .content {
+    text-align: center;
+    display: inline-block;
+  }
+  .title {
+    font-size: 96px;
+    margin-bottom: 40px;
+    font-weight: 100;
+    font-family: 'Lato';
+  }
+  a {
+    color: #B0BEC5;
+    text-decoration:none;
+  }
 </style>
 
 <script>
-import api from '@/api'
-
-const service = api.make('root')
 
 export default {
   name: 'Home',

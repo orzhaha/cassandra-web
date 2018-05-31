@@ -8,8 +8,8 @@ services:
     volumes:
       - .:/go/src/cassanndra
     ports:
-      - 80:80
-      - 8080:8080
+      - 8081:8081
+      - 8082:8082
   cassandra:
     image: scylladb/scylla:latest
     environment:

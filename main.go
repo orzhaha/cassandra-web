@@ -1,41 +1,103 @@
 package main
 
 import (
+	"log"
 	"net/http"
+	"os"
 	"strconv"
 
 	"github.com/gocql/gocql"
 	"github.com/labstack/echo"
 	"github.com/labstack/echo/middleware"
+	"github.com/spf13/viper"
+	"github.com/urfave/cli"
 )
 
 const (
 	SystemSchemaKey = "system_schema"
 )
 
+var env envStruct
+
+// envStruct type
+type envStruct struct {
+	HostPort string `mapstructure:"HOST_PORT" json:"HOST_PORT"`
+}
+
 func main() {
+	app := cli.NewApp()
+	app.Name = "Cassandra-Web"
+	app.Version = "0.5.1"
+	app.Authors = []cli.Author{
+		cli.Author{
+			Name:  "Ken",
+			Email: "ipushc@gmail.com",
+		},
+	}
+	app.Flags = []cli.Flag{
+		cli.StringFlag{
+			Name:   "config, c",
+			Value:  "config.yaml",
+			Usage:  "app config",
+			EnvVar: "CONFIG_PATH",
+		},
+	}
+	app.Action = run
+
+	err := app.Run(os.Args)
+
+	if err != nil {
+		log.Fatal(err)
+	}
+}
+
+// run
+func run(c *cli.Context) {
+	viper.SetConfigFile(c.String("config"))
+	viper.AutomaticEnv()
+
+	err := viper.ReadInConfig()
+
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	envTmp := &envStruct{}
+	err = viper.Unmarshal(envTmp)
+
+	if err != nil {
+		panic(err)
+	}
+
+	env = *envTmp
+
+	log.Println("Cofing 設定成功")
 	// Echo instance
 	e := echo.New()
 
 	e.Use(middleware.Logger())
 
 	// 跨網域用
-	e.Use(middleware.CORSWithConfig(middleware.CORSConfig{
-		AllowOrigins: []string{"http://localhost:8080", "http://localhost:80"},
-		AllowHeaders: []string{echo.HeaderOrigin, echo.HeaderContentType, echo.HeaderAccept},
-	}))
+	// e.Use(middleware.CORSWithConfig(middleware.CORSConfig{
+	// 	AllowOrigins: []string{"http://localhost:8081", "http://localhost:8082"},
+	// 	AllowHeaders: []string{echo.HeaderOrigin, echo.HeaderContentType, echo.HeaderAccept},
+	// }))
 
 	e.Static("/static", "client/dist/static")
 	e.File("/", "client/dist/index.html")
 
 	e.POST("/query", postQuery)
 
-	e.GET("/allkeyspace", getAllKeySpace)
-	e.GET("/alltablebykeyspace", getAllTableByKeySpace)
-	e.GET("/allrowbytable", getAllRowByTable)
+	e.GET("/keyspace", keySpace)
+	e.GET("/table", table)
+	e.GET("/row", row)
 
 	// Start server
-	e.Logger.Fatal(e.Start(":80"))
+	e.Logger.Fatal(e.Start(env.HostPort))
+}
+
+type CqlQuery struct {
+	Query string `json:"query" form:"query" query:"query"`
 }
 
 func postQuery(c echo.Context) error {
@@ -51,9 +113,13 @@ func postQuery(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
 	}
 
-	query := c.FormValue("query")
+	query := new(CqlQuery)
 
-	iter := session.Query(query).Iter()
+	if err = c.Bind(query); err != nil {
+		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
+	}
+
+	iter := session.Query(query.Query).Iter()
 
 	ret, err := iter.SliceMap()
 
@@ -64,7 +130,7 @@ func postQuery(c echo.Context) error {
 	return c.JSON(http.StatusOK, ret)
 }
 
-func getAllKeySpace(c echo.Context) error {
+func keySpace(c echo.Context) error {
 	cluster := gocql.NewCluster("cassandra")
 	cluster.Port = 9042
 	cluster.Keyspace = SystemSchemaKey
@@ -89,7 +155,7 @@ func getAllKeySpace(c echo.Context) error {
 	return c.JSON(http.StatusOK, ret)
 }
 
-func getAllTableByKeySpace(c echo.Context) error {
+func table(c echo.Context) error {
 	cluster := gocql.NewCluster("cassandra")
 	cluster.Port = 9042
 	cluster.Keyspace = SystemSchemaKey
@@ -116,7 +182,7 @@ func getAllTableByKeySpace(c echo.Context) error {
 	return c.JSON(http.StatusOK, ret)
 }
 
-func getAllRowByTable(c echo.Context) error {
+func row(c echo.Context) error {
 	cluster := gocql.NewCluster("cassandra")
 	cluster.Port = 9042
 	cluster.Keyspace = SystemSchemaKey

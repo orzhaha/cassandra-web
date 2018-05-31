@@ -1,15 +1,14 @@
 <template lang="pug">
   el-container(style="height: 600px; border: 1px solid #eee")
     el-aside(style="width: auto")
-      el-radio-group(v-model="isCollapse"
-        style="margin-bottom: 20px;"
-        size="mini")
-        el-radio-button(:label="false") 展开
-        el-radio-button(:label="true") 收起
+      //- el-radio-group(v-model="isCollapse"
+      //-   style="margin-bottom: 20px;"
+      //-   size="mini")
+      //-   el-radio-button(:label="false") 展开
+      //-   el-radio-button(:label="true") 收起
       el-menu(default-active="2"
         class="el-menu-vertical-demo"
-        @open="handleOpen"
-        @close="handleClose"
+        :collapse-transition="false"
         :collapse="isCollapse")
         el-menu-item(
         v-for="v,i in keyspace"
@@ -17,10 +16,18 @@
         :index="i.toString()")
           i(class="el-icon-tickets")
           span(lot="title") {{v.keyspace_name}}
+        el-menu-item(
+        @click="openQuery"
+        index="-1")
+          i(class="el-icon-edit")
+          span(lot="title") Query
+        el-menu-item(
+        @click="toggleMenu"
+        index="-2")
+          i(v-bind:class="[isCollapse ? 'el-icon-caret-right' : 'el-icon-caret-left']")
+          span(lot="title") Folding menu
     el-container
       router-view(v-loading="false")
-      //- Table(:table_data="table_data"
-      //-   :table_field="table_field")
 </template>
 <style>
   .el-header {
@@ -60,6 +67,12 @@ export default {
           }
         })
       } catch (error) {
+        this.$message({
+          type: 'error',
+          showClose: true,
+          duration: 0,
+          message: error
+        });
       }
     },
     async fetch() {
@@ -67,13 +80,48 @@ export default {
         const res = await service.request('keyspace')
         this.keyspace = res.get()
       } catch (error) {
+        this.$message({
+          type: 'error',
+          showClose: true,
+          duration: 0,
+          message: error
+        });
       }
     },
-    handleOpen(key, keyPath) {
-      console.log(key, keyPath);
+    toggleMenu() {
+      this.isCollapse = !this.isCollapse
     },
-    handleClose(key, keyPath) {
-      console.log(key, keyPath);
+    openQuery() {
+      this.$prompt('Enter Query', 'CQL Query', {
+        confirmButtonText: 'Execute',
+        cancelButtonText: 'Cancel',
+      }).then(async ({ value }) => {
+        try {
+          const res = await service.request('query', {
+            data: {
+              query: value
+            }
+          })
+          this.$message({
+            type: 'success',
+            showClose: true,
+            duration: 0,
+            message: res.get()
+          });
+        } catch (error) {
+          this.$message({
+            type: 'error',
+            showClose: true,
+            duration: 0,
+            message: error
+          });
+        }
+      }).catch(() => {
+        this.$message({
+          type: 'info',
+          message: 'Cancel Query'
+        });
+      });
     }
   }
 };
