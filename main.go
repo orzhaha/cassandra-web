@@ -21,7 +21,9 @@ var env envStruct
 
 // envStruct type
 type envStruct struct {
-	HostPort string `mapstructure:"HOST_PORT" json:"HOST_PORT"`
+	HostPort      string `mapstructure:"HOST_PORT" json:"HOST_PORT"`
+	CassandraHost string `mapstructure:"CASSANDRA_HOST" json:"CASSANDRA_HOST"`
+	CassandraPort int    `mapstructure:"CASSANDRA_PORT" json:"CASSANDRA_PORT"`
 }
 
 func main() {
@@ -101,8 +103,8 @@ type CqlQuery struct {
 }
 
 func postQuery(c echo.Context) error {
-	cluster := gocql.NewCluster("cassandra")
-	cluster.Port = 9042
+	cluster := gocql.NewCluster(env.CassandraHost)
+	cluster.Port = env.CassandraPort
 	cluster.Consistency = gocql.One
 
 	session, err := cluster.CreateSession()

@@ -1,7 +1,8 @@
 FROM golang:1.9.1
 
-RUN wget https://nodejs.org/dist/v8.5.0/node-v8.5.0-linux-x64.tar.gz \
-    && tar -xf node-v8.5.0-linux-x64.tar.gz --directory /usr/local --strip-components 1 \
-    && rm -rf node-v8.5.0-linux-x64.tar.gz
+RUN cd /go/src && \
+    git clone https://github.com/orzhaha/cassandra-web.git && \
+    cd cassandra-web && \
+    go build -o cassandra-web
 
-CMD ["tail", "-f", "/dev/null"]
+CMD ["./cassandra-web"]

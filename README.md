@@ -3,7 +3,7 @@ cassandra web ui
 
 ## API
 
-#### /allkeyspace 取得所有KeySpace
+#### /keyspace 取得所有KeySpace
 
 ##### 參數：無
 
@@ -12,12 +12,15 @@ cassandra web ui
 ##### 範例：
 
 ```sh
-http://localhost/allkeyspace
+curl \
+  -X GET \
+  -H 'Content-Type: application/json' \
+  http://localhost/keyspace
 ```
 
 ----
 
-##### /alltablebykeyspace 取得KeySpace裡所有Table
+##### /table 取得KeySpace裡所有Table
 
 ##### 參數：
 
@@ -28,12 +31,15 @@ http://localhost/allkeyspace
 ##### 範例：
 
 ```sh
-http://localhost/alltablebykeyspace?keyspace=abc
+curl \
+  -X GET \
+  -H 'Content-Type: application/json' \
+  http://localhost/table?keyspace=abc
 ```
 
 ----
 
-##### /allrowbytable 取得Table裡所有的Row
+##### /row 取得Table裡所有的Row
 
 ##### 參數：
 
@@ -47,7 +53,30 @@ http://localhost/alltablebykeyspace?keyspace=abc
 ##### 範例：
 
 ```sh
-http://localhost/allrowbytable?table=ca.abc&limit=5&token_key=a&next_token=Serenity
+curl \
+  -X GET \
+  -H 'Content-Type: application/json' \
+  http://localhost/row?table=ca.abc&limit=5&token_key=a&next_token=Serenity
+```
+
+---
+
+##### /query 執行cql query
+
+##### 參數：
+
+* query cql query
+
+##### 回傳：Json object
+
+##### 範例：
+
+```sh
+curl \
+  -X POST \
+  http://localhost/query \
+  -H 'Content-Type: application/json' \
+  -d '{"query":"cql query"}'
 ```
 
 ---
