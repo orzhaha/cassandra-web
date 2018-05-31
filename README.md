@@ -1,6 +1,22 @@
 # cassandra-web
 cassandra web ui
 
+## Docker
+
+```sh
+docker pull ipushc/cassandra-web
+```
+
+----
+
+## 環境變數
+
+* HOST_PORT: ":80"
+* CASSANDRA_HOST: cassandra
+* CASSANDRA_PORT: 9042
+
+----
+
 ## API
 
 #### /keyspace 取得所有KeySpace
