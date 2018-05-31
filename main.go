@@ -76,8 +76,10 @@ func run(c *cli.Context) {
 	log.Info("Cofing 設定成功")
 	// Echo instance
 	e := echo.New()
+
 	e.Debug = true
-	e.Logger.SetLevel(log.DEBUG)
+	e.Logger.SetLevel(log.ERROR)
+
 	e.Use(middleware.Logger())
 
 	// 跨網域用
