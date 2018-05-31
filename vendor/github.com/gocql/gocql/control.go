@@ -344,7 +344,9 @@ func (c *controlConn) reconnect(refreshring bool) {
 		if err != nil {
 			// host is dead
 			// TODO: this is replicated in a few places
-			c.session.handleNodeDown(host.ConnectAddress(), host.Port())
+			if c.session.cfg.ConvictionPolicy.AddFailure(err, host) {
+				c.session.handleNodeDown(host.ConnectAddress(), host.Port())
+			}
 		} else {
 			newConn = conn
 		}

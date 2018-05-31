@@ -147,8 +147,6 @@ type Conn struct {
 	quit   chan struct{}
 
 	timeouts int64
-
-	frameWriteArgChan chan *callReq
 }
 
 // Connect establishes a connection to a Cassandra node.
@@ -185,20 +183,19 @@ func (s *Session) dial(ip net.IP, port int, cfg *ConnConfig, errorHandler ConnEr
 	}
 
 	c := &Conn{
-		conn:              conn,
-		r:                 bufio.NewReader(conn),
-		cfg:               cfg,
-		calls:             make(map[int]*callReq),
-		timeout:           cfg.Timeout,
-		version:           uint8(cfg.ProtoVersion),
-		addr:              conn.RemoteAddr().String(),
-		errorHandler:      errorHandler,
-		compressor:        cfg.Compressor,
-		auth:              cfg.Authenticator,
-		quit:              make(chan struct{}),
-		session:           s,
-		streams:           streams.New(cfg.ProtoVersion),
-		frameWriteArgChan: make(chan *callReq),
+		conn:         conn,
+		r:            bufio.NewReader(conn),
+		cfg:          cfg,
+		calls:        make(map[int]*callReq),
+		timeout:      cfg.Timeout,
+		version:      uint8(cfg.ProtoVersion),
+		addr:         conn.RemoteAddr().String(),
+		errorHandler: errorHandler,
+		compressor:   cfg.Compressor,
+		auth:         cfg.Authenticator,
+		quit:         make(chan struct{}),
+		session:      s,
+		streams:      streams.New(cfg.ProtoVersion),
 	}
 
 	if cfg.Keepalive > 0 {
@@ -218,9 +215,6 @@ func (s *Session) dial(ip net.IP, port int, cfg *ConnConfig, errorHandler ConnEr
 
 	frameTicker := make(chan struct{}, 1)
 	startupErr := make(chan error)
-
-	go c.writeToConn()
-
 	go func() {
 		for range frameTicker {
 			err := c.recv()
@@ -377,8 +371,6 @@ func (c *Conn) authenticateHandshake(ctx context.Context, authFrame *authenticat
 		default:
 			return fmt.Errorf("unknown frame response during authentication: %v", v)
 		}
-
-		framerPool.Put(framer)
 	}
 }
 
@@ -442,27 +434,6 @@ func (c *Conn) discardFrame(head frameHeader) error {
 	return nil
 }
 
-// writeToConn() processes writing to the connection, which is required before any write
-// to Conn and is usually called in a separate goroutine.
-func (c *Conn) writeToConn() {
-	for {
-		select {
-		case call := <-c.frameWriteArgChan:
-			if err := call.req.writeFrame(call.framer, call.streamID); err != nil {
-				// I think this is the correct thing to do, im not entirely sure. It is not
-				// ideal as readers might still get some data, but they probably wont.
-				// Here we need to be careful as the stream is not available and if all
-				// writes just timeout or fail then the pool might use this connection to
-				// send a frame on, with all the streams used up and not returned.
-				c.closeWithError(err)
-				return
-			}
-		case <-c.quit:
-			return
-		}
-	}
-}
-
 type protocolError struct {
 	frame frame
 }
@@ -490,7 +461,7 @@ func (c *Conn) recv() error {
 	}
 
 	if head.stream > c.streams.NumStreams {
-		return fmt.Errorf("gocql: frame header stream is beyond call exepected bounds: %d", head.stream)
+		return fmt.Errorf("gocql: frame header stream is beyond call expected bounds: %d", head.stream)
 	} else if head.stream == -1 {
 		// TODO: handle cassandra event frames, we shouldnt get any currently
 		framer := newFramer(c, c, c.compressor, c.version)
@@ -506,7 +477,6 @@ func (c *Conn) recv() error {
 		if err := framer.readFrame(&head); err != nil {
 			return err
 		}
-		defer framerPool.Put(framer)
 
 		frame, err := framer.parseFrame()
 		if err != nil {
@@ -551,7 +521,7 @@ func (c *Conn) releaseStream(stream int) {
 	c.mu.Lock()
 	call := c.calls[stream]
 	if call != nil && stream != call.streamID {
-		panic(fmt.Sprintf("attempt to release streamID with ivalid stream: %d -> %+v\n", stream, call))
+		panic(fmt.Sprintf("attempt to release streamID with invalid stream: %d -> %+v\n", stream, call))
 	} else if call == nil {
 		panic(fmt.Sprintf("releasing a stream not in use: %d", stream))
 	}
@@ -588,30 +558,8 @@ type callReq struct {
 	framer   *framer
 	timeout  chan struct{} // indicates to recv() that a call has timedout
 	streamID int           // current stream in use
-	req      frameWriter
 
 	timer *time.Timer
-}
-
-func (c *callReq) resetTimeout(timeout time.Duration) <-chan time.Time {
-	var timeoutCh <-chan time.Time
-	if timeout > 0 {
-		if c.timer == nil {
-			c.timer = time.NewTimer(0)
-			<-c.timer.C
-		} else {
-			if !c.timer.Stop() {
-				select {
-				case <-c.timer.C:
-				default:
-				}
-			}
-		}
-
-		c.timer.Reset(timeout)
-		timeoutCh = c.timer.C
-	}
-	return timeoutCh
 }
 
 func (c *Conn) exec(ctx context.Context, req frameWriter, tracer Tracer) (*framer, error) {
@@ -624,33 +572,86 @@ func (c *Conn) exec(ctx context.Context, req frameWriter, tracer Tracer) (*frame
 	// resp is basically a waiting semaphore protecting the framer
 	framer := newFramer(c, c, c.compressor, c.version)
 
-	c.mu.Lock()
-	call := c.calls[stream]
-	if call != nil {
-		c.mu.Unlock()
-		return nil, fmt.Errorf("attempting to use stream already in use: %d -> %d", stream, call.streamID)
-	} else {
-		call = streamPool.Get().(*callReq)
-	}
-	c.calls[stream] = call
-
+	call := streamPool.Get().(*callReq)
 	call.framer = framer
 	call.timeout = make(chan struct{})
 	call.streamID = stream
-	call.req = req
+
+	c.mu.Lock()
+	existingCall := c.calls[stream]
+	if existingCall == nil {
+		c.calls[stream] = call
+	}
 	c.mu.Unlock()
+
+	if existingCall != nil {
+		return nil, fmt.Errorf("attempting to use stream already in use: %d -> %d", stream, existingCall.streamID)
+	}
 
 	if tracer != nil {
 		framer.trace()
 	}
 
-	timeoutCh := call.resetTimeout(c.timeout)
-	if err := c.sendFrame(ctx, call, timeoutCh); err != nil {
+	err := req.writeFrame(framer, stream)
+	if err != nil {
+		// closeWithError will block waiting for this stream to either receive a response
+		// or for us to timeout, close the timeout chan here. Im not entirely sure
+		// but we should not get a response after an error on the write side.
+		close(call.timeout)
+		// I think this is the correct thing to do, im not entirely sure. It is not
+		// ideal as readers might still get some data, but they probably wont.
+		// Here we need to be careful as the stream is not available and if all
+		// writes just timeout or fail then the pool might use this connection to
+		// send a frame on, with all the streams used up and not returned.
+		c.closeWithError(err)
 		return nil, err
 	}
 
-	if err := c.getResp(ctx, call, timeoutCh); err != nil {
-		return nil, err
+	var timeoutCh <-chan time.Time
+	if c.timeout > 0 {
+		if call.timer == nil {
+			call.timer = time.NewTimer(0)
+			<-call.timer.C
+		} else {
+			if !call.timer.Stop() {
+				select {
+				case <-call.timer.C:
+				default:
+				}
+			}
+		}
+
+		call.timer.Reset(c.timeout)
+		timeoutCh = call.timer.C
+	}
+
+	var ctxDone <-chan struct{}
+	if ctx != nil {
+		ctxDone = ctx.Done()
+	}
+
+	select {
+	case err := <-call.resp:
+		close(call.timeout)
+		if err != nil {
+			if !c.Closed() {
+				// if the connection is closed then we cant release the stream,
+				// this is because the request is still outstanding and we have
+				// been handed another error from another stream which caused the
+				// connection to close.
+				c.releaseStream(stream)
+			}
+			return nil, err
+		}
+	case <-timeoutCh:
+		close(call.timeout)
+		c.handleTimeout()
+		return nil, ErrTimeoutNoResponse
+	case <-ctxDone:
+		close(call.timeout)
+		return nil, ctx.Err()
+	case <-c.quit:
+		return nil, ErrConnectionClosed
 	}
 
 	// dont release the stream if detect a timeout as another request can reuse
@@ -666,61 +667,6 @@ func (c *Conn) exec(ctx context.Context, req frameWriter, tracer Tracer) (*frame
 	}
 
 	return framer, nil
-}
-
-func (c *Conn) getResp(ctx context.Context, call *callReq, timeoutCh <-chan time.Time) error {
-	var ctxDone <-chan struct{}
-	if ctx != nil {
-		ctxDone = ctx.Done()
-	}
-
-	select {
-	case err := <-call.resp:
-		close(call.timeout)
-		if err != nil {
-			if !c.Closed() {
-				// if the connection is closed then we cant release the stream,
-				// this is because the request is still outstanding and we have
-				// been handed another error from another stream which caused the
-				// connection to close.
-				c.releaseStream(call.streamID)
-			}
-			return err
-		}
-		return nil
-	case <-timeoutCh:
-		close(call.timeout)
-		c.handleTimeout()
-		return ErrTimeoutNoResponse
-	case <-ctxDone:
-		close(call.timeout)
-		return ctx.Err()
-	case <-c.quit:
-		return ErrConnectionClosed
-	}
-}
-
-func (c *Conn) sendFrame(ctx context.Context, call *callReq, timeoutCh <-chan time.Time) error {
-	var ctxDone <-chan struct{}
-	if ctx != nil {
-		ctxDone = ctx.Done()
-	}
-
-	select {
-	case c.frameWriteArgChan <- call:
-		return nil
-	case <-timeoutCh:
-		c.releaseStream(call.streamID)
-		close(call.timeout)
-		c.handleTimeout()
-		return ErrTimeoutNoResponse
-	case <-ctxDone:
-		c.releaseStream(call.streamID)
-		close(call.timeout)
-		return ctx.Err()
-	case <-c.quit:
-		return ErrConnectionClosed
-	}
 }
 
 type preparedStatment struct {
@@ -766,6 +712,7 @@ func (c *Conn) prepareStatement(ctx context.Context, stmt string, tracer Tracer)
 	if err != nil {
 		flight.err = err
 		flight.wg.Done()
+		c.session.stmtsLRU.remove(stmtCacheKey)
 		return nil, err
 	}
 
@@ -796,8 +743,6 @@ func (c *Conn) prepareStatement(ctx context.Context, stmt string, tracer Tracer)
 	if flight.err != nil {
 		c.session.stmtsLRU.remove(stmtCacheKey)
 	}
-
-	framerPool.Put(framer)
 
 	return flight.preparedStatment, flight.err
 }
@@ -1096,7 +1041,6 @@ func (c *Conn) executeBatch(batch *Batch) *Iter {
 
 	switch x := resp.(type) {
 	case *resultVoidFrame:
-		framerPool.Put(framer)
 		return &Iter{}
 	case *RequestErrUnprepared:
 		stmt, found := stmts[string(x.StatementId)]
@@ -1104,8 +1048,6 @@ func (c *Conn) executeBatch(batch *Batch) *Iter {
 			key := c.session.stmtsLRU.keyFor(c.addr, c.currentKeyspace, stmt)
 			c.session.stmtsLRU.remove(key)
 		}
-
-		framerPool.Put(framer)
 
 		if found {
 			return c.executeBatch(batch)
