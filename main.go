@@ -1,7 +1,6 @@
 package main
 
 import (
-	"log"
 	"net/http"
 	"os"
 	"strconv"
@@ -9,6 +8,7 @@ import (
 	"github.com/gocql/gocql"
 	"github.com/labstack/echo"
 	"github.com/labstack/echo/middleware"
+	"github.com/labstack/gommon/log"
 	"github.com/spf13/viper"
 	"github.com/urfave/cli"
 )
@@ -73,11 +73,11 @@ func run(c *cli.Context) {
 
 	env = *envTmp
 
-	log.Println("Cofing 設定成功")
+	log.Info("Cofing 設定成功")
 	// Echo instance
 	e := echo.New()
 	e.Debug = true
-
+	e.Logger.SetLevel(log.DEBUG)
 	e.Use(middleware.Logger())
 
 	// 跨網域用
