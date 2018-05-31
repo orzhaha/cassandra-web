@@ -76,6 +76,7 @@ func run(c *cli.Context) {
 	log.Println("Cofing 設定成功")
 	// Echo instance
 	e := echo.New()
+	e.Debug = true
 
 	e.Use(middleware.Logger())
 
