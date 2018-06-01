@@ -77,9 +77,6 @@ func run(c *cli.Context) {
 	// Echo instance
 	e := echo.New()
 
-	e.Debug = true
-	e.Logger.SetLevel(log.ERROR)
-
 	e.Use(middleware.Logger())
 
 	// 跨網域用
@@ -136,8 +133,8 @@ func postQuery(c echo.Context) error {
 }
 
 func keySpace(c echo.Context) error {
-	cluster := gocql.NewCluster("cassandra")
-	cluster.Port = 9042
+	cluster := gocql.NewCluster(env.CassandraHost)
+	cluster.Port = env.CassandraPort
 	cluster.Keyspace = SystemSchemaKey
 	cluster.Consistency = gocql.One
 
@@ -161,8 +158,8 @@ func keySpace(c echo.Context) error {
 }
 
 func table(c echo.Context) error {
-	cluster := gocql.NewCluster("cassandra")
-	cluster.Port = 9042
+	cluster := gocql.NewCluster(env.CassandraHost)
+	cluster.Port = env.CassandraPort
 	cluster.Keyspace = SystemSchemaKey
 	cluster.Consistency = gocql.One
 
@@ -188,8 +185,8 @@ func table(c echo.Context) error {
 }
 
 func row(c echo.Context) error {
-	cluster := gocql.NewCluster("cassandra")
-	cluster.Port = 9042
+	cluster := gocql.NewCluster(env.CassandraHost)
+	cluster.Port = env.CassandraPort
 	cluster.Keyspace = SystemSchemaKey
 	cluster.Consistency = gocql.One
 

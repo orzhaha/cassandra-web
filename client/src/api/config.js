@@ -1,5 +1,5 @@
-const domain = window.location.origin
-// const domain = 'http://localhost:8081'
+// const domain = window.location.origin
+const domain = 'http://localhost:8081'
 
 const config = {
   root: {
