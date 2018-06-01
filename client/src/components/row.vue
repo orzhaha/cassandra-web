@@ -7,6 +7,7 @@
       style="width: 100%")
         el-table-column(
         v-for="key in keys"
+        :formatter="rowFormatter"
         :prop="key"
         :label="key"
         )
@@ -80,6 +81,12 @@ export default {
         message: row
       });
     },
+    rowFormatter(row, column, cellValue) {
+      if (typeof(cellValue) === 'object') {
+        return JSON.stringify(cellValue)
+      }
+      return cellValue
+    }
   }
 };
 </script>

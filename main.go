@@ -29,7 +29,7 @@ type envStruct struct {
 func main() {
 	app := cli.NewApp()
 	app.Name = "Cassandra-Web"
-	app.Version = "0.5.1"
+	app.Version = "0.6.0"
 	app.Authors = []cli.Author{
 		cli.Author{
 			Name:  "Ken",
