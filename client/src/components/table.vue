@@ -58,7 +58,6 @@ export default {
         this.$message({
           type: 'error',
           showClose: true,
-          duration: 0,
           message: error
         });
       }
