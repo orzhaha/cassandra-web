@@ -99,7 +99,6 @@ curl \
 
 ## TODO
 
-* 分頁功能
 * 快速編輯刪除功能
 * Materialized View查詢
 * Map 如果Key是數字再轉Json會強制轉字串
