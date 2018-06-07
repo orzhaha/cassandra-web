@@ -96,10 +96,10 @@ func run(c *cli.Context) {
 	e.Use(middleware.Logger())
 
 	// 跨網域用
-	// e.Use(middleware.CORSWithConfig(middleware.CORSConfig{
-	// 	AllowOrigins: []string{"http://localhost:8081", "http://localhost:8082"},
-	// 	AllowHeaders: []string{echo.HeaderOrigin, echo.HeaderContentType, echo.HeaderAccept},
-	// }))
+	e.Use(middleware.CORSWithConfig(middleware.CORSConfig{
+		AllowOrigins: []string{"http://localhost:8081", "http://localhost:8082"},
+		AllowHeaders: []string{echo.HeaderOrigin, echo.HeaderContentType, echo.HeaderAccept},
+	}))
 
 	e.Static("/static", "client/dist/static")
 	e.File("/", "client/dist/index.html")
@@ -170,10 +170,12 @@ func (h *Handler) row(c echo.Context) error {
 	data := make(map[string]interface{})
 
 	table := c.QueryParam("table")
-	tokenKey := c.QueryParam("token_key")
-	nextToken := c.QueryParam("next_token")
-	prevToken := c.QueryParam("prev_token")
-	limit, err := strconv.Atoi(c.QueryParam("limit"))
+	page, err := strconv.Atoi(c.QueryParam("page"))
+	pagesize, err := strconv.Atoi(c.QueryParam("pagesize"))
+
+	if err != nil {
+		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
+	}
 
 	countIter := h.Session.Query(`SELECT COUNT(*) FROM ` + table).Iter()
 	countRet, err := countIter.SliceMap()
@@ -184,40 +186,34 @@ func (h *Handler) row(c echo.Context) error {
 
 	data["count"] = countRet[0]["count"]
 
-	if nextToken != "" {
-		rowIter := h.Session.Query(`SELECT * FROM `+table+` WHERE token(`+tokenKey+`) > token('`+nextToken+`') LIMIT ? ALLOW FILTERING`, limit).Iter()
-		rowRet, nextErr := rowIter.SliceMap()
+	if page == 0 {
+		page = 1
+	}
 
-		if nextErr != nil {
-			return echo.NewHTTPError(http.StatusInternalServerError, nextErr.Error())
+	limit_end := page * pagesize
+	limit_start := limit_end - pagesize
+	i := 0
+
+	rowIter := h.Session.Query(`SELECT * FROM ` + table + ` ALLOW FILTERING`).Iter()
+	rowData := make([]map[string]interface{}, 0)
+
+	for {
+		i++
+
+		row := make(map[string]interface{})
+		if !rowIter.MapScan(row) {
+			break
+		}
+		if i > limit_start {
+			rowData = append(rowData, row)
 		}
 
-		data["row"] = rowRet
-
-		return c.JSON(http.StatusOK, data)
-	}
-
-	if prevToken != "" {
-		rowIter := h.Session.Query(`SELECT * FROM `+table+` WHERE token(`+tokenKey+`) < token('`+prevToken+`') LIMIT ? ALLOW FILTERING`, limit).Iter()
-		rowRet, prevErr := rowIter.SliceMap()
-
-		if prevErr != nil {
-			return echo.NewHTTPError(http.StatusInternalServerError, prevErr.Error())
+		if i >= limit_end {
+			break
 		}
-
-		data["row"] = rowRet
-
-		return c.JSON(http.StatusOK, data)
 	}
 
-	rowIter := h.Session.Query(`SELECT * FROM `+table+` LIMIT ? ALLOW FILTERING`, limit).Iter()
-	rowRet, err := rowIter.SliceMap()
-
-	if err != nil {
-		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
-	}
-
-	data["row"] = rowRet
+	data["row"] = rowData
 
 	return c.JSON(http.StatusOK, data)
 }

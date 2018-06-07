@@ -1,5 +1,5 @@
 <template lang="pug">
-  el-container(style="height: 600px; border: 1px solid #eee")
+  el-container(style="height: 100%; border: 1px solid #eee")
     el-aside(style="width: auto")
       //- el-radio-group(v-model="isCollapse"
       //-   style="margin-bottom: 20px;"

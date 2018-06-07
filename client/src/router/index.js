@@ -25,7 +25,7 @@ export default new Router({
           component: Table,
         },
         {
-          path: ':table/row',
+          path: ':table/row/:page/:pagesize',
           name: 'row',
           component: Row,
         }

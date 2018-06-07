@@ -1,0 +1,10 @@
+Thumbs.db
+.DS_Store
+.buildpath
+.project
+.settings
+.tmpoj
+.idea
+
+cassandra
+cassandra-web

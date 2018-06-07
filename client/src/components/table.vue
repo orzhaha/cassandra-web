@@ -42,7 +42,9 @@ export default {
       this.$router.push({
         name: 'row',
         params: {
-          table: `${row.keyspace_name}.${row.table_name}`
+          table: `${row.keyspace_name}.${row.table_name}`,
+          page: 1,
+          pagesize: 50
         }
       })
     },
