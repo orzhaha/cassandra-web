@@ -93,6 +93,7 @@ export default {
       this.$prompt('Enter Query', 'CQL Query', {
         confirmButtonText: 'Execute',
         cancelButtonText: 'Cancel',
+        inputType: 'textarea',
       }).then(async ({ value }) => {
         try {
           const res = await service.request('query', {

@@ -96,10 +96,10 @@ func run(c *cli.Context) {
 	e.Use(middleware.Logger())
 
 	// 跨網域用
-	e.Use(middleware.CORSWithConfig(middleware.CORSConfig{
-		AllowOrigins: []string{"http://localhost:8081", "http://localhost:8082"},
-		AllowHeaders: []string{echo.HeaderOrigin, echo.HeaderContentType, echo.HeaderAccept},
-	}))
+	// e.Use(middleware.CORSWithConfig(middleware.CORSConfig{
+	// 	AllowOrigins: []string{"http://localhost:8081", "http://localhost:8082"},
+	// 	AllowHeaders: []string{echo.HeaderOrigin, echo.HeaderContentType, echo.HeaderAccept},
+	// }))
 
 	e.Static("/static", "client/dist/static")
 	e.File("/", "client/dist/index.html")
