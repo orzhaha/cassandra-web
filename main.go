@@ -228,20 +228,20 @@ func (h *Handler) Row(c echo.Context) error {
 }
 
 type SaveReq struct {
-	Item  string `json:"item" form:"item" query:"item"`
 	Table string `json:"table" form:"table" query:"table"`
+	Item  string `json:"item" form:"item" query:"item"`
 }
 
 func (h *Handler) Save(c echo.Context) error {
-	saveReq := new(SaveReq)
+	req := new(SaveReq)
 
-	if err := c.Bind(saveReq); err != nil {
+	if err := c.Bind(req); err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
 	}
 
 	var item map[string]interface{}
 
-	err := json.Unmarshal([]byte(saveReq.Item), &item)
+	err := json.Unmarshal([]byte(req.Item), &item)
 
 	if err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
@@ -252,17 +252,63 @@ func (h *Handler) Save(c echo.Context) error {
 		itemData        []interface{}
 		itemPlaceholder []string
 	)
+	schema := make(map[string]string)
 
-	for k, v := range item {
-		itemKey = append(itemKey, k)
-		itemData = append(itemData, v)
-		itemPlaceholder = append(itemPlaceholder, "?")
+	for _, v := range h.GetSchema(req.Table) {
+		schema[v["column_name"].(string)] = v["type"].(string)
 	}
 
-	if err := h.Session.Query(`INSERT INTO `+saveReq.Table+` (`+strings.Join(itemKey, ",")+`) VALUES(`+strings.Join(itemPlaceholder, ",")+`)`, itemData...).Exec(); err != nil {
-		log.Info(err)
+	itemKey, itemData, itemPlaceholder = TransformType(item, schema)
+
+	if err := h.Session.Query(`INSERT INTO `+req.Table+` (`+strings.Join(itemKey, ",")+`) VALUES(`+strings.Join(itemPlaceholder, ",")+`)`, itemData...).Exec(); err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
 	}
 
 	return c.JSON(http.StatusOK, "success")
+}
+
+func (h *Handler) GetSchema(table string) []map[string]interface{} {
+	tablekey := strings.Split(table, ".")
+
+	iter := h.Session.Query(`SELECT * FROM system_schema.columns WHERE keyspace_name = '` + tablekey[0] + `' and table_name = '` + tablekey[1] + `' `).Iter()
+
+	ret, err := iter.SliceMap()
+
+	if err != nil {
+		return nil
+	}
+
+	return ret
+}
+
+func TransformType(item map[string]interface{}, schema map[string]string) ([]string, []interface{}, []string) {
+	var (
+		itemKey         []string
+		itemData        []interface{}
+		itemPlaceholder []string
+	)
+
+	for k, v := range item {
+		switch schema[k] {
+		case "tinyint":
+			itemData = append(itemData, int8(v.(float64)))
+		case "smallint":
+			itemData = append(itemData, int16(v.(float64)))
+		case "int":
+			itemData = append(itemData, int32(v.(float64)))
+		case "bigint":
+			itemData = append(itemData, int64(v.(float64)))
+		case "float":
+			itemData = append(itemData, float32(v.(float64)))
+		case "double":
+			itemData = append(itemData, v.(float64))
+		default:
+			itemData = append(itemData, v)
+		}
+
+		itemKey = append(itemKey, k)
+		itemPlaceholder = append(itemPlaceholder, "?")
+	}
+
+	return itemKey, itemData, itemPlaceholder
 }
