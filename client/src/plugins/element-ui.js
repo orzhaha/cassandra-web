@@ -19,6 +19,7 @@ import {
   Pagination,
   Message,
   MessageBox,
+  Input,
 } from 'element-ui';
 import '@/style/theme/index.css';
 
@@ -35,6 +36,7 @@ Vue.use(Radio);
 Vue.use(RadioGroup);
 Vue.use(RadioButton);
 Vue.use(Pagination);
+Vue.use(Input);
 
 Vue.prototype.$loading = Loading.service;
 Vue.prototype.$prompt = MessageBox.prompt;

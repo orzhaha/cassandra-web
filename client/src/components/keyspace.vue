@@ -12,6 +12,7 @@
         :collapse="isCollapse")
         el-menu-item(
         v-for="v,i in keyspace"
+        :key="i"
         @click="getTable(v.keyspace_name)"
         :index="i.toString()")
           i(class="el-icon-tickets")

@@ -1,9 +1,11 @@
 package main
 
 import (
+	"encoding/json"
 	"net/http"
 	"os"
 	"strconv"
+	"strings"
 
 	"github.com/gocql/gocql"
 	"github.com/labstack/echo"
@@ -29,7 +31,7 @@ type envStruct struct {
 func main() {
 	app := cli.NewApp()
 	app.Name = "Cassandra-Web"
-	app.Version = "1.0.1"
+	app.Version = "1.0.2"
 	app.Authors = []cli.Author{
 		cli.Author{
 			Name:  "Ken",
@@ -104,43 +106,54 @@ func run(c *cli.Context) {
 	e.Static("/static", "client/dist/static")
 	e.File("/", "client/dist/index.html")
 
-	e.POST("/query", h.postQuery)
+	e.POST("/query", h.Query)
+	e.POST("/save", h.Save)
 
-	e.GET("/keyspace", h.keySpace)
-	e.GET("/table", h.table)
-	e.GET("/row", h.row)
+	e.GET("/keyspace", h.KeySpace)
+	e.GET("/table", h.Table)
+	e.GET("/row", h.Row)
 
 	// Start server
 	e.Logger.Fatal(e.Start(env.HostPort))
-}
-
-type CqlQuery struct {
-	Query string `json:"query" form:"query" query:"query"`
 }
 
 type Handler struct {
 	Session *gocql.Session
 }
 
-func (h *Handler) postQuery(c echo.Context) error {
+type CqlQuery struct {
+	Query string `json:"query" form:"query" query:"query"`
+}
+
+func (h *Handler) Query(c echo.Context) error {
 	query := new(CqlQuery)
 
 	if err := c.Bind(query); err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
 	}
 
-	iter := h.Session.Query(query.Query).Iter()
+	var rets []interface{}
 
-	ret, err := iter.SliceMap()
+	for _, q := range strings.Split(query.Query, ";") {
+		if q == "" {
+			continue
+		}
 
-	if err != nil {
-		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
+		iter := h.Session.Query(q).Iter()
+
+		ret, err := iter.SliceMap()
+
+		if err != nil {
+			rets = append(rets, err.Error())
+		}
+
+		rets = append(rets, ret)
 	}
 
-	return c.JSON(http.StatusOK, ret)
+	return c.JSON(http.StatusOK, rets)
 }
 
-func (h *Handler) keySpace(c echo.Context) error {
+func (h *Handler) KeySpace(c echo.Context) error {
 	iter := h.Session.Query(`SELECT * FROM system_schema.keyspaces`).Iter()
 
 	ret, err := iter.SliceMap()
@@ -152,7 +165,7 @@ func (h *Handler) keySpace(c echo.Context) error {
 	return c.JSON(http.StatusOK, ret)
 }
 
-func (h *Handler) table(c echo.Context) error {
+func (h *Handler) Table(c echo.Context) error {
 	keyspace := c.QueryParam("keyspace")
 
 	iter := h.Session.Query(`SELECT * FROM system_schema.tables WHERE  keyspace_name = ?`, keyspace).Iter()
@@ -166,7 +179,7 @@ func (h *Handler) table(c echo.Context) error {
 	return c.JSON(http.StatusOK, ret)
 }
 
-func (h *Handler) row(c echo.Context) error {
+func (h *Handler) Row(c echo.Context) error {
 	data := make(map[string]interface{})
 
 	table := c.QueryParam("table")
@@ -194,7 +207,7 @@ func (h *Handler) row(c echo.Context) error {
 	limit_start := limit_end - pagesize
 	i := 0
 
-	rowIter := h.Session.Query(`SELECT * FROM ` + table + ` ALLOW FILTERING`).Iter()
+	rowIter := h.Session.Query(`SELECT * FROM `+table+` LIMIT ? ALLOW FILTERING`, limit_end).Iter()
 	rowData := make([]map[string]interface{}, 0)
 
 	for {
@@ -207,13 +220,49 @@ func (h *Handler) row(c echo.Context) error {
 		if i > limit_start {
 			rowData = append(rowData, row)
 		}
-
-		if i >= limit_end {
-			break
-		}
 	}
 
 	data["row"] = rowData
 
 	return c.JSON(http.StatusOK, data)
+}
+
+type SaveReq struct {
+	Item  string `json:"item" form:"item" query:"item"`
+	Table string `json:"table" form:"table" query:"table"`
+}
+
+func (h *Handler) Save(c echo.Context) error {
+	saveReq := new(SaveReq)
+
+	if err := c.Bind(saveReq); err != nil {
+		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
+	}
+
+	var item map[string]interface{}
+
+	err := json.Unmarshal([]byte(saveReq.Item), &item)
+
+	if err != nil {
+		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
+	}
+
+	var (
+		itemKey         []string
+		itemData        []interface{}
+		itemPlaceholder []string
+	)
+
+	for k, v := range item {
+		itemKey = append(itemKey, k)
+		itemData = append(itemData, v)
+		itemPlaceholder = append(itemPlaceholder, "?")
+	}
+
+	if err := h.Session.Query(`INSERT INTO `+saveReq.Table+` (`+strings.Join(itemKey, ",")+`) VALUES(`+strings.Join(itemPlaceholder, ",")+`)`, itemData...).Exec(); err != nil {
+		log.Info(err)
+		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
+	}
+
+	return c.JSON(http.StatusOK, "success")
 }

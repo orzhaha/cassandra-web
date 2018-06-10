@@ -19,6 +19,10 @@ const config = {
       type: 'POST',
       url: `${domain}/query`
     },
+    save: {
+      type: 'POST',
+      url: `${domain}/save`
+    },
   }
 }
 

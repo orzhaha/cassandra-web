@@ -5,14 +5,21 @@
       :highlight-current-row="true"
       empty-text="empty data"
       stripe
+      :row-style="rowStyle"
       style="width: 100%")
         el-table-column(
         v-for="key in keys"
+        :key="key"
         :formatter="rowFormatter"
-        :prop="key"
-        :label="key"
-        )
-    el-pagination( :page-size="20"
+        :label="key")
+          template(slot-scope="scope")
+            div(@dblclick.stop="handleActive(`${scope.$index}${key}`, scope.row[key])")
+              span(v-if="!isEdit[`${scope.$index}${key}`]") {{scope.row[key]}}
+              el-input(v-else
+              @blur.stop="handleEdit(`${scope.$index}${key}`, scope.row[key], scope.row)"
+              v-model="scope.row[key]"
+              )
+    el-pagination(:page-size="20"
       @current-change="handleCurrentChange"
       @prev-click="handleCurrentChange"
       @next-click="handleCurrentChange"
@@ -31,6 +38,7 @@
 </style>
 <script>
 import api from '@/api'
+import { forEach, cloneDeep } from 'lodash'
 
 const service = api.make('root')
 
@@ -41,7 +49,9 @@ export default {
       keys: [],
       rowdata: [],
       rowcount: 0,
-      pagesize: 50
+      pagesize: 50,
+      isEdit: {},
+      originalData: {},
     }
   },
   created() {
@@ -67,7 +77,17 @@ export default {
 
         if (rows !== undefined && rows.length > 0) {
           this.keys = Object.keys(rows[0])
-          this.rowdata = rows
+          this.rowdata = rows.map((row) => {
+            const item = row
+            forEach(item, (itemData, itemKey) => {
+              if (typeof (itemData) === 'object') {
+                item[itemKey] = JSON.stringify(itemData)
+              } else {
+                item[itemKey] = itemData
+              }
+            })
+            return item
+          })
           this.rowcount = res.get('count')
         } else {
           this.keys = []
@@ -99,10 +119,58 @@ export default {
       })
     },
     rowFormatter(row, column, cellValue) {
-      if (typeof (cellValue) === 'object') {
-        return JSON.stringify(cellValue)
-      }
       return cellValue
+    },
+    handleActive(key, colData) {
+      this.originalData[key] = colData
+      this.$set(this.isEdit, key, !this.isEdit[key])
+    },
+    async handleEdit(key, colData, row) {
+      this.$set(this.isEdit, key, !this.isEdit[key])
+
+      if (this.originalData[key] === colData) {
+        return
+      }
+      const cRow = cloneDeep(row)
+
+      forEach(cRow, (itemData, itemKey) => {
+        cRow[itemKey] = this.jsonParams(itemData)
+      })
+
+      try {
+        const res = await service.request('save', {
+          data: {
+            item: JSON.stringify(cRow),
+            table: this.$route.params.table,
+          }
+        })
+
+        const message = (res.get() === []) ? 'success' : res.get()
+
+        this.$message({
+          type: 'success',
+          showClose: true,
+          duration: 0,
+          message
+        });
+      } catch (error) {
+        this.$message({
+          type: 'error',
+          showClose: true,
+          duration: 0,
+          message: error.body.message
+        });
+      }
+    },
+    rowStyle() {
+      return { cursor: 'pointer' }
+    },
+    jsonParams(jsonString) {
+      try {
+        return JSON.parse(jsonString)
+      } catch (e) {
+        return jsonString
+      }
     }
   }
 };

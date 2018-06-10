@@ -9,7 +9,7 @@ docker pull ipushc/cassandra-web
 
 ----
 
-## 環境變數
+## Environment
 
 * HOST_PORT: ":80"
 * CASSANDRA_HOST: cassandra
@@ -19,13 +19,13 @@ docker pull ipushc/cassandra-web
 
 ## API
 
-#### /keyspace 取得所有KeySpace
+#### /keyspace (get all keyspace)
 
-##### 參數：無
+##### params
 
-##### 回傳：Json array
+##### return：Json array
 
-##### 範例：
+##### example：
 
 ```sh
 curl \
@@ -36,15 +36,15 @@ curl \
 
 ----
 
-##### /table 取得KeySpace裡所有Table
+##### /table (get all table in keyspace)
 
-##### 參數：
+##### params
 
 * keyspace
 
-##### 回傳：Json array
+##### return：Json array
 
-##### 範例：
+##### example：
 
 ```sh
 curl \
@@ -55,18 +55,17 @@ curl \
 
 ----
 
-##### /row 取得Table裡所有的Row
+##### /row (get all row in table)
 
-##### 參數：
+##### params
 
-* limit 筆數
-* token_key 主鍵欄位名稱
-* prev_token 上一頁最靠近的一筆資料
-* next_token 下一頁最靠近的一筆資料
+* table
+* page
+* pagesize
 
-##### 回傳：Json object
+##### return：Json object
 
-##### 範例：
+##### example：
 
 ```sh
 curl \
@@ -77,15 +76,15 @@ curl \
 
 ---
 
-##### /query 執行cql query
+##### /query (cql query)
 
-##### 參數：
+##### params
 
 * query cql query
 
-##### 回傳：Json object
+##### return：Json object
 
-##### 範例：
+##### example：
 
 ```sh
 curl \
@@ -97,8 +96,28 @@ curl \
 
 ---
 
-## TODO
+##### /Save eidt Save
 
-* 快速編輯刪除功能
-* Materialized View查詢
-* Map 如果Key是數字再轉Json會強制轉字串
+##### params
+
+* table
+* item
+
+##### return：Json object
+
+##### example：
+
+```sh
+curl \
+  -X POST \
+  http://localhost/save \
+  -H 'Content-Type: application/json' \
+  -d '{"table":"table_name", "item":"{field1:value1, field2:value2}"}'
+```
+
+---
+
+## Issue
+
+* Materialized View Table
+* CQL Data Types Map. JSON only allows key names to be strings.

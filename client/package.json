@@ -15,6 +15,7 @@
   },
   "dependencies": {
     "element-ui": "^2.3.7",
+    "lodash": "^4.17.10",
     "node-sass": "^4.9.0",
     "pug": "^2.0.3",
     "pug-filters": "^3.1.0",

@@ -1,4 +1,4 @@
-FROM golang:1.9.1
+FROM ipushc/observedcat
 
 RUN cd /go/src/ && git clone https://github.com/orzhaha/cassandra-web.git
 
