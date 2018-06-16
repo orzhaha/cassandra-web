@@ -21,7 +21,11 @@ import {
   MessageBox,
   Input,
 } from 'element-ui';
+import lang from 'element-ui/lib/locale/lang/en'
+import locale from 'element-ui/lib/locale'
 import '@/style/theme/index.css';
+
+locale.use(lang)
 
 Vue.use(Loading.directive);
 Vue.use(Table);
@@ -38,6 +42,7 @@ Vue.use(RadioButton);
 Vue.use(Pagination);
 Vue.use(Input);
 
+Vue.config.lang = 'en-us'
 Vue.prototype.$loading = Loading.service;
 Vue.prototype.$prompt = MessageBox.prompt;
 Vue.prototype.$msgbox = MessageBox;

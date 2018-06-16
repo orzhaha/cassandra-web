@@ -4,6 +4,7 @@ import Home from '@/components/home';
 import Keyspace from '@/components/keyspace';
 import Table from '@/components/table';
 import Row from '@/components/row';
+import Query from '@/components/query';
 
 Vue.use(Router);
 
@@ -28,6 +29,11 @@ export default new Router({
           path: ':table/row/:page/:pagesize',
           name: 'row',
           component: Row,
+        },
+        {
+          path: ':query/query',
+          name: 'query',
+          component: Query,
         }
       ]
     },

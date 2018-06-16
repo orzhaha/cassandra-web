@@ -24,6 +24,7 @@
     "sass-loader": "^7.0.1",
     "service-proxy": "^0.4.2",
     "vue": "^2.5.2",
+    "vue-localstorage": "^0.6.2",
     "vue-router": "^3.0.1"
   },
   "devDependencies": {

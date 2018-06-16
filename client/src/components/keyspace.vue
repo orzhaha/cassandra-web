@@ -1,11 +1,6 @@
 <template lang="pug">
   el-container(style="height: 100%; border: 1px solid #eee")
     el-aside(style="width: auto")
-      //- el-radio-group(v-model="isCollapse"
-      //-   style="margin-bottom: 20px;"
-      //-   size="mini")
-      //-   el-radio-button(:label="false") 展开
-      //-   el-radio-button(:label="true") 收起
       el-menu(default-active="2"
         class="el-menu-vertical-demo"
         :collapse-transition="false"
@@ -97,17 +92,12 @@ export default {
         inputType: 'textarea',
       }).then(async ({ value }) => {
         try {
-          const res = await service.request('query', {
-            data: {
-              query: value
+          this.$router.push({
+            name: 'query',
+            params: {
+              query: `${value}`
             }
           })
-          this.$message({
-            type: 'success',
-            showClose: true,
-            duration: 0,
-            message: res.get()
-          });
         } catch (error) {
           this.$message({
             type: 'error',
