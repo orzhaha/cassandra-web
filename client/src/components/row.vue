@@ -5,8 +5,7 @@
       :highlight-current-row="true"
       empty-text="empty data"
       stripe
-      :row-style="rowStyle"
-      style="width: 100%")
+      :row-style="rowStyle")
         el-table-column(
         v-for="key in keys"
         :key="key"
