@@ -526,6 +526,8 @@ func MapToCassandraMapType(i interface{}, keyType string, valType string) (inter
 	case string:
 		err := JsonStringToObject(v, &m)
 		return m, err
+	case nil:
+		return m, nil
 	default:
 		return m, fmt.Errorf("unable to cast %#v of type %T to map[string]string", i, i)
 	}
