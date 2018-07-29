@@ -1,0 +1,4 @@
+*.go linguist-language=Go
+*.js linguist-language=JavaScript
+*.vue linguist-language=JavaScript
+*.css linguist-vendored
