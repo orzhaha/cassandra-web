@@ -1,19 +1,24 @@
 package main
 
 import (
-	"encoding/json"
+	"fmt"
 	"net/http"
 	"os"
+	"regexp"
 	"strconv"
 	"strings"
 
 	"github.com/gocql/gocql"
+	"github.com/json-iterator/go"
 	"github.com/labstack/echo"
 	"github.com/labstack/echo/middleware"
 	"github.com/labstack/gommon/log"
+	"github.com/spf13/cast"
 	"github.com/spf13/viper"
 	"github.com/urfave/cli"
 )
+
+var json = jsoniter.ConfigCompatibleWithStandardLibrary
 
 const (
 	SystemSchemaKey = "system_schema"
@@ -99,7 +104,7 @@ func run(c *cli.Context) {
 
 	// 跨網域用
 	// e.Use(middleware.CORSWithConfig(middleware.CORSConfig{
-	// 	AllowOrigins: []string{"http://localhost:8081", "http://localhost:8082"},
+	// 	AllowOrigins: []string{"http://localhost:8083", "http://localhost:8084"},
 	// 	AllowHeaders: []string{echo.HeaderOrigin, echo.HeaderContentType, echo.HeaderAccept},
 	// }))
 
@@ -168,13 +173,18 @@ func (h *Handler) KeySpace(c echo.Context) error {
 func (h *Handler) Table(c echo.Context) error {
 	keyspace := c.QueryParam("keyspace")
 
-	iter := h.Session.Query(`SELECT * FROM system_schema.tables WHERE  keyspace_name = ?`, keyspace).Iter()
+	iter := h.Session.Query(`SELECT keyspace_name, table_name, id FROM system_schema.tables WHERE  keyspace_name = ?`, keyspace).Iter()
 
 	ret, err := iter.SliceMap()
 
 	if err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
 	}
+
+	iter2 := h.Session.Query(`SELECT keyspace_name,  view_name as table_name, id FROM system_schema.views WHERE  keyspace_name = ?`, keyspace).Iter()
+	ret2, err := iter2.SliceMap()
+
+	ret = append(ret, ret2...)
 
 	return c.JSON(http.StatusOK, ret)
 }
@@ -218,13 +228,75 @@ func (h *Handler) Row(c echo.Context) error {
 			break
 		}
 		if i > limit_start {
-			rowData = append(rowData, row)
+			rowData = append(rowData, OutTransformType(row))
 		}
 	}
 
 	data["row"] = rowData
 
 	return c.JSON(http.StatusOK, data)
+}
+
+func OutTransformType(row map[string]interface{}) map[string]interface{} {
+	for k, v := range row {
+		switch v.(type) {
+		case int64, float64, float32:
+			row[k] = cast.ToString(v)
+		case []int64:
+			row[k] = cast.ToStringSlice(v)
+		case map[string]int64:
+			val, err := cast.FToStringMapStringE(v)
+
+			if err == nil {
+				row[k] = val
+			}
+		case map[int64]int64:
+			val, err := cast.FToStringMapStringE(v)
+
+			if err == nil {
+				row[k] = val
+			}
+		case map[int32]int64:
+			val, err := cast.FToStringMapStringE(v)
+
+			if err == nil {
+				row[k] = val
+			}
+		case map[int16]int64:
+			val, err := cast.FToStringMapStringE(v)
+
+			if err == nil {
+				row[k] = val
+			}
+		case map[int8]int64:
+			val, err := cast.FToStringMapStringE(v)
+
+			if err == nil {
+				row[k] = val
+			}
+		case map[float64]int64:
+			val, err := cast.FToStringMapStringE(v)
+
+			if err == nil {
+				row[k] = val
+			}
+		case map[float32]int64:
+			val, err := cast.FToStringMapStringE(v)
+
+			if err == nil {
+				row[k] = val
+			}
+		case map[bool]int64:
+			val, err := cast.FToStringMapStringE(v)
+
+			if err == nil {
+				row[k] = val
+			}
+		}
+
+	}
+
+	return row
 }
 
 type SaveReq struct {
@@ -258,7 +330,11 @@ func (h *Handler) Save(c echo.Context) error {
 		schema[v["column_name"].(string)] = v["type"].(string)
 	}
 
-	itemKey, itemData, itemPlaceholder = TransformType(item, schema)
+	itemKey, itemData, itemPlaceholder, err = InTransformType(item, schema)
+
+	if err != nil {
+		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
+	}
 
 	if err := h.Session.Query(`INSERT INTO `+req.Table+` (`+strings.Join(itemKey, ",")+`) VALUES(`+strings.Join(itemPlaceholder, ",")+`)`, itemData...).Exec(); err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
@@ -281,34 +357,260 @@ func (h *Handler) GetSchema(table string) []map[string]interface{} {
 	return ret
 }
 
-func TransformType(item map[string]interface{}, schema map[string]string) ([]string, []interface{}, []string) {
+func InTransformType(item map[string]interface{}, schema map[string]string) ([]string, []interface{}, []string, error) {
 	var (
 		itemKey         []string
 		itemData        []interface{}
 		itemPlaceholder []string
 	)
 
+	mapReg := regexp.MustCompile(`(?U)^map\<(.+),\s(.+)\>`)
+
 	for k, v := range item {
 		switch schema[k] {
-		case "tinyint":
-			itemData = append(itemData, int8(v.(float64)))
-		case "smallint":
-			itemData = append(itemData, int16(v.(float64)))
-		case "int":
-			itemData = append(itemData, int32(v.(float64)))
 		case "bigint":
-			itemData = append(itemData, int64(v.(float64)))
-		case "float":
-			itemData = append(itemData, float32(v.(float64)))
+			val, err := cast.ToInt64E(v)
+			if err != nil {
+				return nil, nil, nil, err
+			}
+			itemData = append(itemData, val)
+		case "boolean":
+			val, err := cast.ToBoolE(v)
+			if err != nil {
+				return nil, nil, nil, err
+			}
+			itemData = append(itemData, val)
+		case "counter":
+			val, err := cast.ToInt64E(v)
+			if err != nil {
+				return nil, nil, nil, err
+			}
+			itemData = append(itemData, val)
+		case "date":
+			val, err := cast.ToStringE(v)
+			if err != nil {
+				return nil, nil, nil, err
+			}
+			itemData = append(itemData, val)
+		case "decimal":
+			val, err := cast.ToFloat64E(v)
+			if err != nil {
+				return nil, nil, nil, err
+			}
+			itemData = append(itemData, val)
 		case "double":
-			itemData = append(itemData, v.(float64))
+			val, err := cast.ToFloat64E(v)
+			if err != nil {
+				return nil, nil, nil, err
+			}
+			itemData = append(itemData, val)
+		case "float":
+			val, err := cast.ToFloat64E(v)
+			if err != nil {
+				return nil, nil, nil, err
+			}
+			itemData = append(itemData, val)
+		case "inet":
+			val, err := cast.ToStringE(v)
+			if err != nil {
+				return nil, nil, nil, err
+			}
+			itemData = append(itemData, val)
+		case "int":
+			val, err := cast.ToInt32E(v)
+			if err != nil {
+				return nil, nil, nil, err
+			}
+			itemData = append(itemData, val)
+		case "smallint":
+			val, err := cast.ToInt16E(v)
+			if err != nil {
+				return nil, nil, nil, err
+			}
+			itemData = append(itemData, val)
+		case "text":
+			val, err := cast.ToStringE(v)
+			if err != nil {
+				return nil, nil, nil, err
+			}
+			itemData = append(itemData, val)
+		case "time":
+			val, err := cast.ToStringE(v)
+			if err != nil {
+				return nil, nil, nil, err
+			}
+			itemData = append(itemData, val)
+		case "timestamp":
+			val, err := cast.ToStringE(v)
+			if err != nil {
+				return nil, nil, nil, err
+			}
+			itemData = append(itemData, val)
+		case "timeuuid":
+			val, err := cast.ToStringE(v)
+			if err != nil {
+				return nil, nil, nil, err
+			}
+			itemData = append(itemData, val)
+		case "tinyint":
+			val, err := cast.ToInt8E(v)
+			if err != nil {
+				return nil, nil, nil, err
+			}
+			itemData = append(itemData, val)
+		case "uuid":
+			val, err := cast.ToStringE(v)
+			if err != nil {
+				return nil, nil, nil, err
+			}
+			itemData = append(itemData, val)
+		case "varchar":
+			val, err := cast.ToStringE(v)
+			if err != nil {
+				return nil, nil, nil, err
+			}
+			itemData = append(itemData, val)
+		case "varint":
+			val, err := cast.ToInt32E(v)
+			if err != nil {
+				return nil, nil, nil, err
+			}
+			itemData = append(itemData, val)
 		default:
-			itemData = append(itemData, v)
+			var val interface{} = v
+			var err error
+
+			mapRet := mapReg.FindStringSubmatch(schema[k])
+
+			if len(mapRet) == 3 {
+				val, err = MapToCassandraMapType(v, mapRet[1], mapRet[2])
+
+				if err != nil {
+					return nil, nil, nil, err
+				}
+			}
+
+			itemData = append(itemData, val)
 		}
 
 		itemKey = append(itemKey, k)
 		itemPlaceholder = append(itemPlaceholder, "?")
 	}
 
-	return itemKey, itemData, itemPlaceholder
+	return itemKey, itemData, itemPlaceholder, nil
+}
+
+// MapToCassandraMapType map對應cassandra map的型別
+func MapToCassandraMapType(i interface{}, keyType string, valType string) (interface{}, error) {
+	var m = map[interface{}]interface{}{}
+
+	switch v := i.(type) {
+	case map[string]interface{}:
+		for k, val := range v {
+			kRet, err := CassandraTypeToGoType(k, keyType)
+
+			if err != nil {
+				return nil, err
+			}
+
+			valRet, err := CassandraTypeToGoType(val, valType)
+
+			if err != nil {
+				return nil, err
+			}
+
+			m[kRet] = valRet
+		}
+
+		return m, nil
+	case string:
+		err := JsonStringToObject(v, &m)
+		return m, err
+	default:
+		return m, fmt.Errorf("unable to cast %#v of type %T to map[string]string", i, i)
+	}
+}
+
+// CassandraTypeToGoType cassandra的型別轉Go型別
+func CassandraTypeToGoType(i interface{}, t string) (interface{}, error) {
+	switch t {
+	case "bigint":
+		val, err := cast.ToInt64E(i)
+		return val, err
+	case "boolean":
+		val, err := cast.ToBoolE(i)
+
+		return val, err
+	case "counter":
+		val, err := cast.ToInt64E(i)
+
+		return val, err
+	case "date":
+		val, err := cast.ToStringE(i)
+
+		return val, err
+	case "decimal":
+		val, err := cast.ToFloat64E(i)
+
+		return val, err
+	case "double":
+		val, err := cast.ToFloat64E(i)
+
+		return val, err
+	case "float":
+		val, err := cast.ToFloat64E(i)
+
+		return val, err
+	case "inet":
+		val, err := cast.ToStringE(i)
+
+		return val, err
+	case "int":
+		val, err := cast.ToInt32E(i)
+
+		return val, err
+	case "smallint":
+		val, err := cast.ToInt16E(i)
+
+		return val, err
+	case "text":
+		val, err := cast.ToStringE(i)
+
+		return val, err
+	case "time":
+		val, err := cast.ToStringE(i)
+
+		return val, err
+	case "timestamp":
+		val, err := cast.ToStringE(i)
+
+		return val, err
+	case "timeuuid":
+		val, err := cast.ToStringE(i)
+
+		return val, err
+	case "tinyint":
+		val, err := cast.ToInt8E(i)
+
+		return val, err
+	case "uuid":
+		val, err := cast.ToStringE(i)
+
+		return val, err
+	case "varchar":
+		val, err := cast.ToStringE(i)
+
+		return val, err
+	case "varint":
+		val, err := cast.ToInt32E(i)
+
+		return val, err
+	}
+
+	return i, nil
+}
+
+func JsonStringToObject(s string, v interface{}) error {
+	data := []byte(s)
+	return json.Unmarshal(data, v)
 }

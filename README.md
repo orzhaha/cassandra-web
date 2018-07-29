@@ -119,5 +119,5 @@ curl \
 
 ## Issue
 
-* Materialized View Table
 * CQL Data Types Map. JSON only allows key names to be strings.
+* JSON int64 to string

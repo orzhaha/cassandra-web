@@ -5,7 +5,8 @@
       :highlight-current-row="true"
       empty-text="empty data"
       stripe
-      :row-style="rowStyle")
+      :row-style="rowStyle"
+      style="width: 100%")
         el-table-column(
         v-for="key in keys"
         :key="key"
@@ -38,6 +39,7 @@
 <script>
 import api from '@/api'
 import { forEach, cloneDeep } from 'lodash'
+import JSONbig from 'json-bigint'
 
 const service = api.make('root')
 
@@ -80,7 +82,7 @@ export default {
             const item = row
             forEach(item, (itemData, itemKey) => {
               if (typeof (itemData) === 'object') {
-                item[itemKey] = JSON.stringify(itemData)
+                item[itemKey] = JSONbig.stringify(itemData)
               } else {
                 item[itemKey] = itemData
               }
@@ -139,7 +141,7 @@ export default {
       try {
         const res = await service.request('save', {
           data: {
-            item: JSON.stringify(cRow),
+            item: JSONbig.stringify(cRow),
             table: this.$route.params.table,
           }
         })
@@ -147,7 +149,7 @@ export default {
         const message = (res.get() === []) ? 'success' : res.get()
 
         this.$message({
-          type: 'success',
+          // type: 'success',
           showClose: true,
           duration: 0,
           message
@@ -166,7 +168,7 @@ export default {
     },
     jsonParams(jsonString) {
       try {
-        return JSON.parse(jsonString)
+        return JSONbig.parse(jsonString)
       } catch (e) {
         return jsonString
       }

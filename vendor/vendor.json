@@ -3,6 +3,12 @@
 	"ignore": "test",
 	"package": [
 		{
+			"checksumSHA1": "0EhLvZ6Og9HYqJtCc2Dzs1EgM30=",
+			"path": "github.com/bitly/go-simplejson",
+			"revision": "0c965951289cce37dec52ad1f34200fefc816777",
+			"revisionTime": "2017-10-23T17:51:54Z"
+		},
+		{
 			"checksumSHA1": "4772zXrOaPVeDeSgdiV7Vp4KEjk=",
 			"path": "github.com/dgrijalva/jwt-go",
 			"revision": "06ea1031745cb8b3dab3f6a236daf2b0aa468b7e",
