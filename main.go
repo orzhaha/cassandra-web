@@ -1,12 +1,14 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
 	"net/http"
 	"os"
 	"regexp"
 	"strconv"
 	"strings"
+	"unsafe"
 
 	"github.com/gocql/gocql"
 	"github.com/json-iterator/go"
@@ -18,7 +20,31 @@ import (
 	"github.com/urfave/cli"
 )
 
-var json = jsoniter.ConfigCompatibleWithStandardLibrary
+func init() {
+	decodeNumberAsInt64IfPossible := func(ptr unsafe.Pointer, iter *jsoniter.Iterator) {
+		switch iter.WhatIsNext() {
+		case jsoniter.NumberValue:
+			var number json.Number
+			iter.ReadVal(&number)
+			i, err := strconv.ParseInt(string(number), 10, 64)
+			if err == nil {
+				*(*interface{})(ptr) = i
+				return
+			}
+			f, err := strconv.ParseFloat(string(number), 64)
+			if err == nil {
+				*(*interface{})(ptr) = f
+				return
+			}
+			// Not much we can do here.
+		default:
+			*(*interface{})(ptr) = iter.Read()
+		}
+	}
+	jsoniter.RegisterTypeDecoderFunc("interface {}", decodeNumberAsInt64IfPossible)
+}
+
+var jsoni = jsoniter.ConfigCompatibleWithStandardLibrary
 
 const (
 	SystemSchemaKey = "system_schema"
@@ -313,7 +339,7 @@ func (h *Handler) Save(c echo.Context) error {
 
 	var item map[string]interface{}
 
-	err := json.Unmarshal([]byte(req.Item), &item)
+	err := jsoni.Unmarshal([]byte(req.Item), &item)
 
 	if err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
@@ -614,5 +640,5 @@ func CassandraTypeToGoType(i interface{}, t string) (interface{}, error) {
 
 func JsonStringToObject(s string, v interface{}) error {
 	data := []byte(s)
-	return json.Unmarshal(data, v)
+	return jsoni.Unmarshal(data, v)
 }
