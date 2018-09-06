@@ -185,9 +185,15 @@ func (h *Handler) Query(c echo.Context) error {
 }
 
 func (h *Handler) KeySpace(c echo.Context) error {
-	iter := h.Session.Query(`SELECT * FROM system_schema.keyspaces`).Iter()
+	iter := h.Session.Query(`SELECT keyspace_name FROM system_schema.keyspaces`).Iter()
 
 	ret, err := iter.SliceMap()
+
+	for i, v := range ret {
+		if v["keyspace_name"] == "system_distributed" {
+			ret[i]["keyspace_name"] = "system_distributed!"
+		}
+	}
 
 	if err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
