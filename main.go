@@ -166,6 +166,8 @@ func (h *Handler) Query(c echo.Context) error {
 	var rets []interface{}
 
 	for _, q := range strings.Split(query.Query, ";") {
+		rowData := make([]map[string]interface{}, 0)
+
 		if q == "" {
 			continue
 		}
@@ -174,11 +176,18 @@ func (h *Handler) Query(c echo.Context) error {
 
 		ret, err := iter.SliceMap()
 
+		for _, k := range ret {
+			row := make(map[string]interface{})
+			for vi, ki := range k {
+				row[vi] = ki
+			}
+
+			rowData = append(rowData, OutTransformType(row))
+		}
 		if err != nil {
 			rets = append(rets, err.Error())
 		}
-
-		rets = append(rets, ret)
+		rets = append(rets, rowData)
 	}
 
 	return c.JSON(http.StatusOK, rets)
