@@ -8,6 +8,7 @@ import (
 	"regexp"
 	"strconv"
 	"strings"
+	"time"
 	"unsafe"
 
 	"github.com/gocql/gocql"
@@ -111,6 +112,10 @@ func run(c *cli.Context) {
 	cluster := gocql.NewCluster(env.CassandraHost)
 	cluster.Port = env.CassandraPort
 	cluster.Keyspace = SystemSchemaKey
+	cluster.Timeout = 30 * time.Second
+	cluster.ConnectTimeout = 30 * time.Second
+	cluster.RetryPolicy = &gocql.SimpleRetryPolicy{NumRetries: 20}
+	cluster.NumConns = 10
 	cluster.Consistency = gocql.One
 
 	session, err := cluster.CreateSession()

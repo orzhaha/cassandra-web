@@ -58,7 +58,8 @@ func setupTLSConfig(sslOpts *SslOptions) (*tls.Config, error) {
 
 	sslOpts.InsecureSkipVerify = !sslOpts.EnableHostVerification
 
-	return sslOpts.Config, nil
+	// return clone to avoid race
+	return sslOpts.Config.Clone(), nil
 }
 
 type policyConnPool struct {
@@ -95,6 +96,7 @@ func connConfig(cfg *ClusterConfig) (*ConnConfig, error) {
 		ConnectTimeout: cfg.ConnectTimeout,
 		Compressor:     cfg.Compressor,
 		Authenticator:  cfg.Authenticator,
+		AuthProvider:   cfg.AuthProvider,
 		Keepalive:      cfg.SocketKeepalive,
 		tlsConfig:      tlsConfig,
 	}, nil

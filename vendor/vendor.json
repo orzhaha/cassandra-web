@@ -21,10 +21,10 @@
 			"revisionTime": "2018-01-10T05:33:47Z"
 		},
 		{
-			"checksumSHA1": "x6Ry3zpVkl61TMQqHc6Xy7AOGD0=",
+			"checksumSHA1": "jhaeS5fX8dfA4E87mPnv5Z9+vh8=",
 			"path": "github.com/gocql/gocql",
-			"revision": "3c37daec2f4d3def4b3b21668c6c2e80d3265a69",
-			"revisionTime": "2018-05-30T08:37:31Z"
+			"revision": "70385f88b28b43805bd83d212169ab2d38810b15",
+			"revisionTime": "2018-11-24T15:14:48Z"
 		},
 		{
 			"checksumSHA1": "7RlYIbPYgPkxDDCSEuE6bvYEEeU=",
