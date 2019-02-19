@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net/http"
 	"os"
+	"os/exec"
 	"regexp"
 	"strconv"
 	"strings"
@@ -21,6 +22,7 @@ import (
 	"github.com/urfave/cli"
 )
 
+// init 初始化
 func init() {
 	decodeNumberAsInt64IfPossible := func(ptr unsafe.Pointer, iter *jsoniter.Iterator) {
 		switch iter.WhatIsNext() {
@@ -148,6 +150,8 @@ func run(c *cli.Context) {
 	e.GET("/keyspace", h.KeySpace)
 	e.GET("/table", h.Table)
 	e.GET("/row", h.Row)
+	e.GET("/describe", h.Describe)
+	e.GET("/columns", h.Columns)
 
 	// Start server
 	e.Logger.Fatal(e.Start(env.HostPort))
@@ -161,6 +165,7 @@ type CqlQuery struct {
 	Query string `json:"query" form:"query" query:"query"`
 }
 
+// Query Query cql語法處理
 func (h *Handler) Query(c echo.Context) error {
 	query := new(CqlQuery)
 
@@ -198,6 +203,7 @@ func (h *Handler) Query(c echo.Context) error {
 	return c.JSON(http.StatusOK, rets)
 }
 
+// KeySpace 取的所有keypace處理
 func (h *Handler) KeySpace(c echo.Context) error {
 	iter := h.Session.Query(`SELECT keyspace_name FROM system_schema.keyspaces`).Iter()
 
@@ -216,6 +222,7 @@ func (h *Handler) KeySpace(c echo.Context) error {
 	return c.JSON(http.StatusOK, ret)
 }
 
+// Table 取的keyspace的table處理
 func (h *Handler) Table(c echo.Context) error {
 	keyspace := c.QueryParam("keyspace")
 
@@ -235,6 +242,7 @@ func (h *Handler) Table(c echo.Context) error {
 	return c.JSON(http.StatusOK, ret)
 }
 
+// Row 取的table的row資料處理
 func (h *Handler) Row(c echo.Context) error {
 	data := make(map[string]interface{})
 
@@ -281,6 +289,38 @@ func (h *Handler) Row(c echo.Context) error {
 	data["row"] = rowData
 
 	return c.JSON(http.StatusOK, data)
+}
+
+// Describe 用cqlsh取的describe
+func (h *Handler) Describe(c echo.Context) error {
+	kind := c.QueryParam("kind")
+	item := c.QueryParam("item")
+
+	cql := fmt.Sprintf("DESCRIBE %s %s ;", kind, item)
+	cmd := exec.Command("cqlsh", "cassandra", "-e", cql)
+	out, err := cmd.CombinedOutput()
+
+	if err != nil {
+		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
+	}
+
+	return c.String(http.StatusOK, string(out))
+}
+
+// Columns 取的tabel欄位處理
+func (h *Handler) Columns(c echo.Context) error {
+	keyspace := c.QueryParam("keyspace")
+	table := c.QueryParam("table")
+
+	cql := fmt.Sprintf("SELECT * FROM system_schema.columns WHERE keyspace_name='%s' AND table_name='%s';", keyspace, table)
+	iter := h.Session.Query(cql).Iter()
+	ret, err := iter.SliceMap()
+
+	if err != nil {
+		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
+	}
+
+	return c.JSON(http.StatusOK, ret)
 }
 
 func OutTransformType(row map[string]interface{}) map[string]interface{} {
