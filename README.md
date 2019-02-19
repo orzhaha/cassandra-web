@@ -97,7 +97,7 @@ curl \
 
 ---
 
-##### /Save eidt Save
+##### /Save (eidt Save)
 
 ##### params
 
@@ -117,6 +117,49 @@ curl \
 ```
 
 ---
+
+##### /Describe (cqlsh describe)
+
+##### params
+
+* kind
+* item
+
+##### return：string
+
+##### example：
+
+```sh
+curl \
+  -X GET \
+  http://localhost:8083/describe \
+  -H 'Content-Type: application/json' \
+  -d '{"kind":"table", "item":"system_schema"}'
+```
+
+---
+
+##### /Columns (get table columns)
+
+##### params
+
+* keyspace
+* table
+
+##### return：Json object
+
+##### example：
+
+```sh
+curl \
+  -X GET \
+  http://localhost/columns \
+  -H 'Content-Type: application/json' \
+  -d '{"keyspace":"system_auth", "table":"roles"}'
+```
+
+---
+
 
 ## Issue
 
