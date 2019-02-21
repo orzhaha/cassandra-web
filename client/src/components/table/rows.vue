@@ -69,7 +69,7 @@ export default {
         const res = await service.request('row', {
           query: {
             limit: 1000,
-            table: this.$route.params.table,
+            table: `${this.$route.params.keyspace}.${this.$route.params.table}`,
             page: this.$route.params.page,
             pagesize: this.$route.params.pagesize
           }
@@ -142,7 +142,7 @@ export default {
         const res = await service.request('save', {
           data: {
             item: JSONbig.stringify(cRow),
-            table: this.$route.params.table,
+            table: `${this.$route.params.keyspace}.${this.$route.params.table}`,
           }
         })
 

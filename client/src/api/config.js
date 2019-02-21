@@ -23,6 +23,14 @@ const config = {
       type: 'POST',
       url: `${domain}/save`
     },
+    columns: {
+      type: 'GET',
+      url: `${domain}/columns`
+    },
+    describe: {
+      type: 'GET',
+      url: `${domain}/describe`
+    }
   }
 }
 

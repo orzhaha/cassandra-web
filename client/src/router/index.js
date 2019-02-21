@@ -1,10 +1,14 @@
-import Vue from 'vue';
-import Router from 'vue-router';
-import Home from '@/components/home';
-import Keyspace from '@/components/keyspace';
-import Table from '@/components/table';
-import Row from '@/components/row';
-import Query from '@/components/query';
+import Vue from 'vue'
+import Router from 'vue-router'
+import Home from '@/components/home'
+import Main from '@/components/main'
+import TableList from '@/components/table-list'
+import Table from '@/components/table'
+import Content from '@/components/table/content'
+import Rows from '@/components/table/rows'
+import Columns from '@/components/table/columns'
+import Definition from '@/components/table/definition'
+import Query from '@/components/query'
 
 Vue.use(Router);
 
@@ -16,26 +20,61 @@ export default new Router({
       component: Home,
     },
     {
-      path: '/keyspace',
-      name: 'keyspace',
-      component: Keyspace,
+      path: '/main',
+      name: 'Main',
+      component: Main,
       children: [
         {
-          path: ':keyspace/table',
-          name: 'table',
-          component: Table,
+          path: ':keyspace',
+          name: 'table-list',
+          component: TableList
         },
+
         {
-          path: ':table/row/:page/:pagesize',
-          name: 'row',
-          component: Row,
+          path: ':keyspace/:table',
+          component: Table,
+          children: [
+            {
+              path: '/',
+              name: 'content',
+              component: Content,
+            },
+
+            {
+              path: 'rows/:page/:pagesize',
+              name: 'rows',
+              component: Rows,
+            },
+
+            {
+              path: 'columns',
+              name: 'columns',
+              component: Columns,
+            },
+
+            {
+              path: 'definition',
+              name: 'definition',
+              component: Definition,
+            },
+
+            {
+              path: '*',
+              redirect: { name: 'content' }
+            }
+          ],
         },
+
         {
           path: ':query/query',
           name: 'query',
           component: Query,
         }
       ]
+    },
+    {
+      path: '*',
+      redirect: { name: 'home' }
     },
   ],
 });
