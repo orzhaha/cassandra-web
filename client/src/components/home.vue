@@ -2,7 +2,7 @@
   div(class="container")
     div(class="content")
       div(class="title")
-        router-link(to="/keyspace") Cassandra-Web
+        router-link(to="/main") Cassandra-Web
 </template>
 <style>
   html {

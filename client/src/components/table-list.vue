@@ -40,11 +40,10 @@ export default {
   methods: {
     click(row) {
       this.$router.push({
-        name: 'row',
+        path: `${row.keyspace_name}/${row.table_name}`,
         params: {
-          table: `${row.keyspace_name}.${row.table_name}`,
-          page: 1,
-          pagesize: 50
+          keyspace: row.keyspace_name,
+          table: row.table_name
         }
       })
     },

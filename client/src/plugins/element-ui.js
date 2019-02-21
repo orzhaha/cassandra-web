@@ -20,6 +20,8 @@ import {
   Message,
   MessageBox,
   Input,
+  Header,
+  Main,
 } from 'element-ui';
 import lang from 'element-ui/lib/locale/lang/en'
 import locale from 'element-ui/lib/locale'
@@ -41,6 +43,8 @@ Vue.use(RadioGroup);
 Vue.use(RadioButton);
 Vue.use(Pagination);
 Vue.use(Input);
+Vue.use(Header);
+Vue.use(Main);
 
 Vue.config.lang = 'en-us'
 Vue.prototype.$loading = Loading.service;

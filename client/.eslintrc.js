@@ -21,7 +21,8 @@ module.exports = {
       webpack: {
         config: 'build/webpack.base.conf.js'
       }
-    }
+    },
+    "import/core-modules": [ "codemirror" ],
   },
   // add your custom rules here
   rules: {
