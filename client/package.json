@@ -85,8 +85,7 @@
     "webpack": "^3.6.0",
     "webpack-bundle-analyzer": "^2.9.0",
     "webpack-dev-server": "^3.1.11",
-    "webpack-merge": "^4.1.0",
-    "json-bigin": "^0.3.0"
+    "webpack-merge": "^4.1.0"
   },
   "engines": {
     "node": ">= 6.0.0",
