@@ -297,7 +297,7 @@ func (h *Handler) Describe(c echo.Context) error {
 	item := c.QueryParam("item")
 
 	cql := fmt.Sprintf("DESCRIBE %s %s ;", kind, item)
-	cmd := exec.Command("cqlsh", "cassandra", "-e", cql)
+	cmd := exec.Command("cqlsh", env.CassandraHost, "-e", cql)
 	out, err := cmd.CombinedOutput()
 
 	if err != nil {
