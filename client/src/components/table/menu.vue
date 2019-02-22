@@ -23,7 +23,7 @@ export default {
     const arr = split(this.$route.path, '/')
 
     return {
-      defaultActive: get(arr, 4),
+      defaultActive: get(arr, 5),
 
       tabs: [
         {

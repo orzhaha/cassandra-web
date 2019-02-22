@@ -25,13 +25,18 @@ export default new Router({
       component: Main,
       children: [
         {
-          path: ':keyspace',
+          path: 'query/:query',
+          name: 'query',
+          component: Query,
+        },
+        {
+          path: 'keyspace/:keyspace',
           name: 'table-list',
           component: TableList
         },
 
         {
-          path: ':keyspace/:table',
+          path: 'keyspace/:keyspace/:table',
           component: Table,
           children: [
             {
@@ -63,12 +68,6 @@ export default new Router({
               redirect: { name: 'content' }
             }
           ],
-        },
-
-        {
-          path: ':query/query',
-          name: 'query',
-          component: Query,
         }
       ]
     },
