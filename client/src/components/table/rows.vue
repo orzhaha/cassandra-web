@@ -44,7 +44,7 @@ import JSONbig from 'json-bigint'
 const service = api.make('root')
 
 export default {
-  name: 'Row',
+  name: 'Rows',
   data() {
     return {
       keys: [],
@@ -105,7 +105,7 @@ export default {
     },
     handleCurrentChange(page) {
       this.$router.push({
-        name: 'row',
+        name: 'rows',
         params: {
           page
         }
@@ -113,7 +113,7 @@ export default {
     },
     handleSizeChange(pagesize) {
       this.$router.push({
-        name: 'row',
+        name: 'rows',
         params: {
           pagesize
         }

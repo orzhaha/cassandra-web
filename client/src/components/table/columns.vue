@@ -34,7 +34,7 @@ import JSONbig from 'json-bigint'
 const service = api.make('root')
 
 export default {
-  name: 'Row',
+  name: 'Columns',
   data() {
     return {
       keys: [],

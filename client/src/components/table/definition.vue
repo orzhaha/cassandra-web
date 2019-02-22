@@ -19,7 +19,7 @@ import api from '@/api'
 const service = api.make('root')
 
 export default {
-  name: 'Row',
+  name: 'Definition',
   data() {
     return {
       content: null,
