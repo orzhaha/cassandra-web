@@ -27,7 +27,6 @@ import {
   ColorPicker,
   Footer,
   ButtonGroup,
-  Tooltip,
 } from 'element-ui';
 import lang from 'element-ui/lib/locale/lang/en'
 import locale from 'element-ui/lib/locale'
@@ -56,7 +55,6 @@ Vue.use(Button);
 Vue.use(ColorPicker);
 Vue.use(Footer);
 Vue.use(ButtonGroup);
-Vue.use(Tooltip);
 
 Vue.config.lang = 'en-us'
 Vue.prototype.$loading = Loading.service;

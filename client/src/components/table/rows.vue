@@ -13,14 +13,9 @@
           :formatter="rowFormatter"
           :label="`${key} (${getCqlType(key)})`")
             template(slot-scope="scope")
-              el-tooltip(
-                class="item"
-                effect="light"
-                content="partition_key"
-                placement="top-start")
-                i(
-                  v-if="isPartitionKey(key)"
-                  class="el-icon-warning")
+              img.iconKey(
+                v-if="isPartitionKey(key)"
+                src="../../assets/icon-key.svg")
               template(v-if="inputType(key) === '' || inputType(key) === 'textarea'")
                 span(
                   v-if="!isEdit(scope.$index, key)")  {{scope.row[key]}}
@@ -89,6 +84,11 @@
     border: 1px solid #eee;
     height: auto;
   }
+
+  .iconKey {
+    width: 15px;
+    height: auto;
+  }
 </style>
 <script>
 import api from '@/api'
@@ -105,6 +105,7 @@ const service = api.make('root')
 
 export default {
   name: 'Rows',
+
   data() {
     return {
       keys: [],
