@@ -22,6 +22,12 @@ import {
   Input,
   Header,
   Main,
+  Popover,
+  Button,
+  ColorPicker,
+  Footer,
+  ButtonGroup,
+  Tooltip,
 } from 'element-ui';
 import lang from 'element-ui/lib/locale/lang/en'
 import locale from 'element-ui/lib/locale'
@@ -45,9 +51,16 @@ Vue.use(Pagination);
 Vue.use(Input);
 Vue.use(Header);
 Vue.use(Main);
+Vue.use(Popover);
+Vue.use(Button);
+Vue.use(ColorPicker);
+Vue.use(Footer);
+Vue.use(ButtonGroup);
+Vue.use(Tooltip);
 
 Vue.config.lang = 'en-us'
 Vue.prototype.$loading = Loading.service;
 Vue.prototype.$prompt = MessageBox.prompt;
 Vue.prototype.$msgbox = MessageBox;
 Vue.prototype.$message = Message;
+Vue.prototype.$confirm = MessageBox.confirm;

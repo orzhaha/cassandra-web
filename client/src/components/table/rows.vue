@@ -8,17 +8,67 @@
       :row-style="rowStyle"
       style="width: 100%")
         el-table-column(
-        v-for="key in keys"
-        :key="key"
-        :formatter="rowFormatter"
-        :label="key")
-          template(slot-scope="scope")
-            div(@dblclick.stop="handleActive(`${scope.$index}${key}`, scope.row[key])")
-              span(v-if="!isEdit[`${scope.$index}${key}`]") {{scope.row[key]}}
-              el-input(v-else
-              @blur.stop="handleEdit(`${scope.$index}${key}`, scope.row[key], scope.row)"
-              v-model="scope.row[key]"
-              )
+          v-for="key in keys"
+          :key="key"
+          :formatter="rowFormatter"
+          :label="`${key} (${getCqlType(key)})`")
+            template(slot-scope="scope")
+              el-tooltip(
+                class="item"
+                effect="light"
+                content="partition_key"
+                placement="top-start")
+                i(
+                  v-if="isPartitionKey(key)"
+                  class="el-icon-warning")
+              template(v-if="inputType(key) === '' || inputType(key) === 'textarea'")
+                span(
+                  v-if="!isEdit(scope.$index, key)")  {{scope.row[key]}}
+                el-input(
+                  v-else
+                  :type="inputType(key)"
+                  :autosize="{ minRows: 1, maxRows: 10}"
+                  v-model="scope.row[key]")
+
+              template(v-else)
+                span(
+                  v-if="!isEdit(scope.$index, key)") {{scope.row[key]}}
+                codemirror(
+                  v-else
+                  v-model="scope.row[key]"
+                  :options="cmOptions")
+        el-table-column(
+          fixed="right"
+          label="Tools"
+          width="110")
+          el-button-group(slot-scope="scope")
+            el-button(
+              v-if="!isRowEditActive(scope.$index)"
+              type="primary"
+              @click="activeRowEdit(scope.$index)"
+              icon="el-icon-edit"
+              size="small")
+
+            template(v-else)
+              el-button-group
+                el-button(
+                  type="success"
+                  @click="handleEditRow(scope.$index, scope.row)"
+                  icon="el-icon-check"
+                  size="small")
+                el-button(
+                  type="info"
+                  @click="handleCancelRow(scope.$index)"
+                  icon="el-icon-close"
+                  size="small")
+
+            el-button(
+              v-if="!isRowEditActive(scope.$index)"
+              type="danger"
+              icon="el-icon-delete"
+              size="small"
+              @click="handleDelete")
+
     el-pagination(:page-size="20"
       @current-change="handleCurrentChange"
       @prev-click="handleCurrentChange"
@@ -35,11 +85,21 @@
   .w100 {
     width: 100%;
   }
+  .CodeMirror {
+    border: 1px solid #eee;
+    height: auto;
+  }
 </style>
 <script>
 import api from '@/api'
-import { forEach, cloneDeep } from 'lodash'
+import get from 'lodash/get'
+import forEach from 'lodash/forEach'
+import cloneDeep from 'lodash/cloneDeep'
+import includes from 'lodash/includes'
 import JSONbig from 'json-bigint'
+import getType from '@/config/data-type'
+import 'codemirror/mode/javascript/javascript'
+import 'codemirror/theme/monokai.css'
 
 const service = api.make('root')
 
@@ -51,12 +111,25 @@ export default {
       rowdata: [],
       rowcount: 0,
       pagesize: 50,
-      isEdit: {},
-      originalData: {},
+      isRowEdit: null,
+      originalData: [],
+      types: {},
+      partitionKey: [],
+      cmOptions: {
+        mode: {
+          name: 'javascript',
+          json: true
+        },
+        theme: 'monokai',
+        line: true,
+        lineWrapping: true,
+        autofocus: true,
+      },
     }
   },
   created() {
     this.fetch()
+    this.fetchType()
   },
   watch: {
     $route() {
@@ -64,6 +137,95 @@ export default {
     }
   },
   methods: {
+    isEdit(index, rowKey) {
+      return this.isRowEditActive(index) && !this.isPartitionKey(rowKey)
+    },
+
+    isRowEditActive(index) {
+      return this.isRowEdit === index
+    },
+
+    async activeRowEdit(index) {
+      if (this.isRowEdit === null) {
+        this.isRowEdit = index
+
+        return
+      }
+
+      if (this.isRowEditActive(index)) {
+        this.isRowEdit = null
+
+        return
+      }
+
+      if (this.isDataChange(
+        JSON.stringify(this.originalData[this.isRowEdit]),
+        JSON.stringify(this.rowdata[this.isRowEdit])
+      )) {
+        await this.$confirm('Do you want to save data on current change ?', '', {
+          confirmButtonText: 'Save',
+          cancelButtonText: 'Cancel',
+        }).then(() => {
+          this.handleEdit(this.isRowEdit, this.rowdata[this.isRowEdit])
+        }).catch(() => {
+          this.fetch()
+        })
+      }
+
+      this.isRowEdit = index
+    },
+
+    handleDelete() {
+      this.$confirm('Are you sure ?', '', {
+        confirmButtonText: 'Delete',
+        cancelButtonText: 'Cancel',
+        confirmButtonClass: 'el-button--danger'
+      }).then(() => {
+        this.$message({
+          showClose: true,
+          duration: 0,
+          message: 'ken 還沒開 api'
+        })
+      }).catch(() => {})
+    },
+
+    handleEditRow(index, rowData) {
+      if (this.isRowEditActive(index)) {
+        this.handleEdit(index, rowData)
+      }
+
+      this.activeRowEdit(index)
+    },
+
+    handleCancelRow(index) {
+      this.fetch()
+
+      this.activeRowEdit(index)
+    },
+
+    isPartitionKey(key) {
+      return includes(this.partitionKey, key)
+    },
+    getCqlType(key) {
+      return get(this.types, `${key}.cql`, '')
+    },
+
+    getJSType(key) {
+      return get(this.types, `${key}.js`, 'string')
+    },
+
+    inputType(key) {
+      if (this.getJSType(key) === 'number') {
+        return ''
+      }
+
+      if (this.getJSType(key) === 'string') {
+        return 'textarea'
+      }
+
+      return null
+    },
+
     async fetch() {
       try {
         const res = await service.request('row', {
@@ -89,6 +251,9 @@ export default {
             })
             return item
           })
+
+          this.originalData = cloneDeep(this.rowdata)
+
           this.rowcount = res.get('count')
         } else {
           this.keys = []
@@ -103,6 +268,34 @@ export default {
         });
       }
     },
+
+    async fetchType() {
+      const res = await service.request('columns', {
+        query: {
+          keyspace: this.$route.params.keyspace,
+          table: this.$route.params.table,
+        }
+      })
+
+      const data = res.get()
+      const types = {}
+
+      forEach(data, (item) => {
+        if (get(item, 'column_name')) {
+          types[item.column_name] = {
+            cql: get(item, 'type', ''),
+            js: getType(get(item, 'type', ''))
+          }
+
+          if (get(item, 'kind') === 'partition_key') {
+            this.partitionKey.push(get(item, 'column_name'))
+          }
+        }
+      })
+
+      this.types = types
+    },
+
     handleCurrentChange(page) {
       this.$router.push({
         name: 'rows',
@@ -122,16 +315,42 @@ export default {
     rowFormatter(row, column, cellValue) {
       return cellValue
     },
-    handleActive(key, colData) {
-      this.originalData[key] = colData
-      this.$set(this.isEdit, key, !this.isEdit[key])
-    },
-    async handleEdit(key, colData, row) {
-      this.$set(this.isEdit, key, !this.isEdit[key])
 
-      if (this.originalData[key] === colData) {
+    isDataChange(data1, data2) {
+      return JSON.stringify(data1) !== JSON.stringify(data2)
+    },
+
+    async handleEdit(index, newRowData) {
+      if (!this.isDataChange(
+        JSON.stringify(this.originalData[index]),
+        JSON.stringify(newRowData)
+      )) {
         return
       }
+
+      // TODO: edit partition_key
+      // if (this.isPartitionKey(rowKey)) {
+      //   await this.$confirm('In the case, it will change the partition_key. are you sure？', '', {
+      //     confirmButtonText: 'Do it',
+      //     cancelButtonText: 'Cancel',
+      //   }).then(() => {
+      //     // this.updateData(row)
+      //     this.$message({
+      //       showClose: true,
+      //       duration: 0,
+      //       message: '尚未開放修改 partition_key 功能'
+      //     })
+      //   }).catch(() => {})
+
+      //   this.fetch()
+
+      //   return
+      // }
+
+      this.updateData(newRowData)
+    },
+
+    async updateData(row) {
       const cRow = cloneDeep(row)
 
       forEach(cRow, (itemData, itemKey) => {
@@ -149,11 +368,13 @@ export default {
         const message = (res.get() === []) ? 'success' : res.get()
 
         this.$message({
-          // type: 'success',
+          type: 'success',
           showClose: true,
           duration: 0,
           message
         });
+
+        this.fetch()
       } catch (error) {
         this.$message({
           type: 'error',
@@ -163,6 +384,7 @@ export default {
         });
       }
     },
+
     rowStyle() {
       return { cursor: 'pointer' }
     },

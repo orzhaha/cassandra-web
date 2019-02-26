@@ -29,9 +29,6 @@ el-menu(
       span(lot="title") Folding menu
 </template>
 <style>
-  .el-aside {
-    color: #333;
-  }
 </style>
 
 <script>
