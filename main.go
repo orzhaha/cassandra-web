@@ -6,7 +6,6 @@ import (
 	"net/http"
 	"os"
 	"os/exec"
-	"regexp"
 	"strconv"
 	"strings"
 	"time"
@@ -17,13 +16,13 @@ import (
 	"github.com/labstack/echo"
 	"github.com/labstack/echo/middleware"
 	"github.com/labstack/gommon/log"
-	"github.com/spf13/cast"
 	"github.com/spf13/viper"
 	"github.com/urfave/cli"
 )
 
 // init 初始化
 func init() {
+	// 反序列化float64精准度問題處理
 	decodeNumberAsInt64IfPossible := func(ptr unsafe.Pointer, iter *jsoniter.Iterator) {
 		switch iter.WhatIsNext() {
 		case jsoniter.NumberValue:
@@ -141,6 +140,7 @@ func run(c *cli.Context) {
 	// 	AllowHeaders: []string{echo.HeaderOrigin, echo.HeaderContentType, echo.HeaderAccept},
 	// }))
 
+	// 讀靜態檔(前端)
 	e.Static("/static", "client/dist/static")
 	e.File("/", "client/dist/index.html")
 
@@ -161,21 +161,19 @@ type Handler struct {
 	Session *gocql.Session
 }
 
-type CqlQuery struct {
-	Query string `json:"query" form:"query" query:"query"`
-}
-
 // Query Query cql語法處理
 func (h *Handler) Query(c echo.Context) error {
-	query := new(CqlQuery)
+	req := struct {
+		Query string `json:"query" form:"query" query:"query"`
+	}{}
 
-	if err := c.Bind(query); err != nil {
+	if err := c.Bind(&req); err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
 	}
 
 	var rets []interface{}
 
-	for _, q := range strings.Split(query.Query, ";") {
+	for _, q := range strings.Split(req.Query, ";") {
 		rowData := make([]map[string]interface{}, 0)
 
 		if q == "" {
@@ -192,7 +190,7 @@ func (h *Handler) Query(c echo.Context) error {
 				row[vi] = ki
 			}
 
-			rowData = append(rowData, OutTransformType(row))
+			rowData = append(rowData, OutputTransformType(row))
 		}
 		if err != nil {
 			rets = append(rets, err.Error())
@@ -210,6 +208,7 @@ func (h *Handler) KeySpace(c echo.Context) error {
 	ret, err := iter.SliceMap()
 
 	for i, v := range ret {
+		// 避免前端element table出現關鍵字bug
 		if v["keyspace_name"] == "system_distributed" {
 			ret[i]["keyspace_name"] = "system_distributed!"
 		}
@@ -226,15 +225,16 @@ func (h *Handler) KeySpace(c echo.Context) error {
 func (h *Handler) Table(c echo.Context) error {
 	keyspace := c.QueryParam("keyspace")
 
+	// 查詢	table
 	iter := h.Session.Query(`SELECT keyspace_name, table_name, id FROM system_schema.tables WHERE  keyspace_name = ?`, keyspace).Iter()
-
 	ret, err := iter.SliceMap()
 
 	if err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
 	}
 
-	iter2 := h.Session.Query(`SELECT keyspace_name,  view_name as table_name, id FROM system_schema.views WHERE  keyspace_name = ?`, keyspace).Iter()
+	// 查詢 虛擬view
+	iter2 := h.Session.Query(`SELECT keyspace_name, view_name as table_name, id FROM system_schema.views WHERE  keyspace_name = ?`, keyspace).Iter()
 	ret2, err := iter2.SliceMap()
 
 	ret = append(ret, ret2...)
@@ -242,7 +242,7 @@ func (h *Handler) Table(c echo.Context) error {
 	return c.JSON(http.StatusOK, ret)
 }
 
-// Row 取的table的row資料處理
+// Row 取的table的row資料處理 (資量大時需耗費很多效能)
 func (h *Handler) Row(c echo.Context) error {
 	data := make(map[string]interface{})
 
@@ -271,7 +271,7 @@ func (h *Handler) Row(c echo.Context) error {
 	limit_start := limit_end - pagesize
 	i := 0
 
-	rowIter := h.Session.Query(`SELECT * FROM `+table+` LIMIT ? ALLOW FILTERING`, limit_end).Iter()
+	rowIter := h.Session.Query(`SELECT * FROM `+table+` LIMIT ?`, limit_end).Iter()
 	rowData := make([]map[string]interface{}, 0)
 
 	for {
@@ -282,7 +282,7 @@ func (h *Handler) Row(c echo.Context) error {
 			break
 		}
 		if i > limit_start {
-			rowData = append(rowData, OutTransformType(row))
+			rowData = append(rowData, OutputTransformType(row))
 		}
 	}
 
@@ -323,77 +323,13 @@ func (h *Handler) Columns(c echo.Context) error {
 	return c.JSON(http.StatusOK, ret)
 }
 
-func OutTransformType(row map[string]interface{}) map[string]interface{} {
-	for k, v := range row {
-		switch v.(type) {
-		case int64, float64, float32:
-			row[k] = cast.ToString(v)
-		case []int64:
-			row[k] = cast.ToStringSlice(v)
-		case map[string]int64:
-			val, err := cast.FToStringMapStringE(v)
-
-			if err == nil {
-				row[k] = val
-			}
-		case map[int64]int64:
-			val, err := cast.FToStringMapStringE(v)
-
-			if err == nil {
-				row[k] = val
-			}
-		case map[int32]int64:
-			val, err := cast.FToStringMapStringE(v)
-
-			if err == nil {
-				row[k] = val
-			}
-		case map[int16]int64:
-			val, err := cast.FToStringMapStringE(v)
-
-			if err == nil {
-				row[k] = val
-			}
-		case map[int8]int64:
-			val, err := cast.FToStringMapStringE(v)
-
-			if err == nil {
-				row[k] = val
-			}
-		case map[float64]int64:
-			val, err := cast.FToStringMapStringE(v)
-
-			if err == nil {
-				row[k] = val
-			}
-		case map[float32]int64:
-			val, err := cast.FToStringMapStringE(v)
-
-			if err == nil {
-				row[k] = val
-			}
-		case map[bool]int64:
-			val, err := cast.FToStringMapStringE(v)
-
-			if err == nil {
-				row[k] = val
-			}
-		}
-
-	}
-
-	return row
-}
-
-type SaveReq struct {
-	Table string `json:"table" form:"table" query:"table"`
-	Item  string `json:"item" form:"item" query:"item"`
-}
-
 func (h *Handler) Save(c echo.Context) error {
-	req := new(SaveReq)
+	req := struct {
+		Table string `json:"table" form:"table" query:"table"`
+		Item  string `json:"item" form:"item" query:"item"`
+	}{}
 
-	if err := c.Bind(req); err != nil {
+	if err := c.Bind(&req); err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
 	}
 
@@ -416,7 +352,7 @@ func (h *Handler) Save(c echo.Context) error {
 		schema[v["column_name"].(string)] = v["type"].(string)
 	}
 
-	itemKey, itemData, itemPlaceholder, err = InTransformType(item, schema)
+	itemKey, itemData, itemPlaceholder, err = InputTransformType(item, schema)
 
 	if err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
@@ -441,264 +377,4 @@ func (h *Handler) GetSchema(table string) []map[string]interface{} {
 	}
 
 	return ret
-}
-
-func InTransformType(item map[string]interface{}, schema map[string]string) ([]string, []interface{}, []string, error) {
-	var (
-		itemKey         []string
-		itemData        []interface{}
-		itemPlaceholder []string
-	)
-
-	mapReg := regexp.MustCompile(`(?U)^map\<(.+),\s(.+)\>`)
-
-	for k, v := range item {
-		switch schema[k] {
-		case "bigint":
-			val, err := cast.ToInt64E(v)
-			if err != nil {
-				return nil, nil, nil, err
-			}
-			itemData = append(itemData, val)
-		case "boolean":
-			val, err := cast.ToBoolE(v)
-			if err != nil {
-				return nil, nil, nil, err
-			}
-			itemData = append(itemData, val)
-		case "counter":
-			val, err := cast.ToInt64E(v)
-			if err != nil {
-				return nil, nil, nil, err
-			}
-			itemData = append(itemData, val)
-		case "date":
-			val, err := cast.ToStringE(v)
-			if err != nil {
-				return nil, nil, nil, err
-			}
-			itemData = append(itemData, val)
-		case "decimal":
-			val, err := cast.ToFloat64E(v)
-			if err != nil {
-				return nil, nil, nil, err
-			}
-			itemData = append(itemData, val)
-		case "double":
-			val, err := cast.ToFloat64E(v)
-			if err != nil {
-				return nil, nil, nil, err
-			}
-			itemData = append(itemData, val)
-		case "float":
-			val, err := cast.ToFloat64E(v)
-			if err != nil {
-				return nil, nil, nil, err
-			}
-			itemData = append(itemData, val)
-		case "inet":
-			val, err := cast.ToStringE(v)
-			if err != nil {
-				return nil, nil, nil, err
-			}
-			itemData = append(itemData, val)
-		case "int":
-			val, err := cast.ToInt32E(v)
-			if err != nil {
-				return nil, nil, nil, err
-			}
-			itemData = append(itemData, val)
-		case "smallint":
-			val, err := cast.ToInt16E(v)
-			if err != nil {
-				return nil, nil, nil, err
-			}
-			itemData = append(itemData, val)
-		case "text":
-			val, err := cast.ToStringE(v)
-			if err != nil {
-				return nil, nil, nil, err
-			}
-			itemData = append(itemData, val)
-		case "time":
-			val, err := cast.ToStringE(v)
-			if err != nil {
-				return nil, nil, nil, err
-			}
-			itemData = append(itemData, val)
-		case "timestamp":
-			val, err := cast.ToStringE(v)
-			if err != nil {
-				return nil, nil, nil, err
-			}
-			itemData = append(itemData, val)
-		case "timeuuid":
-			val, err := cast.ToStringE(v)
-			if err != nil {
-				return nil, nil, nil, err
-			}
-			itemData = append(itemData, val)
-		case "tinyint":
-			val, err := cast.ToInt8E(v)
-			if err != nil {
-				return nil, nil, nil, err
-			}
-			itemData = append(itemData, val)
-		case "uuid":
-			val, err := cast.ToStringE(v)
-			if err != nil {
-				return nil, nil, nil, err
-			}
-			itemData = append(itemData, val)
-		case "varchar":
-			val, err := cast.ToStringE(v)
-			if err != nil {
-				return nil, nil, nil, err
-			}
-			itemData = append(itemData, val)
-		case "varint":
-			val, err := cast.ToInt32E(v)
-			if err != nil {
-				return nil, nil, nil, err
-			}
-			itemData = append(itemData, val)
-		default:
-			var val interface{} = v
-			var err error
-
-			mapRet := mapReg.FindStringSubmatch(schema[k])
-
-			if len(mapRet) == 3 {
-				val, err = MapToCassandraMapType(v, mapRet[1], mapRet[2])
-
-				if err != nil {
-					return nil, nil, nil, err
-				}
-			}
-
-			itemData = append(itemData, val)
-		}
-
-		itemKey = append(itemKey, k)
-		itemPlaceholder = append(itemPlaceholder, "?")
-	}
-
-	return itemKey, itemData, itemPlaceholder, nil
-}
-
-// MapToCassandraMapType map對應cassandra map的型別
-func MapToCassandraMapType(i interface{}, keyType string, valType string) (interface{}, error) {
-	var m = map[interface{}]interface{}{}
-
-	switch v := i.(type) {
-	case map[string]interface{}:
-		for k, val := range v {
-			kRet, err := CassandraTypeToGoType(k, keyType)
-
-			if err != nil {
-				return nil, err
-			}
-
-			valRet, err := CassandraTypeToGoType(val, valType)
-
-			if err != nil {
-				return nil, err
-			}
-
-			m[kRet] = valRet
-		}
-
-		return m, nil
-	case string:
-		err := JsonStringToObject(v, &m)
-		return m, err
-	case nil:
-		return m, nil
-	default:
-		return m, fmt.Errorf("unable to cast %#v of type %T to map[string]string", i, i)
-	}
-}
-
-// CassandraTypeToGoType cassandra的型別轉Go型別
-func CassandraTypeToGoType(i interface{}, t string) (interface{}, error) {
-	switch t {
-	case "bigint":
-		val, err := cast.ToInt64E(i)
-		return val, err
-	case "boolean":
-		val, err := cast.ToBoolE(i)
-
-		return val, err
-	case "counter":
-		val, err := cast.ToInt64E(i)
-
-		return val, err
-	case "date":
-		val, err := cast.ToStringE(i)
-
-		return val, err
-	case "decimal":
-		val, err := cast.ToFloat64E(i)
-
-		return val, err
-	case "double":
-		val, err := cast.ToFloat64E(i)
-
-		return val, err
-	case "float":
-		val, err := cast.ToFloat64E(i)
-
-		return val, err
-	case "inet":
-		val, err := cast.ToStringE(i)
-
-		return val, err
-	case "int":
-		val, err := cast.ToInt32E(i)
-
-		return val, err
-	case "smallint":
-		val, err := cast.ToInt16E(i)
-
-		return val, err
-	case "text":
-		val, err := cast.ToStringE(i)
-
-		return val, err
-	case "time":
-		val, err := cast.ToStringE(i)
-
-		return val, err
-	case "timestamp":
-		val, err := cast.ToStringE(i)
-
-		return val, err
-	case "timeuuid":
-		val, err := cast.ToStringE(i)
-
-		return val, err
-	case "tinyint":
-		val, err := cast.ToInt8E(i)
-
-		return val, err
-	case "uuid":
-		val, err := cast.ToStringE(i)
-
-		return val, err
-	case "varchar":
-		val, err := cast.ToStringE(i)
-
-		return val, err
-	case "varint":
-		val, err := cast.ToInt32E(i)
-
-		return val, err
-	}
-
-	return i, nil
-}
-
-func JsonStringToObject(s string, v interface{}) error {
-	data := []byte(s)
-	return jsoni.Unmarshal(data, v)
 }
