@@ -7,6 +7,34 @@ import (
 	"github.com/spf13/cast"
 )
 
+const (
+	AsciiType     = "ascii"
+	BigintType    = "bigint"
+	BlobType      = "blob"
+	BooleanType   = "boolean"
+	CounterType   = "counter"
+	DateType      = "date"
+	DecimalType   = "decimal"
+	DoubleType    = "double"
+	FloatType     = "float"
+	FrozenType    = "frozen"
+	InetType      = "inet"
+	IntType       = "int"
+	ListType      = "list"
+	MapType       = "map"
+	SetType       = "set"
+	SmallintType  = "smallint"
+	TextType      = "text"
+	TimeType      = "time"
+	TimestampType = "timestamp"
+	TimeuuidType  = "timeuuid"
+	TinyintType   = "tinyint"
+	TupleType     = "tuple"
+	UuidType      = "uuid"
+	VarcharType   = "varchar"
+	VarintType    = "varint"
+)
+
 // OutputTransformType Map Value 數值轉字串
 func OutputTransformType(row map[string]interface{}) map[string]interface{} {
 	for k, v := range row {
@@ -70,6 +98,52 @@ func OutputTransformType(row map[string]interface{}) map[string]interface{} {
 	return row
 }
 
+func cqlFormat(columnName string, columnType string, columnVal interface{}) string {
+	switch columnType {
+	case BigintType:
+		return fmt.Sprintf("%s=%v", columnName, columnVal)
+	case BlobType:
+		return fmt.Sprintf("%s=%v", columnName, columnVal)
+	case BooleanType:
+		return fmt.Sprintf("%s=%v", columnName, columnVal)
+	case CounterType:
+		return fmt.Sprintf("%s=%v", columnName, columnVal)
+	case DecimalType:
+		return fmt.Sprintf("%s=%v", columnName, columnVal)
+	case DoubleType:
+		return fmt.Sprintf("%s=%v", columnName, columnVal)
+	case FloatType:
+		return fmt.Sprintf("%s=%v", columnName, columnVal)
+	case FrozenType:
+		return fmt.Sprintf("%s=%v", columnName, columnVal)
+	case IntType:
+		return fmt.Sprintf("%s=%v", columnName, columnVal)
+	case ListType:
+		b, _ := jsoni.Marshal(columnVal)
+		return fmt.Sprintf("%s=%v", columnName, string(b))
+	case MapType:
+		b, _ := jsoni.Marshal(columnVal)
+		return fmt.Sprintf("%s=%v", columnName, string(b))
+	case SetType:
+		b, _ := jsoni.Marshal(columnVal)
+		return fmt.Sprintf("%s=%v", columnName, string(b))
+	case AsciiType:
+		return fmt.Sprintf("%s='%v'", columnName, columnVal)
+	case TextType:
+		return fmt.Sprintf("%s='%v'", columnName, columnVal)
+	case TimeType:
+		return fmt.Sprintf("%s='%v'", columnName, columnVal)
+	case DateType:
+		return fmt.Sprintf("%s='%v'", columnName, columnVal)
+	case InetType:
+		return fmt.Sprintf("%s='%v'", columnName, columnVal)
+	case VarcharType:
+		return fmt.Sprintf("%s='%v'", columnName, columnVal)
+	default:
+		return ""
+	}
+}
+
 // InputTransformType 對應table schema型別作轉換
 func InputTransformType(item map[string]interface{}, schema map[string]string) ([]string, []interface{}, []string, error) {
 	var (
@@ -82,109 +156,109 @@ func InputTransformType(item map[string]interface{}, schema map[string]string) (
 
 	for k, v := range item {
 		switch schema[k] {
-		case "bigint":
+		case BigintType:
 			val, err := cast.ToInt64E(v)
 			if err != nil {
 				return nil, nil, nil, err
 			}
 			itemData = append(itemData, val)
-		case "boolean":
+		case BooleanType:
 			val, err := cast.ToBoolE(v)
 			if err != nil {
 				return nil, nil, nil, err
 			}
 			itemData = append(itemData, val)
-		case "counter":
+		case CounterType:
 			val, err := cast.ToInt64E(v)
 			if err != nil {
 				return nil, nil, nil, err
 			}
 			itemData = append(itemData, val)
-		case "date":
+		case DateType:
 			val, err := cast.ToStringE(v)
 			if err != nil {
 				return nil, nil, nil, err
 			}
 			itemData = append(itemData, val)
-		case "decimal":
+		case DecimalType:
 			val, err := cast.ToFloat64E(v)
 			if err != nil {
 				return nil, nil, nil, err
 			}
 			itemData = append(itemData, val)
-		case "double":
+		case DoubleType:
 			val, err := cast.ToFloat64E(v)
 			if err != nil {
 				return nil, nil, nil, err
 			}
 			itemData = append(itemData, val)
-		case "float":
+		case FloatType:
 			val, err := cast.ToFloat64E(v)
 			if err != nil {
 				return nil, nil, nil, err
 			}
 			itemData = append(itemData, val)
-		case "inet":
+		case InetType:
 			val, err := cast.ToStringE(v)
 			if err != nil {
 				return nil, nil, nil, err
 			}
 			itemData = append(itemData, val)
-		case "int":
+		case IntType:
 			val, err := cast.ToInt32E(v)
 			if err != nil {
 				return nil, nil, nil, err
 			}
 			itemData = append(itemData, val)
-		case "smallint":
+		case SmallintType:
 			val, err := cast.ToInt16E(v)
 			if err != nil {
 				return nil, nil, nil, err
 			}
 			itemData = append(itemData, val)
-		case "text":
+		case TextType:
 			val, err := cast.ToStringE(v)
 			if err != nil {
 				return nil, nil, nil, err
 			}
 			itemData = append(itemData, val)
-		case "time":
+		case TimeType:
 			val, err := cast.ToStringE(v)
 			if err != nil {
 				return nil, nil, nil, err
 			}
 			itemData = append(itemData, val)
-		case "timestamp":
+		case TimestampType:
 			val, err := cast.ToStringE(v)
 			if err != nil {
 				return nil, nil, nil, err
 			}
 			itemData = append(itemData, val)
-		case "timeuuid":
+		case TimeuuidType:
 			val, err := cast.ToStringE(v)
 			if err != nil {
 				return nil, nil, nil, err
 			}
 			itemData = append(itemData, val)
-		case "tinyint":
+		case TinyintType:
 			val, err := cast.ToInt8E(v)
 			if err != nil {
 				return nil, nil, nil, err
 			}
 			itemData = append(itemData, val)
-		case "uuid":
+		case UuidType:
 			val, err := cast.ToStringE(v)
 			if err != nil {
 				return nil, nil, nil, err
 			}
 			itemData = append(itemData, val)
-		case "varchar":
+		case VarcharType:
 			val, err := cast.ToStringE(v)
 			if err != nil {
 				return nil, nil, nil, err
 			}
 			itemData = append(itemData, val)
-		case "varint":
+		case VarintType:
 			val, err := cast.ToInt32E(v)
 			if err != nil {
 				return nil, nil, nil, err
@@ -250,74 +324,74 @@ func MapToCassandraMapType(i interface{}, keyType string, valType string) (inter
 // CassandraTypeToGoType cassandra的型別轉Go型別
 func CassandraTypeToGoType(i interface{}, t string) (interface{}, error) {
 	switch t {
-	case "bigint":
+	case BigintType:
 		val, err := cast.ToInt64E(i)
 		return val, err
-	case "boolean":
+	case BooleanType:
 		val, err := cast.ToBoolE(i)
 
 		return val, err
-	case "counter":
+	case CounterType:
 		val, err := cast.ToInt64E(i)
 
 		return val, err
-	case "date":
+	case DateType:
 		val, err := cast.ToStringE(i)
 
 		return val, err
-	case "decimal":
+	case DecimalType:
 		val, err := cast.ToFloat64E(i)
 
 		return val, err
-	case "double":
+	case DoubleType:
 		val, err := cast.ToFloat64E(i)
 
 		return val, err
-	case "float":
+	case FloatType:
 		val, err := cast.ToFloat64E(i)
 
 		return val, err
-	case "inet":
+	case InetType:
 		val, err := cast.ToStringE(i)
 
 		return val, err
-	case "int":
+	case IntType:
 		val, err := cast.ToInt32E(i)
 
 		return val, err
-	case "smallint":
+	case SmallintType:
 		val, err := cast.ToInt16E(i)
 
 		return val, err
-	case "text":
+	case TextType:
 		val, err := cast.ToStringE(i)
 
 		return val, err
-	case "time":
+	case TimeType:
 		val, err := cast.ToStringE(i)
 
 		return val, err
-	case "timestamp":
+	case TimestampType:
 		val, err := cast.ToStringE(i)
 
 		return val, err
-	case "timeuuid":
+	case TimeuuidType:
 		val, err := cast.ToStringE(i)
 
 		return val, err
-	case "tinyint":
+	case TinyintType:
 		val, err := cast.ToInt8E(i)
 
 		return val, err
-	case "uuid":
+	case UuidType:
 		val, err := cast.ToStringE(i)
 
 		return val, err
-	case "varchar":
+	case VarcharType:
 		val, err := cast.ToStringE(i)
 
 		return val, err
-	case "varint":
+	case VarintType:
 		val, err := cast.ToInt32E(i)
 
 		return val, err

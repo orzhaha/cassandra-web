@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"os"
 	"os/exec"
+	"sort"
 	"strconv"
 	"strings"
 	"time"
@@ -152,6 +153,8 @@ func run(c *cli.Context) {
 	e.GET("/row", h.Row)
 	e.GET("/describe", h.Describe)
 	e.GET("/columns", h.Columns)
+	e.POST("/delete", h.Delete)
+	e.POST("/find", h.Find)
 
 	// Start server
 	e.Logger.Fatal(e.Start(env.HostPort))
@@ -207,15 +210,15 @@ func (h *Handler) KeySpace(c echo.Context) error {
 
 	ret, err := iter.SliceMap()
 
+	if err != nil {
+		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
+	}
+
 	for i, v := range ret {
 		// 避免前端element table出現關鍵字bug
 		if v["keyspace_name"] == "system_distributed" {
 			ret[i]["keyspace_name"] = "system_distributed!"
 		}
-	}
-
-	if err != nil {
-		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
 	}
 
 	return c.JSON(http.StatusOK, ret)
@@ -311,14 +314,7 @@ func (h *Handler) Describe(c echo.Context) error {
 func (h *Handler) Columns(c echo.Context) error {
 	keyspace := c.QueryParam("keyspace")
 	table := c.QueryParam("table")
-
-	cql := fmt.Sprintf("SELECT * FROM system_schema.columns WHERE keyspace_name='%s' AND table_name='%s';", keyspace, table)
-	iter := h.Session.Query(cql).Iter()
-	ret, err := iter.SliceMap()
-
-	if err != nil {
-		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
-	}
+	ret := h.GetSchema(keyspace + "." + table)
 
 	return c.JSON(http.StatusOK, ret)
 }
@@ -365,6 +361,125 @@ func (h *Handler) Save(c echo.Context) error {
 	return c.JSON(http.StatusOK, "success")
 }
 
+// Delete 刪除row
+func (h *Handler) Delete(c echo.Context) error {
+	req := struct {
+		Table string `json:"table" form:"table" query:"table"`
+		Item  string `json:"item" form:"item" query:"item"`
+	}{}
+
+	if err := c.Bind(&req); err != nil {
+		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
+	}
+
+	var item map[string]interface{}
+
+	err := jsoni.Unmarshal([]byte(req.Item), &item)
+
+	if err != nil {
+		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
+	}
+
+	schema := h.GetSchema(req.Table)
+
+	sort.Slice(schema, func(i, j int) bool {
+		return schema[i]["position"].(int) < schema[j]["position"].(int)
+	})
+
+	var partitionCql []string
+	var clusteringCql []string
+
+	for _, v := range schema {
+		kind := v["kind"].(string)
+		columnType := v["type"].(string)
+		columnName := v["column_name"].(string)
+
+		if kind == "partition_key" {
+			partitionCql = append(partitionCql, cqlFormat(columnName, columnType, item[columnName]))
+		} else if kind == "clustering" {
+			clusteringCql = append(clusteringCql, cqlFormat(columnName, columnType, item[columnName]))
+		}
+	}
+
+	cql := `DELETE FROM ` + req.Table + ` WHERE `
+	cql += strings.Join(append(partitionCql, clusteringCql...), " AND ")
+
+	if err := h.Session.Query(cql).Exec(); err != nil {
+		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
+	}
+
+	return c.JSON(http.StatusOK, "success")
+}
+
+// Find 搜尋row
+func (h *Handler) Find(c echo.Context) error {
+	req := struct {
+		Table string `json:"table" form:"table" query:"table"`
+		Item  string `json:"item" form:"item" query:"item"`
+	}{}
+
+	if err := c.Bind(&req); err != nil {
+		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
+	}
+
+	var item map[string]interface{}
+
+	err := jsoni.Unmarshal([]byte(req.Item), &item)
+
+	if err != nil {
+		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
+	}
+
+	schema := h.GetSchema(req.Table)
+
+	sort.Slice(schema, func(i, j int) bool {
+		return schema[i]["position"].(int) < schema[j]["position"].(int)
+	})
+
+	var partitionCql []string
+	var clusteringCql []string
+
+	for _, v := range schema {
+		kind := v["kind"].(string)
+		columnType := v["type"].(string)
+		columnName := v["column_name"].(string)
+
+		if kind == "partition_key" {
+			if _, ok := item[columnName]; !ok {
+				continue
+			}
+
+			partitionCql = append(partitionCql, cqlFormat(columnName, columnType, item[columnName]))
+		} else if kind == "clustering" {
+			if _, ok := item[columnName]; !ok {
+				continue
+			}
+
+			clusteringCql = append(clusteringCql, cqlFormat(columnName, columnType, item[columnName]))
+		}
+	}
+
+	cql := `SELECT * FROM ` + req.Table + ` WHERE `
+	cql += strings.Join(append(partitionCql, clusteringCql...), " AND ")
+
+	rowIter := h.Session.Query(cql).Iter()
+	rowData := make([]map[string]interface{}, 0)
+
+	for {
+		row := make(map[string]interface{})
+		if !rowIter.MapScan(row) {
+			break
+		}
+		rowData = append(rowData, OutputTransformType(row))
+	}
+
+	data := make(map[string]interface{})
+	data["row"] = rowData
+
+	return c.JSON(http.StatusOK, data)
+}
+
+// GetSchema 取的table schema
 func (h *Handler) GetSchema(table string) []map[string]interface{} {
 	tablekey := strings.Split(table, ".")
 
