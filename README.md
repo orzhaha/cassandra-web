@@ -97,7 +97,7 @@ curl \
 
 ---
 
-##### /Save (eidt Save)
+##### /save (eidt Save)
 
 ##### params
 
@@ -113,12 +113,12 @@ curl \
   -X POST \
   http://localhost/save \
   -H 'Content-Type: application/json' \
-  -d '{"table":"table_name", "item":"{field1:value1, field2:value2}"}'
+  -d '{"table":"table_name", "item":"{field1:value1, field2:value2}"}'
 ```
 
 ---
 
-##### /Describe (cqlsh describe)
+##### /describe (cqlsh describe)
 
 ##### params
 
@@ -139,7 +139,7 @@ curl \
 
 ---
 
-##### /Columns (get table columns)
+##### /columns (get table columns)
 
 ##### params
 
@@ -159,6 +159,51 @@ curl \
 ```
 
 ---
+
+##### /delete (delete table row)
+
+##### params
+
+* table
+* item
+
+##### return：Json object
+
+##### example：
+
+```sh
+curl \
+  -X POST \
+  http://localhost/save \
+  -H 'Content-Type: application/json' \
+  -d '{"table":"table_name", "item":"{field1:value1, field2:value2}"}'
+```
+
+---
+
+##### /Find (find table row)
+
+##### params
+
+* table
+* item
+* order_by array[object{name:columns_name,order:asc|desc}] 只能是clustering key 而且要按照順序來
+
+##### return：Json object
+
+##### example：
+
+```sh
+curl \
+  -X POST \
+  http://localhost/save \
+  -H 'Content-Type: application/json' \
+  -d '{"table":"sage.orders", "item":{"order_id":123}, "order_by":[{"name":"order_mode", "order": "asc"},{"name":"game_name", "order":"asc"}]}'
+```
+
+---
+
+
 
 
 ## Issue

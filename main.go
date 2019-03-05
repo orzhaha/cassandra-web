@@ -414,19 +414,12 @@ func (h *Handler) Delete(c echo.Context) error {
 // Find 搜尋row
 func (h *Handler) Find(c echo.Context) error {
 	req := struct {
-		Table string `json:"table" form:"table" query:"table"`
-		Item  string `json:"item" form:"item" query:"item"`
+		Table   string                 `json:"table" form:"table" query:"table"`
+		Item    map[string]interface{} `json:"item" form:"item" query:"item"`
+		OrderBy []map[string]string    `json:"order_by" form:"order_by" query:"order_by"`
 	}{}
 
 	if err := c.Bind(&req); err != nil {
-		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
-	}
-
-	var item map[string]interface{}
-
-	err := jsoni.Unmarshal([]byte(req.Item), &item)
-
-	if err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
 	}
 
@@ -438,6 +431,23 @@ func (h *Handler) Find(c echo.Context) error {
 
 	var partitionCql []string
 	var clusteringCql []string
+	var orderByCql []string
+
+	schemaMap := make(map[string]map[string]interface{})
+
+	for _, v := range schema {
+		schemaMap[v["column_name"].(string)] = v
+	}
+
+	for _, ob := range req.OrderBy {
+		if _, ok := schemaMap[ob["name"]]; !ok {
+			continue
+		}
+
+		if schemaMap[ob["name"]]["clustering_order"].(string) != "NONE" {
+			orderByCql = append(orderByCql, fmt.Sprintf("%s %s", ob["name"], ob["order"]))
+		}
+	}
 
 	for _, v := range schema {
 		kind := v["kind"].(string)
@@ -445,22 +455,27 @@ func (h *Handler) Find(c echo.Context) error {
 		columnName := v["column_name"].(string)
 
 		if kind == "partition_key" {
-			if _, ok := item[columnName]; !ok {
+			if _, ok := req.Item[columnName]; !ok {
 				continue
 			}
 
-			partitionCql = append(partitionCql, cqlFormat(columnName, columnType, item[columnName]))
+			partitionCql = append(partitionCql, cqlFormat(columnName, columnType, req.Item[columnName]))
 		} else if kind == "clustering" {
-			if _, ok := item[columnName]; !ok {
+			if _, ok := req.Item[columnName]; !ok {
 				continue
 			}
 
-			clusteringCql = append(clusteringCql, cqlFormat(columnName, columnType, item[columnName]))
+			clusteringCql = append(clusteringCql, cqlFormat(columnName, columnType, req.Item[columnName]))
 		}
 	}
 
 	cql := `SELECT * FROM ` + req.Table + ` WHERE `
 	cql += strings.Join(append(partitionCql, clusteringCql...), " AND ")
+
+	if len(orderByCql) > 0 {
+		cql += " ORDER BY "
+		cql += strings.Join(orderByCql, " , ")
+	}
 
 	rowIter := h.Session.Query(cql).Iter()
 	rowData := make([]map[string]interface{}, 0)
