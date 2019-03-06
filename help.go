@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"os"
 	"regexp"
 
 	"github.com/spf13/cast"
@@ -404,4 +405,21 @@ func CassandraTypeToGoType(i interface{}, t string) (interface{}, error) {
 func JsonStringToObject(s string, v interface{}) error {
 	data := []byte(s)
 	return jsoni.Unmarshal(data, v)
+}
+
+// CreateTmpFile 建立暫存檔案
+func CreateTmpFile(fpath string) error {
+	f, err := os.Create(fpath)
+
+	if err != nil {
+		return err
+	}
+
+	f.Close()
+
+	if err := os.Chmod(fpath, 0666); err != nil {
+		return err
+	}
+
+	return nil
 }

@@ -204,6 +204,47 @@ curl \
 ---
 
 
+##### /Export (export file table data)
+
+##### params
+
+* table
+
+##### return：file
+
+##### example：
+
+```sh
+curl \
+  -X POST \
+  http://localhost/export?table=keyspace.table \
+  -H 'Content-Type: application/json' \
+```
+
+---
+
+
+##### /Import (import file table data)
+
+##### form-data params
+
+* table
+* file
+
+##### return：Josn object
+
+##### example：
+
+```sh
+curl \
+  -X POST \
+  http://localhost/import \
+  -F "table=keyspace.table" \
+  -F "filecomment=This is an image file" \
+  -F "file=@/home/user/Desktop/importfile" \
+```
+
+---
 
 
 ## Issue

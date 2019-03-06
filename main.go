@@ -3,6 +3,7 @@ package main
 import (
 	"encoding/json"
 	"fmt"
+	"io/ioutil"
 	"net/http"
 	"os"
 	"os/exec"
@@ -155,6 +156,8 @@ func run(c *cli.Context) {
 	e.GET("/columns", h.Columns)
 	e.POST("/delete", h.Delete)
 	e.POST("/find", h.Find)
+	e.GET("/export", h.Export)
+	e.POST("/import", h.Import)
 
 	// Start server
 	e.Logger.Fatal(e.Start(env.HostPort))
@@ -492,6 +495,75 @@ func (h *Handler) Find(c echo.Context) error {
 	data["row"] = rowData
 
 	return c.JSON(http.StatusOK, data)
+}
+
+// Export 匯出copy file
+func (h *Handler) Export(c echo.Context) error {
+	table := c.QueryParam("table")
+
+	cql := fmt.Sprintf("COPY %s TO STDOUT;", table)
+	cmd := exec.Command("cqlsh", env.CassandraHost, "-e", cql)
+	out, err := cmd.CombinedOutput()
+
+	if err != nil {
+		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
+	}
+
+	return c.Blob(http.StatusOK, "application/force-download", out)
+}
+
+// Export 匯入copy file
+func (h *Handler) Import(c echo.Context) error {
+	file, err := c.FormFile("file")
+	table := c.FormValue("table")
+
+	if err != nil {
+		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
+	}
+
+	f, err := file.Open()
+	if err != nil {
+		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
+	}
+	defer f.Close()
+
+	tmpPath := "/tmp/importfile"
+	if _, err := os.Stat(tmpPath); err != nil {
+		if os.IsNotExist(err) {
+			CreateTmpFile(tmpPath)
+		} else {
+			return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
+		}
+	}
+
+	tf, err := os.OpenFile(
+		tmpPath,
+		os.O_WRONLY|os.O_TRUNC|os.O_CREATE,
+		0666,
+	)
+	if err != nil {
+		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
+	}
+	defer tf.Close()
+
+	fb, err := ioutil.ReadAll(f)
+	if err != nil {
+		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
+	}
+
+	_, err = tf.Write(fb)
+	if err != nil {
+		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
+	}
+
+	cql := fmt.Sprintf("COPY %s FROM '%s' WITH MINBATCHSIZE=1 AND MAXBATCHSIZE=1 AND PAGESIZE=10;", table, tmpPath)
+	cmd := exec.Command("cqlsh", env.CassandraHost, "--connect-timeout=600", "--request-timeout=600", "-e", cql)
+	_, err = cmd.CombinedOutput()
+	if err != nil {
+		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
+	}
+
+	return c.JSON(http.StatusOK, "success")
 }
 
 // GetSchema 取的table schema
