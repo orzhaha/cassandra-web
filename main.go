@@ -240,10 +240,10 @@ func (h *Handler) Table(c echo.Context) error {
 	}
 
 	// 查詢 虛擬view
-	iter2 := h.Session.Query(`SELECT keyspace_name, view_name as table_name, id FROM system_schema.views WHERE  keyspace_name = ?`, keyspace).Iter()
-	ret2, err := iter2.SliceMap()
+	// iter2 := h.Session.Query(`SELECT keyspace_name, view_name as table_name, id FROM system_schema.views WHERE  keyspace_name = ?`, keyspace).Iter()
+	// ret2, err := iter2.SliceMap()
 
-	ret = append(ret, ret2...)
+	// ret = append(ret, ret2...)
 
 	return c.JSON(http.StatusOK, ret)
 }
@@ -299,10 +299,9 @@ func (h *Handler) Row(c echo.Context) error {
 
 // Describe 用cqlsh取的describe
 func (h *Handler) Describe(c echo.Context) error {
-	kind := c.QueryParam("kind")
-	item := c.QueryParam("item")
+	table := c.QueryParam("table")
 
-	cql := fmt.Sprintf("DESCRIBE %s %s ;", kind, item)
+	cql := fmt.Sprintf("DESCRIBE %s ;", table)
 	cmd := exec.Command("cqlsh", env.CassandraHost, "-e", cql)
 	out, err := cmd.CombinedOutput()
 
@@ -509,6 +508,7 @@ func (h *Handler) Export(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
 	}
 
+	c.Response().Header().Set(echo.HeaderContentDisposition, fmt.Sprintf("%s; filename=%q", "cql", strings.Replace(table, ".", "-", -1)))
 	return c.Blob(http.StatusOK, "application/force-download", out)
 }
 
@@ -547,6 +547,7 @@ func (h *Handler) Import(c echo.Context) error {
 	defer tf.Close()
 
 	fb, err := ioutil.ReadAll(f)
+
 	if err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
 	}

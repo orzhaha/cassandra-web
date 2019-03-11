@@ -122,8 +122,7 @@ curl \
 
 ##### params
 
-* kind
-* item
+* table
 
 ##### return：string
 
@@ -132,9 +131,8 @@ curl \
 ```sh
 curl \
   -X GET \
-  http://localhost:8083/describe \
+  http://localhost/describe?table=ca.abc
   -H 'Content-Type: application/json' \
-  -d '{"kind":"table", "item":"system_schema"}'
 ```
 
 ---

@@ -47,8 +47,7 @@ export default {
       try {
         const res = await service.request('describe', {
           query: {
-            kind: 'table',
-            item: `${this.$route.params.keyspace}.${this.$route.params.table}`,
+            table: `${this.$route.params.keyspace}.${this.$route.params.table}`,
           }
         })
 

@@ -37,6 +37,14 @@ export default {
         {
           name: 'definition',
           trigger: this.Definition
+        },
+        {
+          name: 'export',
+          trigger: this.Export
+        },
+        {
+          name: 'import',
+          trigger: this.Import
         }
       ]
     }
@@ -72,6 +80,18 @@ export default {
     Definition() {
       this.$router.push({
         name: 'definition'
+      })
+    },
+
+    Export() {
+      this.$router.push({
+        name: 'export'
+      })
+    },
+
+    Import() {
+      this.$router.push({
+        name: 'import'
       })
     },
   }

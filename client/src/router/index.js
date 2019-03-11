@@ -8,6 +8,8 @@ import Content from '@/components/table/content'
 import Rows from '@/components/table/rows'
 import Columns from '@/components/table/columns'
 import Definition from '@/components/table/definition'
+import Export from '@/components/table/export'
+import Import from '@/components/table/import'
 import Query from '@/components/query'
 
 Vue.use(Router);
@@ -61,6 +63,18 @@ export default new Router({
               path: 'definition',
               name: 'definition',
               component: Definition,
+            },
+
+            {
+              path: 'export',
+              name: 'export',
+              component: Export,
+            },
+
+            {
+              path: 'import',
+              name: 'import',
+              component: Import,
             },
 
             {

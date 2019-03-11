@@ -1,5 +1,5 @@
-const domain = window.location.origin
-// const domain = 'http://localhost:8083'
+export const domain = window.location.origin
+// export const domain = 'http://localhost:8083'
 
 const config = {
   root: {
@@ -30,6 +30,14 @@ const config = {
     describe: {
       type: 'GET',
       url: `${domain}/describe`
+    },
+    export: {
+      type: 'GET',
+      url: `${domain}/export`
+    },
+    import: {
+      type: 'POST',
+      url: `${domain}/import`
     }
   }
 }
