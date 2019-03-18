@@ -5,12 +5,13 @@
         type="danger"
         icon="el-icon-download")
         a(
-          v-bind:href="href")
+          v-bind:href="href"
+          class="download_btn")
           span Download
 </template>
 
 <style>
-a {
+a.download_btn {
   color:#FFFFFF;
   text-decoration:none;
 }

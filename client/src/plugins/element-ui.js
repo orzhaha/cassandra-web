@@ -28,6 +28,9 @@ import {
   Footer,
   ButtonGroup,
   Upload,
+  Select,
+  Option,
+  Checkbox,
 } from 'element-ui';
 import lang from 'element-ui/lib/locale/lang/en'
 import locale from 'element-ui/lib/locale'
@@ -57,6 +60,9 @@ Vue.use(ColorPicker);
 Vue.use(Footer);
 Vue.use(ButtonGroup);
 Vue.use(Upload);
+Vue.use(Select);
+Vue.use(Option);
+Vue.use(Checkbox);
 
 Vue.config.lang = 'en-us'
 Vue.prototype.$loading = Loading.service;

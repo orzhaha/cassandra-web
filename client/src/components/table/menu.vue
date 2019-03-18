@@ -31,6 +31,10 @@ export default {
           trigger: this.showRows
         },
         {
+          name: 'find',
+          trigger: this.Find
+        },
+        {
           name: 'columns',
           trigger: this.Columns
         },
@@ -68,6 +72,12 @@ export default {
           page: 1,
           pagesize: 50
         }
+      })
+    },
+
+    Find() {
+      this.$router.push({
+        name: 'find'
       })
     },
 

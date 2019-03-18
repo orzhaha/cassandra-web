@@ -15,6 +15,10 @@ const config = {
       type: 'GET',
       url: `${domain}/row`
     },
+    find: {
+      type: 'POST',
+      url: `${domain}/find`
+    },
     query: {
       type: 'POST',
       url: `${domain}/query`
@@ -22,6 +26,10 @@ const config = {
     save: {
       type: 'POST',
       url: `${domain}/save`
+    },
+    delete: {
+      type: 'POST',
+      url: `${domain}/delete`
     },
     columns: {
       type: 'GET',

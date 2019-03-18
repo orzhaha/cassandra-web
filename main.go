@@ -22,6 +22,11 @@ import (
 	"github.com/urfave/cli"
 )
 
+const (
+	PartitionKey  = "partition_key"
+	ClusteringKey = "clustering"
+)
+
 // init 初始化
 func init() {
 	// 反序列化float64精准度問題處理
@@ -239,11 +244,19 @@ func (h *Handler) Table(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
 	}
 
-	// 查詢 虛擬view
-	// iter2 := h.Session.Query(`SELECT keyspace_name, view_name as table_name, id FROM system_schema.views WHERE  keyspace_name = ?`, keyspace).Iter()
-	// ret2, err := iter2.SliceMap()
+	for i, _ := range ret {
+		ret[i]["views"] = false
+	}
 
-	// ret = append(ret, ret2...)
+	// 查詢 虛擬view
+	iter2 := h.Session.Query(`SELECT keyspace_name, view_name as table_name, id FROM system_schema.views WHERE  keyspace_name = ?`, keyspace).Iter()
+	ret2, err := iter2.SliceMap()
+
+	for i, _ := range ret2 {
+		ret2[i]["views"] = true
+	}
+
+	ret = append(ret, ret2...)
 
 	return c.JSON(http.StatusOK, ret)
 }
@@ -384,10 +397,6 @@ func (h *Handler) Delete(c echo.Context) error {
 
 	schema := h.GetSchema(req.Table)
 
-	sort.Slice(schema, func(i, j int) bool {
-		return schema[i]["position"].(int) < schema[j]["position"].(int)
-	})
-
 	var partitionCql []string
 	var clusteringCql []string
 
@@ -396,10 +405,10 @@ func (h *Handler) Delete(c echo.Context) error {
 		columnType := v["type"].(string)
 		columnName := v["column_name"].(string)
 
-		if kind == "partition_key" {
-			partitionCql = append(partitionCql, cqlFormat(columnName, columnType, item[columnName]))
-		} else if kind == "clustering" {
-			clusteringCql = append(clusteringCql, cqlFormat(columnName, columnType, item[columnName]))
+		if kind == PartitionKey {
+			partitionCql = append(partitionCql, cqlFormat(columnName, columnType, item[columnName], "="))
+		} else if kind == ClusteringKey {
+			clusteringCql = append(clusteringCql, cqlFormat(columnName, columnType, item[columnName], "="))
 		}
 	}
 
@@ -416,9 +425,9 @@ func (h *Handler) Delete(c echo.Context) error {
 // Find 搜尋row
 func (h *Handler) Find(c echo.Context) error {
 	req := struct {
-		Table   string                 `json:"table" form:"table" query:"table"`
-		Item    map[string]interface{} `json:"item" form:"item" query:"item"`
-		OrderBy []map[string]string    `json:"order_by" form:"order_by" query:"order_by"`
+		Table   string                            `json:"table" form:"table" query:"table"`
+		Item    map[string]map[string]interface{} `json:"item" form:"item" query:"item"`
+		OrderBy []map[string]string               `json:"order_by" form:"order_by" query:"order_by"`
 	}{}
 
 	if err := c.Bind(&req); err != nil {
@@ -426,10 +435,6 @@ func (h *Handler) Find(c echo.Context) error {
 	}
 
 	schema := h.GetSchema(req.Table)
-
-	sort.Slice(schema, func(i, j int) bool {
-		return schema[i]["position"].(int) < schema[j]["position"].(int)
-	})
 
 	var partitionCql []string
 	var clusteringCql []string
@@ -456,18 +461,18 @@ func (h *Handler) Find(c echo.Context) error {
 		columnType := v["type"].(string)
 		columnName := v["column_name"].(string)
 
-		if kind == "partition_key" {
+		if kind == PartitionKey {
 			if _, ok := req.Item[columnName]; !ok {
 				continue
 			}
 
-			partitionCql = append(partitionCql, cqlFormat(columnName, columnType, req.Item[columnName]))
-		} else if kind == "clustering" {
+			partitionCql = append(partitionCql, cqlFormat(columnName, columnType, req.Item[columnName]["value"], "="))
+		} else if kind == ClusteringKey {
 			if _, ok := req.Item[columnName]; !ok {
 				continue
 			}
 
-			clusteringCql = append(clusteringCql, cqlFormat(columnName, columnType, req.Item[columnName]))
+			clusteringCql = append(clusteringCql, cqlFormat(columnName, columnType, req.Item[columnName]["value"], req.Item[columnName]["operator"].(string)))
 		}
 	}
 
@@ -578,6 +583,28 @@ func (h *Handler) GetSchema(table string) []map[string]interface{} {
 	if err != nil {
 		return nil
 	}
+
+	sort.Slice(ret, func(a, b int) bool {
+		if ret[a]["kind"].(string) == PartitionKey {
+			if ret[b]["kind"].(string) == PartitionKey {
+				return ret[a]["position"].(int) < ret[b]["position"].(int)
+			}
+
+			return true
+		}
+
+		if ret[a]["kind"].(string) == ClusteringKey {
+			if ret[b]["kind"].(string) == PartitionKey {
+				return false
+			} else if ret[b]["kind"].(string) == ClusteringKey {
+				return ret[a]["position"].(int) < ret[b]["position"].(int)
+			}
+
+			return true
+		}
+
+		return false
+	})
 
 	return ret
 }

@@ -10,6 +10,7 @@ import Columns from '@/components/table/columns'
 import Definition from '@/components/table/definition'
 import Export from '@/components/table/export'
 import Import from '@/components/table/import'
+import Find from '@/components/table/find'
 import Query from '@/components/query'
 
 Vue.use(Router);
@@ -51,6 +52,12 @@ export default new Router({
               path: 'rows/:page/:pagesize',
               name: 'rows',
               component: Rows,
+            },
+
+            {
+              path: 'find',
+              name: 'find',
+              component: Find,
             },
 
             {

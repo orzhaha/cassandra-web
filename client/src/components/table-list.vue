@@ -5,16 +5,19 @@
     empty-text="empty data"
     stripe
     :row-style="rowStyle"
-    style="width: 100%"
-  )
+    style="width: 100%")
     el-table-column(
       prop="table_name"
-      label="table_name"
-    )
+      label="table_name")
+      template(slot-scope="scope")
+        span {{scope.row.table_name}}
+          i(
+            v-if="scope.row.views === true"
+            class="el-icon-view"
+            style="font-size: 1.2em;")
     el-table-column(
       prop="id"
-      label="id"
-    )
+      label="id")
 </template>
 
 <script>

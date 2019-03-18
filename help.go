@@ -99,47 +99,47 @@ func OutputTransformType(row map[string]interface{}) map[string]interface{} {
 	return row
 }
 
-func cqlFormat(columnName string, columnType string, columnVal interface{}) string {
+func cqlFormat(columnName string, columnType string, columnVal interface{}, operator string) string {
 	switch columnType {
 	case BigintType:
-		return fmt.Sprintf("%s=%v", columnName, columnVal)
+		return fmt.Sprintf("%s %s %v", columnName, operator, columnVal)
 	case BlobType:
-		return fmt.Sprintf("%s=%v", columnName, columnVal)
+		return fmt.Sprintf("%s %s %v", columnName, operator, columnVal)
 	case BooleanType:
-		return fmt.Sprintf("%s=%v", columnName, columnVal)
+		return fmt.Sprintf("%s %s %v", columnName, operator, columnVal)
 	case CounterType:
-		return fmt.Sprintf("%s=%v", columnName, columnVal)
+		return fmt.Sprintf("%s %s %v", columnName, operator, columnVal)
 	case DecimalType:
-		return fmt.Sprintf("%s=%v", columnName, columnVal)
+		return fmt.Sprintf("%s %s %v", columnName, operator, columnVal)
 	case DoubleType:
-		return fmt.Sprintf("%s=%v", columnName, columnVal)
+		return fmt.Sprintf("%s %s %v", columnName, operator, columnVal)
 	case FloatType:
-		return fmt.Sprintf("%s=%v", columnName, columnVal)
+		return fmt.Sprintf("%s %s %v", columnName, operator, columnVal)
 	case FrozenType:
-		return fmt.Sprintf("%s=%v", columnName, columnVal)
+		return fmt.Sprintf("%s %s %v", columnName, operator, columnVal)
 	case IntType:
-		return fmt.Sprintf("%s=%v", columnName, columnVal)
+		return fmt.Sprintf("%s %s %v", columnName, operator, columnVal)
 	case ListType:
 		b, _ := jsoni.Marshal(columnVal)
-		return fmt.Sprintf("%s=%v", columnName, string(b))
+		return fmt.Sprintf("%s %s %v", columnName, operator, string(b))
 	case MapType:
 		b, _ := jsoni.Marshal(columnVal)
-		return fmt.Sprintf("%s=%v", columnName, string(b))
+		return fmt.Sprintf("%s %s %v", columnName, operator, string(b))
 	case SetType:
 		b, _ := jsoni.Marshal(columnVal)
-		return fmt.Sprintf("%s=%v", columnName, string(b))
+		return fmt.Sprintf("%s %s %v", columnName, operator, string(b))
 	case AsciiType:
-		return fmt.Sprintf("%s='%v'", columnName, columnVal)
+		return fmt.Sprintf("%s %s '%v'", columnName, operator, columnVal)
 	case TextType:
-		return fmt.Sprintf("%s='%v'", columnName, columnVal)
+		return fmt.Sprintf("%s %s '%v'", columnName, operator, columnVal)
 	case TimeType:
-		return fmt.Sprintf("%s='%v'", columnName, columnVal)
+		return fmt.Sprintf("%s %s '%v'", columnName, operator, columnVal)
 	case DateType:
-		return fmt.Sprintf("%s='%v'", columnName, columnVal)
+		return fmt.Sprintf("%s %s '%v'", columnName, operator, columnVal)
 	case InetType:
-		return fmt.Sprintf("%s='%v'", columnName, columnVal)
+		return fmt.Sprintf("%s %s '%v'", columnName, operator, columnVal)
 	case VarcharType:
-		return fmt.Sprintf("%s='%v'", columnName, columnVal)
+		return fmt.Sprintf("%s %s '%v'", columnName, operator, columnVal)
 	default:
 		return ""
 	}

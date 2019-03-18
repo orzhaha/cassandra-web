@@ -1,8 +1,11 @@
 <template lang="pug">
-  div(class="w100")
+  div(
+    v-if="rowData.length === 0")
+  div(
+    v-else
+    class="w100")
     el-table(
-      v-if="column"
-      :data="rowdata"
+      :data="rowData"
       :highlight-current-row="true"
       empty-text="empty data"
       stripe
@@ -16,13 +19,13 @@
             template(slot-scope="scope")
               img.iconKey(
                 v-if="column.isPartitionKey(columnData['column_name'])"
-                src="../../assets/icon-key.svg"
+                src="../../../assets/icon-key.svg"
                 title="PartitionKey")
               img.iconKey(
                 v-if="column.isClusteringKey(columnData['column_name'])"
-                src="../../assets/key-ring.svg"
+                src="../../../assets/key-ring.svg"
                 title="Clustering")
-              template(v-if="column.inputType(columnData['column_name']) === '' || column.inputType(columnData['column_name']) === 'textarea'")
+              template(v-if="column.inputType(columnData['column_name']) === ''|| column.inputType(columnData['column_name']) === 'textarea'")
                 span(
                   v-if="!isEdit(scope.$index, columnData['column_name'])")  {{scope.row[columnData['column_name']]}}
                 el-input(
@@ -69,17 +72,6 @@
               icon="el-icon-delete"
               size="small"
               @click="handleDelete(scope.row)")
-
-    el-pagination(:page-size="20"
-      @current-change="handleCurrentChange"
-      @prev-click="handleCurrentChange"
-      @next-click="handleCurrentChange"
-      @size-change="handleSizeChange"
-      background
-      :pageSize="pagesize"
-      :page-sizes="[50, 100, 200, 300, 400, 500]"
-      :total="rowcount"
-      layout="total, sizes, prev, pager, next")
 </template>
 
 <style>
@@ -102,21 +94,20 @@ import cloneDeep from 'lodash/cloneDeep'
 import JSONbig from 'json-bigint'
 import 'codemirror/mode/javascript/javascript'
 import 'codemirror/theme/monokai.css'
-import Column from '../../utils/column'
 
 const service = api.make('root')
 
 export default {
-  name: 'Rows',
-
+  name: 'Result',
+  props: [
+    'rowData',
+    'originalData',
+    'column',
+    'find',
+  ],
   data() {
     return {
-      rowdata: [],
-      rowcount: 0,
-      column: null,
-      pagesize: 50,
       isRowEdit: null,
-      originalData: [],
       cmOptions: {
         mode: {
           name: 'javascript',
@@ -130,13 +121,8 @@ export default {
     }
   },
   created() {
-    this.fetch()
-    this.fetchType()
   },
   watch: {
-    $route() {
-      this.fetch()
-    }
   },
   methods: {
     isEdit(index, rowKey) {
@@ -162,15 +148,15 @@ export default {
 
       if (this.isDataChange(
         JSON.stringify(this.originalData[this.isRowEdit]),
-        JSON.stringify(this.rowdata[this.isRowEdit])
+        JSON.stringify(this.rowData[this.isRowEdit])
       )) {
         await this.$confirm('Do you want to save data on current change ?', '', {
           confirmButtonText: 'Save',
           cancelButtonText: 'Cancel',
         }).then(() => {
-          this.handleEdit(this.isRowEdit, this.rowdata[this.isRowEdit])
+          this.handleEdit(this.isRowEdit, this.rowData[this.isRowEdit])
         }).catch(() => {
-          this.fetch()
+          this.find(false)
         })
       }
 
@@ -185,7 +171,7 @@ export default {
       }).then(() => {
         JSON.stringify(rowData)
         this.deleteData(rowData)
-        this.fetch()
+        this.find(false)
       }).catch(() => {})
     },
 
@@ -198,74 +184,11 @@ export default {
     },
 
     handleCancelRow(index) {
-      this.fetch()
+      this.find(false)
 
       this.activeRowEdit(index)
     },
 
-    async fetch() {
-      try {
-        const res = await service.request('row', {
-          query: {
-            limit: 1000,
-            table: `${this.$route.params.keyspace}.${this.$route.params.table}`,
-            page: this.$route.params.page,
-            pagesize: this.$route.params.pagesize
-          }
-        })
-        const rows = res.get('row')
-
-        if (rows !== undefined && rows.length > 0) {
-          this.rowdata = rows.map((row) => {
-            const item = row
-            forEach(item, (itemData, itemKey) => {
-              if (typeof (itemData) === 'object') {
-                item[itemKey] = JSONbig.stringify(itemData)
-              } else {
-                item[itemKey] = itemData
-              }
-            })
-            return item
-          })
-
-          this.originalData = cloneDeep(this.rowdata)
-
-          this.rowcount = res.get('count')
-        } else {
-          this.rowdata = []
-          this.rowcount = 0
-        }
-      } catch (error) {
-        this.$message({
-          type: 'error',
-          showClose: true,
-          message: error
-        });
-      }
-    },
-
-    async fetchType() {
-      const column = new Column(this.$route.params.keyspace, this.$route.params.table)
-      await column.init()
-      this.column = column
-    },
-
-    handleCurrentChange(page) {
-      this.$router.push({
-        name: 'rows',
-        params: {
-          page
-        }
-      })
-    },
-    handleSizeChange(pagesize) {
-      this.$router.push({
-        name: 'rows',
-        params: {
-          pagesize
-        }
-      })
-    },
     rowFormatter(row, column, cellValue) {
       return cellValue
     },
@@ -281,25 +204,6 @@ export default {
       )) {
         return
       }
-
-      // TODO: edit partition_key
-      // if (this.isPartitionKey(rowKey)) {
-      //   await this.$confirm('In the case, it will change the partition_key. are you sure？', '', {
-      //     confirmButtonText: 'Do it',
-      //     cancelButtonText: 'Cancel',
-      //   }).then(() => {
-      //     // this.updateData(row)
-      //     this.$message({
-      //       showClose: true,
-      //       duration: 0,
-      //       message: '尚未開放修改 partition_key 功能'
-      //     })
-      //   }).catch(() => {})
-
-      //   this.fetch()
-
-      //   return
-      // }
 
       this.updateData(newRowData)
     },
@@ -328,7 +232,7 @@ export default {
           message
         });
 
-        this.fetch()
+        this.find(false)
       } catch (error) {
         this.$message({
           type: 'error',
@@ -363,7 +267,7 @@ export default {
           message
         });
 
-        this.fetch()
+        this.find(false)
       } catch (error) {
         this.$message({
           type: 'error',

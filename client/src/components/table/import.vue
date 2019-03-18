@@ -20,10 +20,6 @@
 </template>
 
 <style>
-a {
-  color:#FFFFFF;
-  text-decoration:none;
-}
 .ml10 {
   margin-left: 10px;
 }
