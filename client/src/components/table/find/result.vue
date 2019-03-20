@@ -12,6 +12,7 @@
       :row-style="rowStyle"
       style="width: 100%")
         el-table-column(
+          show-overflow-tooltip="true"
           v-for="columnData in column.getColumnData()"
           :key="columnData['column_name']"
           :formatter="rowFormatter"
