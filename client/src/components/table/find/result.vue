@@ -12,11 +12,11 @@
       :row-style="rowStyle"
       style="width: 100%")
         el-table-column(
-          show-overflow-tooltip="true"
+          :show-overflow-tooltip="isShowOverflowTooltip"
           v-for="columnData in column.getColumnData()"
           :key="columnData['column_name']"
           :formatter="rowFormatter"
-          :label="`${columnData['column_name']} (${column.getCqlType(columnData['column_name'])})`")
+          :label="`${columnData['column_name']}`")
             template(slot-scope="scope")
               img.iconKey(
                 v-if="column.isPartitionKey(columnData['column_name'])"
@@ -105,6 +105,7 @@ export default {
     'originalData',
     'column',
     'find',
+    'isShowOverflowTooltip',
   ],
   data() {
     return {

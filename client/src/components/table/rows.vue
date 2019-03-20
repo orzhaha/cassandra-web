@@ -1,5 +1,9 @@
 <template lang="pug">
   div(class="w100")
+    el-checkbox(
+      class="is-show-overflow-tooltip-checkbox"
+      @change="changeIsShowOverflowTooltip"
+      v-model="isShowOverflowTooltip") Show Overflow Tooltip
     el-table(
       v-if="column"
       :data="rowdata"
@@ -9,11 +13,11 @@
       :row-style="rowStyle"
       style="width: 100%")
         el-table-column(
-          show-overflow-tooltip="true"
+          :show-overflow-tooltip="isShowOverflowTooltip"
           v-for="columnData in column.getColumnData()"
           :key="columnData['column_name']"
           :formatter="rowFormatter"
-          :label="`${columnData['column_name']} (${column.getCqlType(columnData['column_name'])})`")
+          :label="`${columnData['column_name']}`")
             template(slot-scope="scope")
               img.iconKey(
                 v-if="column.isPartitionKey(columnData['column_name'])"
@@ -95,12 +99,17 @@
     width: 15px;
     height: auto;
   }
+  .is-show-overflow-tooltip-checkbox {
+    margin: 10px 20px;
+    padding: 12px 0px;
+  }
 </style>
 <script>
 import api from '@/api'
 import forEach from 'lodash/forEach'
 import cloneDeep from 'lodash/cloneDeep'
 import JSONbig from 'json-bigint'
+import Cookies from 'js-cookie'
 import 'codemirror/mode/javascript/javascript'
 import 'codemirror/theme/monokai.css'
 import Column from '../../utils/column'
@@ -118,6 +127,7 @@ export default {
       pagesize: 50,
       isRowEdit: null,
       originalData: [],
+      isShowOverflowTooltip: true,
       cmOptions: {
         mode: {
           name: 'javascript',
@@ -133,6 +143,18 @@ export default {
   created() {
     this.fetch()
     this.fetchType()
+
+    const isNotCollapse = Cookies.get('isNotCollapse')
+
+    if (isNotCollapse !== undefined) {
+      this.isNotCollapse = isNotCollapse === 'true'
+    }
+
+    const isShowOverflowTooltip = Cookies.get('isShowOverflowTooltip')
+
+    if (isShowOverflowTooltip !== undefined) {
+      this.isShowOverflowTooltip = isShowOverflowTooltip === 'true'
+    }
   },
   watch: {
     $route() {
@@ -384,7 +406,10 @@ export default {
       } catch (e) {
         return jsonString
       }
-    }
+    },
+    changeIsShowOverflowTooltip(bool) {
+      Cookies.set('isShowOverflowTooltip', bool)
+    },
   }
 };
 </script>

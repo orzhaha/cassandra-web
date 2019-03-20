@@ -1,75 +1,81 @@
 <template lang="pug">
   div(class="w100")
-    el-button(
-      type="text"
-      class="caret-bottom"
-      v-bind:class="[isCollapse ? 'el-icon-caret-top' : 'el-icon-caret-bottom']"
-      @click.stop="isCollapse = !isCollapse") Folding Find Column
-    el-checkbox(
-      v-model="isNotCollapse") Do Not Collapse
-    template(
-      v-if="isNotCollapse || isCollapse")
-      el-table(
-        v-if="column"
-        :data="column.getColumnData()"
-        :highlight-current-row="true"
-        empty-text="empty data"
-        stripe
-        style="width: 100%")
-        el-table-column(
-          prop="column_name"
-          label="Field")
-        el-table-column(
-          prop="kind"
-          label="Kind")
-        el-table-column(
-          prop="type"
-          label="Type")
-        el-table-column(
-          prop="kind"
-          label="Operator")
-          template(slot-scope="scope")
-            template(v-if="scope.row.kind === 'partition_key'")
-              el-select(
-                v-model="columnInput[scope.$index].operator"
-                placeholder='operator')
-                el-option(
-                  v-for="item in partitionOperator"
-                  :key="item.value"
-                  :label="item.label"
-                  :value="item.value")
-            template(v-else-if="scope.row.kind === 'clustering'")
-              el-select(
-                v-model="columnInput[scope.$index].operator"
-                placeholder='operator')
-                el-option(
-                  v-for="item in clusteringOperator"
-                  :key="item.value"
-                  :label="item.label"
-                  :value="item.value")
-
-            template(v-else)
-        el-table-column(
-          prop="kind"
-          label="Value")
-          template(slot-scope="scope")
-            template(v-if="scope.row.kind === 'partition_key' || scope.row.kind === 'clustering' ")
-              el-input(
-                v-model="columnInput[scope.$index].value"
-                :type="column.inputType(scope.row.column_name)"
-                :autosize="{ minRows: 1, maxRows: 10}")
-
-            template(v-else)
-      br
+    div(class="w100")
       el-button(
-        type="danger"
-        icon="el-icon-search"
-        @click.stop="find()")
-    Result(
-      :find="find"
-      :rowData="rowData"
-      :originalData="originalData"
-      :column="column")
+        type="text"
+        class="caret-bottom"
+        v-bind:class="[isCollapse ? 'el-icon-caret-top' : 'el-icon-caret-bottom']"
+        @click.stop="isCollapse = !isCollapse") Folding Find Column
+      el-checkbox(
+        @change="changeIsNotCollapse"
+        v-model="isNotCollapse") Do Not Collapse
+      el-checkbox(
+        @change="changeIsShowOverflowTooltip"
+        v-model="isShowOverflowTooltip") Show Overflow Tooltip
+      template(
+        v-if="isNotCollapse || isCollapse")
+        el-table(
+          v-if="column"
+          :data="column.getColumnData()"
+          :highlight-current-row="true"
+          empty-text="empty data"
+          stripe)
+          el-table-column(
+            prop="column_name"
+            label="Field")
+          el-table-column(
+            prop="kind"
+            label="Kind")
+          el-table-column(
+            prop="type"
+            label="Type")
+          el-table-column(
+            prop="kind"
+            label="Operator")
+            template(slot-scope="scope")
+              template(v-if="scope.row.kind === 'partition_key'")
+                el-select(
+                  v-model="columnInput[scope.$index].operator"
+                  placeholder='operator')
+                  el-option(
+                    v-for="item in partitionOperator"
+                    :key="item.value"
+                    :label="item.label"
+                    :value="item.value")
+              template(v-else-if="scope.row.kind === 'clustering'")
+                el-select(
+                  v-model="columnInput[scope.$index].operator"
+                  placeholder='operator')
+                  el-option(
+                    v-for="item in clusteringOperator"
+                    :key="item.value"
+                    :label="item.label"
+                    :value="item.value")
+
+              template(v-else)
+          el-table-column(
+            prop="kind"
+            label="Value")
+            template(slot-scope="scope")
+              template(v-if="scope.row.kind === 'partition_key' || scope.row.kind === 'clustering' ")
+                el-input(
+                  v-model="columnInput[scope.$index].value"
+                  :type="column.inputType(scope.row.column_name)"
+                  :autosize="{ minRows: 1, maxRows: 10}")
+
+              template(v-else)
+        br
+        el-button(
+          type="danger"
+          icon="el-icon-search"
+          @click.stop="find()")
+    div(class="w100")
+      Result(
+        :find="find"
+        :rowData="rowData"
+        :originalData="originalData"
+        :column="column"
+        :isShowOverflowTooltip="isShowOverflowTooltip")
 </template>
 
 <style>
@@ -86,6 +92,7 @@
 <script>
 import JSONbig from 'json-bigint'
 import forEach from 'lodash/forEach'
+import Cookies from 'js-cookie'
 import cloneDeep from 'lodash/cloneDeep'
 import api from '@/api'
 import Result from './result'
@@ -102,6 +109,7 @@ export default {
     return {
       isCollapse: true,
       isNotCollapse: false,
+      isShowOverflowTooltip: true,
       rowData: [],
       originalData: [],
       columnInput: [],
@@ -142,6 +150,18 @@ export default {
   },
   created() {
     this.fetch()
+
+    const isNotCollapse = Cookies.get('isNotCollapse')
+
+    if (isNotCollapse !== undefined) {
+      this.isNotCollapse = isNotCollapse === 'true'
+    }
+
+    const isShowOverflowTooltip = Cookies.get('isShowOverflowTooltip')
+
+    if (isShowOverflowTooltip !== undefined) {
+      this.isShowOverflowTooltip = isShowOverflowTooltip === 'true'
+    }
   },
   watch: {
     $route() {
@@ -219,6 +239,12 @@ export default {
           message: error.body.message
         });
       }
+    },
+    changeIsNotCollapse(bool) {
+      Cookies.set('isNotCollapse', bool)
+    },
+    changeIsShowOverflowTooltip(bool) {
+      Cookies.set('isShowOverflowTooltip', bool)
     },
   },
 };
