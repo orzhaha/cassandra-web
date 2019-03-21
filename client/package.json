@@ -14,7 +14,7 @@
     "build": "node build/build.js"
   },
   "dependencies": {
-    "element-ui": "^2.3.7",
+    "element-ui": "^2.6.2",
     "js-cookie": "^2.2.0",
     "json-bigint": "^0.3.0",
     "lodash": "^4.17.10",

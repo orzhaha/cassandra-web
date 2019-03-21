@@ -17,6 +17,7 @@
           v-for="columnData in column.getColumnData()"
           :key="columnData['column_name']"
           :formatter="rowFormatter"
+          :width="columnData['text_rect']['width'] + 6"
           :label="`${columnData['column_name']}`")
             template(slot-scope="scope")
               img.iconKey(
@@ -281,6 +282,7 @@ export default {
         }
       })
     },
+
     handleSizeChange(pagesize) {
       this.$router.push({
         name: 'rows',
@@ -289,6 +291,7 @@ export default {
         }
       })
     },
+
     rowFormatter(row, column, cellValue) {
       return cellValue
     },

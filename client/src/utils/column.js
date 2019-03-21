@@ -6,6 +6,24 @@ import getType from '@/config/data-type'
 
 const service = api.make('root')
 
+const getTextRect = () => {
+  const elId = '__get-text-rect'
+  let elNode = document.getElementById(elId)
+  if (!elNode) {
+    elNode = document.createElement('div')
+    elNode.id = elId
+    elNode.style.cssText = 'visiblity:hidden; opacity: 0; position: fixed; top: -9999px; left: -9999px'
+    document.body.appendChild(elNode)
+  }
+
+  return (text, cssText = 'font-size: 14px; padding: 0 10px;') => {
+    if (typeof text !== 'string') return {}
+    const textElement = `<span style="box-sizing: border-box;${cssText}">${text}</span>`
+    elNode.innerHTML = textElement
+    const elRect = elNode.getBoundingClientRect()
+    return elRect
+  }
+}
 
 class Column {
   constructor(keyspace, table) {
@@ -39,13 +57,15 @@ class Column {
 
     this.columnData = res.get()
 
-    forEach(this.columnData, (item) => {
-      if (get(item, 'column_name')) {
-        this.types[item.column_name] = {
-          cql: get(item, 'type', ''),
-          js: getType(get(item, 'type', '')),
-          kind: get(item, 'kind', ''),
-        }
+    const gtr = getTextRect()
+
+    forEach(this.columnData, (item, index) => {
+      this.columnData[index].text_rect = gtr(get(item, 'column_name'))
+
+      this.types[get(item, 'column_name')] = {
+        cql: get(item, 'type', ''),
+        js: getType(get(item, 'type', '')),
+        kind: get(item, 'kind', ''),
       }
 
       if (get(item, 'kind') === 'partition_key') {

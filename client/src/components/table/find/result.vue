@@ -16,6 +16,7 @@
           v-for="columnData in column.getColumnData()"
           :key="columnData['column_name']"
           :formatter="rowFormatter"
+          :width="columnData['text_rect']['width'] + 6"
           :label="`${columnData['column_name']}`")
             template(slot-scope="scope")
               img.iconKey(
@@ -283,6 +284,7 @@ export default {
     rowStyle() {
       return { cursor: 'pointer' }
     },
+
     jsonParams(jsonString) {
       try {
         return JSONbig.parse(jsonString)
