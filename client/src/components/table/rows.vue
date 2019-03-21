@@ -350,8 +350,6 @@ export default {
           duration: 0,
           message
         });
-
-        this.fetch()
       } catch (error) {
         this.$message({
           type: 'error',
@@ -360,6 +358,8 @@ export default {
           message: error.body.message
         });
       }
+
+      this.fetch()
     },
 
     async deleteData(row) {
