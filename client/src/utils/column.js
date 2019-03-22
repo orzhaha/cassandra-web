@@ -29,6 +29,7 @@ class Column {
   constructor(keyspace, table) {
     this.keyspace = keyspace
     this.table = table
+    this.cloumnTextTotalWidth = 0
     this.partitionKey = []
     this.clusteringKey = []
     this.columnData = []
@@ -47,6 +48,10 @@ class Column {
     return this.columnData
   }
 
+  getCloumnTextTotalWidth() {
+    return this.cloumnTextTotalWidth
+  }
+
   async init() {
     const res = await service.request('columns', {
       query: {
@@ -60,8 +65,9 @@ class Column {
     const gtr = getTextRect()
 
     forEach(this.columnData, (item, index) => {
-      this.columnData[index].text_rect = gtr(get(item, 'column_name'))
-
+      const igtr = gtr(get(item, 'column_name'))
+      this.columnData[index].text_rect = igtr
+      this.cloumnTextTotalWidth = this.cloumnTextTotalWidth + igtr.width + 6
       this.types[get(item, 'column_name')] = {
         cql: get(item, 'type', ''),
         js: getType(get(item, 'type', '')),

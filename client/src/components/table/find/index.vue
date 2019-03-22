@@ -1,5 +1,8 @@
 <template lang="pug">
-  div(class="w100")
+  div(
+    class="w100"
+    id="tablerows"
+    ref="tablerows")
     div(class="w100")
       el-button(
         type="text"
@@ -75,7 +78,8 @@
         :rowData="rowData"
         :originalData="originalData"
         :column="column"
-        :isShowOverflowTooltip="isShowOverflowTooltip")
+        :isShowOverflowTooltip="isShowOverflowTooltip"
+        :componentWidth="componentWidth")
 </template>
 
 <style>
@@ -114,6 +118,7 @@ export default {
       originalData: [],
       columnInput: [],
       column: null,
+      componentWidth: 0,
       partitionOperator: [
         {
           value: '=',
@@ -162,6 +167,10 @@ export default {
     if (isShowOverflowTooltip !== undefined) {
       this.isShowOverflowTooltip = isShowOverflowTooltip === 'true'
     }
+
+    this.$nextTick(() => {
+      this.componentWidth = this.$refs.tablerows.clientWidth
+    });
   },
   watch: {
     $route() {

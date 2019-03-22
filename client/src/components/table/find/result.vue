@@ -16,7 +16,7 @@
           v-for="columnData in column.getColumnData()"
           :key="columnData['column_name']"
           :formatter="rowFormatter"
-          :width="columnData['text_rect']['width'] + 6"
+          :width="(isSetＷidth()) ? columnData['text_rect']['width'] + 6 : undefined"
           :label="`${columnData['column_name']}`")
             template(slot-scope="scope")
               img.iconKey(
@@ -107,6 +107,7 @@ export default {
     'column',
     'find',
     'isShowOverflowTooltip',
+    'componentWidth',
   ],
   data() {
     return {
@@ -128,6 +129,16 @@ export default {
   watch: {
   },
   methods: {
+    isSetＷidth() {
+      if (this.column && this.componentWidth !== 0) {
+        if (this.column.getCloumnTextTotalWidth() >= this.componentWidth) {
+          return true
+        }
+      }
+
+      return false
+    },
+
     isEdit(index, rowKey) {
       return this.isRowEditActive(index) && (!this.column.isPartitionKey(rowKey) && !this.column.isClusteringKey(rowKey))
     },

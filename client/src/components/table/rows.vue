@@ -1,5 +1,8 @@
 <template lang="pug">
-  div(class="w100")
+  div(
+    class="w100"
+    id="tablerows"
+    ref="tablerows")
     el-checkbox(
       class="is-show-overflow-tooltip-checkbox"
       @change="changeIsShowOverflowTooltip"
@@ -17,7 +20,7 @@
           v-for="columnData in column.getColumnData()"
           :key="columnData['column_name']"
           :formatter="rowFormatter"
-          :width="columnData['text_rect']['width'] + 6"
+          :width="(isSetＷidth()) ? columnData['text_rect']['width'] + 6 : undefined"
           :label="`${columnData['column_name']}`")
             template(slot-scope="scope")
               img.iconKey(
@@ -125,6 +128,7 @@ export default {
       rowdata: [],
       rowcount: 0,
       column: null,
+      componentWidth: 0,
       pagesize: 50,
       isRowEdit: null,
       originalData: [],
@@ -142,6 +146,10 @@ export default {
     }
   },
   created() {
+    this.$nextTick(() => {
+      this.componentWidth = this.$refs.tablerows.clientWidth
+    });
+
     this.fetch()
     this.fetchType()
 
@@ -163,6 +171,16 @@ export default {
     }
   },
   methods: {
+    isSetＷidth() {
+      if (this.column && this.componentWidth !== 0) {
+        if (this.column.getCloumnTextTotalWidth() >= this.componentWidth) {
+          return true
+        }
+      }
+
+      return false
+    },
+
     isEdit(index, rowKey) {
       return this.isRowEditActive(index) && (!this.column.isPartitionKey(rowKey) && !this.column.isClusteringKey(rowKey))
     },

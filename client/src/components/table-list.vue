@@ -57,7 +57,7 @@
           span import
     el-table-column(
       prop="id"
-      show-overflow-tooltip="true"
+      :show-overflow-tooltip="true"
       label="id")
 </template>
 <style>
