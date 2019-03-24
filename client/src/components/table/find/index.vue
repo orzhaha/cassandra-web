@@ -36,7 +36,7 @@
             prop="kind"
             label="Operator")
             template(slot-scope="scope")
-              template(v-if="scope.row.kind === 'partition_key'")
+              template(v-if="column.isPartitionKey(scope.row.column_name)")
                 el-select(
                   v-model="columnInput[scope.$index].operator"
                   placeholder='operator')
@@ -45,7 +45,7 @@
                     :key="item.value"
                     :label="item.label"
                     :value="item.value")
-              template(v-else-if="scope.row.kind === 'clustering'")
+              template(v-else-if="column.isClusteringKey(scope.row.column_name)")
                 el-select(
                   v-model="columnInput[scope.$index].operator"
                   placeholder='operator')
@@ -60,7 +60,7 @@
             prop="kind"
             label="Value")
             template(slot-scope="scope")
-              template(v-if="scope.row.kind === 'partition_key' || scope.row.kind === 'clustering' ")
+              template(v-if="column.isPartitionKey(scope.row.column_name) || column.isClusteringKey(scope.row.column_name)")
                 el-input(
                   v-model="columnInput[scope.$index].value"
                   :type="column.inputType(scope.row.column_name)"
@@ -76,18 +76,15 @@
       Result(
         :find="find"
         :rowData="rowData"
-        :originalData="originalData"
         :column="column"
         :isShowOverflowTooltip="isShowOverflowTooltip"
         :componentWidth="componentWidth")
 </template>
 
 <style>
-
   .w100 {
     width: 100%;
   }
-
   .caret-bottom {
     margin: 10px 20px;
   }
@@ -97,7 +94,6 @@
 import JSONbig from 'json-bigint'
 import forEach from 'lodash/forEach'
 import Cookies from 'js-cookie'
-import cloneDeep from 'lodash/cloneDeep'
 import api from '@/api'
 import Result from './result'
 import Column from '../../../utils/column'
@@ -111,14 +107,13 @@ export default {
   },
   data() {
     return {
-      isCollapse: true,
-      isNotCollapse: false,
-      isShowOverflowTooltip: true,
       rowData: [],
-      originalData: [],
       columnInput: [],
       column: null,
       componentWidth: 0,
+      isCollapse: true,
+      isNotCollapse: false,
+      isShowOverflowTooltip: true,
       partitionOperator: [
         {
           value: '=',
@@ -228,8 +223,6 @@ export default {
           return item
         })
 
-        this.originalData = cloneDeep(this.rowData)
-
         if (isShowMsg) {
           const message = (res.get() === []) ? 'success' : `conut: ${rows.length}`
 
@@ -249,9 +242,11 @@ export default {
         });
       }
     },
+
     changeIsNotCollapse(bool) {
       Cookies.set('isNotCollapse', bool)
     },
+
     changeIsShowOverflowTooltip(bool) {
       Cookies.set('isShowOverflowTooltip', bool)
     },

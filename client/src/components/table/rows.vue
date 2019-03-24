@@ -9,17 +9,14 @@
       v-model="isShowOverflowTooltip") Show Overflow Tooltip
     el-table(
       v-if="column"
-      :data="rowdata"
-      :highlight-current-row="true"
+      :data="rowData"
       empty-text="empty data"
       stripe
-      :row-style="rowStyle"
       style="width: 100%")
         el-table-column(
           :show-overflow-tooltip="isShowOverflowTooltip"
           v-for="columnData in column.getColumnData()"
           :key="columnData['column_name']"
-          :formatter="rowFormatter"
           :width="(isSetＷidth()) ? columnData['text_rect']['width'] + 6 : undefined"
           :label="`${columnData['column_name']}`")
             template(slot-scope="scope")
@@ -31,53 +28,24 @@
                 v-if="column.isClusteringKey(columnData['column_name'])"
                 src="../../assets/key-ring.svg"
                 title="Clustering")
-              template(v-if="column.inputType(columnData['column_name']) === '' || column.inputType(columnData['column_name']) === 'textarea'")
-                span(
-                  v-if="!isEdit(scope.$index, columnData['column_name'])")  {{scope.row[columnData['column_name']]}}
-                el-input(
-                  v-else
-                  :type="column.inputType(columnData['column_name'])"
-                  :autosize="{ minRows: 1, maxRows: 10}"
-                  v-model="scope.row[columnData['column_name']]")
+              span {{scope.row[columnData['column_name']]}}
 
-              template(v-else)
-                span(
-                  v-if="!isEdit(scope.$index, columnData['column_name'])") {{scope.row[columnData['column_name']]}}
-                codemirror(
-                  v-else
-                  v-model="scope.row[columnData['column_name']]"
-                  :options="cmOptions")
         el-table-column(
           fixed="right"
           label="Tools"
           width="110")
           el-button-group(slot-scope="scope")
             el-button(
-              v-if="!isRowEditActive(scope.$index)"
               type="primary"
-              @click="activeRowEdit(scope.$index)"
+              @click="handleOpenEditDialog(scope.row)"
               icon="el-icon-edit"
               size="small")
 
-            template(v-else)
-              el-button-group
-                el-button(
-                  type="success"
-                  @click="handleEditRow(scope.$index, scope.row)"
-                  icon="el-icon-check"
-                  size="small")
-                el-button(
-                  type="info"
-                  @click="handleCancelRow(scope.$index)"
-                  icon="el-icon-close"
-                  size="small")
-
             el-button(
-              v-if="!isRowEditActive(scope.$index)"
               type="danger"
               icon="el-icon-delete"
               size="small"
-              @click="handleDelete(scope.row)")
+              @click="handleDeleteConfirm(scope.row)")
 
     el-pagination(:page-size="20"
       @current-change="handleCurrentChange"
@@ -87,17 +55,57 @@
       background
       :pageSize="pagesize"
       :page-sizes="[50, 100, 200, 300, 400, 500]"
-      :total="rowcount"
+      :total="rowCount"
       layout="total, sizes, prev, pager, next")
+
+    el-dialog(
+      :title="`${$route.params.keyspace}.${$route.params.table}`"
+      :visible.sync="editDialogVisible")
+      el-table(
+        id="editTable"
+        ref="editTable"
+        v-if="column"
+        :data="column.getColumnData()"
+        empty-text="empty data"
+        stripe)
+        el-table-column(
+          prop="column_name"
+          label="Field")
+        el-table-column(
+          prop="kind"
+          label="Kind")
+        el-table-column(
+          prop="type"
+          label="Type")
+        el-table-column(
+          prop="kind"
+          label="Value")
+          template(slot-scope="scope")
+            template(v-if="column.isPartitionKey(scope.row.column_name) || column.isClusteringKey(scope.row.column_name)")
+              el-input(
+                v-model="editInputData[scope.$index]"
+                :type="column.inputType(scope.row.column_name)"
+                :disabled="true")
+            template(v-else)
+              el-input(
+                v-model="editInputData[scope.$index]"
+                :type="column.inputType(scope.row.column_name)"
+                :autosize="{ minRows: 1, maxRows: 10}")
+      br
+      el-button(
+        type="danger"
+        icon="el-icon-check"
+        @click="handleSubmitEditDialog") Submit
+      el-button(
+        type="primary"
+        @click="handleCloseEditDialog"
+        icon="el-icon-close") Cancel
+
 </template>
 
 <style>
   .w100 {
     width: 100%;
-  }
-  .CodeMirror {
-    border: 1px solid #eee;
-    height: auto;
   }
   .iconKey {
     width: 15px;
@@ -114,8 +122,6 @@ import forEach from 'lodash/forEach'
 import cloneDeep from 'lodash/cloneDeep'
 import JSONbig from 'json-bigint'
 import Cookies from 'js-cookie'
-import 'codemirror/mode/javascript/javascript'
-import 'codemirror/theme/monokai.css'
 import Column from '../../utils/column'
 
 const service = api.make('root')
@@ -125,24 +131,14 @@ export default {
 
   data() {
     return {
-      rowdata: [],
-      rowcount: 0,
+      rowData: [],
+      rowCount: 0,
       column: null,
       componentWidth: 0,
       pagesize: 50,
-      isRowEdit: null,
-      originalData: [],
+      editDialogVisible: false,
+      editInputData: [],
       isShowOverflowTooltip: true,
-      cmOptions: {
-        mode: {
-          name: 'javascript',
-          json: true
-        },
-        theme: 'monokai',
-        line: true,
-        lineWrapping: true,
-        autofocus: true,
-      },
     }
   },
   created() {
@@ -151,7 +147,7 @@ export default {
     });
 
     this.fetch()
-    this.fetchType()
+    this.fetchColumn()
 
     const isNotCollapse = Cookies.get('isNotCollapse')
 
@@ -171,85 +167,68 @@ export default {
     }
   },
   methods: {
-    isSetＷidth() {
-      if (this.column && this.componentWidth !== 0) {
-        if (this.column.getCloumnTextTotalWidth() >= this.componentWidth) {
-          return true
+    handleOpenEditDialog(row) {
+      this.editDialogVisible = true
+
+      forEach(this.column.getColumnData(), (column, index) => {
+        if (this.column.getJSType(column.column_name) === 'boolean') {
+          this.editInputData[index] = (row[column.column_name]) ? 'true' : 'false'
+        } else {
+          this.editInputData[index] = row[column.column_name];
         }
-      }
 
-      return false
-    },
-
-    isEdit(index, rowKey) {
-      return this.isRowEditActive(index) && (!this.column.isPartitionKey(rowKey) && !this.column.isClusteringKey(rowKey))
-    },
-
-    isRowEditActive(index) {
-      return this.isRowEdit === index
-    },
-
-    async activeRowEdit(index) {
-      if (this.isRowEdit === null) {
-        this.isRowEdit = index
-
-        return
-      }
-
-      if (this.isRowEditActive(index)) {
-        this.isRowEdit = null
-
-        return
-      }
-
-      if (this.isDataChange(
-        JSON.stringify(this.originalData[this.isRowEdit]),
-        JSON.stringify(this.rowdata[this.isRowEdit])
-      )) {
-        await this.$confirm('Do you want to save data on current change ?', '', {
-          confirmButtonText: 'Save',
-          cancelButtonText: 'Cancel',
-        }).then(() => {
-          this.handleEdit(this.isRowEdit, this.rowdata[this.isRowEdit])
-        }).catch(() => {
-          this.fetch()
+        this.$nextTick(() => {
+          this.$refs.editTable.toggleRowExpansion(index, false);
+          this.$refs.editTable.toggleRowExpansion(index, true);
         })
+      })
+    },
+
+    handleCloseEditDialog() {
+      this.editDialogVisible = false
+    },
+
+    async handleSubmitEditDialog() {
+      const row = {}
+
+      forEach(this.column.getColumnData(), (column, index) => {
+        row[column.column_name] = this.jsonParams(this.editInputData[index])
+      })
+
+      try {
+        const res = await service.request('save', {
+          data: {
+            item: JSONbig.stringify(row),
+            table: `${this.$route.params.keyspace}.${this.$route.params.table}`,
+          }
+        })
+
+        const message = (res.get() === []) ? 'success' : res.get()
+
+        this.$message({
+          type: 'success',
+          showClose: true,
+          duration: 0,
+          message
+        });
+      } catch (error) {
+        this.$message({
+          type: 'error',
+          showClose: true,
+          duration: 0,
+          message: error.body.message
+        });
       }
 
-      this.isRowEdit = index
-    },
+      this.editDialogVisible = false
 
-    handleDelete(rowData) {
-      this.$confirm('Are you sure ?', '', {
-        confirmButtonText: 'Delete',
-        cancelButtonText: 'Cancel',
-        confirmButtonClass: 'el-button--danger'
-      }).then(() => {
-        JSON.stringify(rowData)
-        this.deleteData(rowData)
-        this.fetch()
-      }).catch(() => {})
-    },
-
-    handleEditRow(index, rowData) {
-      if (this.isRowEditActive(index)) {
-        this.handleEdit(index, rowData)
-      }
-
-      this.activeRowEdit(index)
-    },
-
-    handleCancelRow(index) {
       this.fetch()
-
-      this.activeRowEdit(index)
     },
 
     async fetch() {
       try {
         const res = await service.request('row', {
           query: {
-            limit: 1000,
             table: `${this.$route.params.keyspace}.${this.$route.params.table}`,
             page: this.$route.params.page,
             pagesize: this.$route.params.pagesize
@@ -258,7 +237,7 @@ export default {
         const rows = res.get('row')
 
         if (rows !== undefined && rows.length > 0) {
-          this.rowdata = rows.map((row) => {
+          this.rowData = rows.map((row) => {
             const item = row
             forEach(item, (itemData, itemKey) => {
               if (typeof (itemData) === 'object') {
@@ -270,12 +249,10 @@ export default {
             return item
           })
 
-          this.originalData = cloneDeep(this.rowdata)
-
-          this.rowcount = res.get('count')
+          this.rowCount = res.get('count')
         } else {
-          this.rowdata = []
-          this.rowcount = 0
+          this.rowData = []
+          this.rowCount = 0
         }
       } catch (error) {
         this.$message({
@@ -286,7 +263,7 @@ export default {
       }
     },
 
-    async fetchType() {
+    async fetchColumn() {
       const column = new Column(this.$route.params.keyspace, this.$route.params.table)
       await column.init()
       this.column = column
@@ -310,77 +287,16 @@ export default {
       })
     },
 
-    rowFormatter(row, column, cellValue) {
-      return cellValue
-    },
-
-    isDataChange(data1, data2) {
-      return JSON.stringify(data1) !== JSON.stringify(data2)
-    },
-
-    async handleEdit(index, newRowData) {
-      if (!this.isDataChange(
-        JSON.stringify(this.originalData[index]),
-        JSON.stringify(newRowData)
-      )) {
-        return
-      }
-
-      // TODO: edit partition_key
-      // if (this.isPartitionKey(rowKey)) {
-      //   await this.$confirm('In the case, it will change the partition_key. are you sure？', '', {
-      //     confirmButtonText: 'Do it',
-      //     cancelButtonText: 'Cancel',
-      //   }).then(() => {
-      //     // this.updateData(row)
-      //     this.$message({
-      //       showClose: true,
-      //       duration: 0,
-      //       message: '尚未開放修改 partition_key 功能'
-      //     })
-      //   }).catch(() => {})
-
-      //   this.fetch()
-
-      //   return
-      // }
-
-      this.updateData(newRowData)
-    },
-
-    async updateData(row) {
-      const cRow = cloneDeep(row)
-
-      forEach(cRow, (itemData, itemKey) => {
-        cRow[itemKey] = this.jsonParams(itemData)
-      })
-
-      try {
-        const res = await service.request('save', {
-          data: {
-            item: JSONbig.stringify(cRow),
-            table: `${this.$route.params.keyspace}.${this.$route.params.table}`,
-          }
-        })
-
-        const message = (res.get() === []) ? 'success' : res.get()
-
-        this.$message({
-          type: 'success',
-          showClose: true,
-          duration: 0,
-          message
-        });
-      } catch (error) {
-        this.$message({
-          type: 'error',
-          showClose: true,
-          duration: 0,
-          message: error.body.message
-        });
-      }
-
-      this.fetch()
+    handleDeleteConfirm(rowData) {
+      this.$confirm('Are you sure ?', '', {
+        confirmButtonText: 'Delete',
+        cancelButtonText: 'Cancel',
+        confirmButtonClass: 'el-button--danger'
+      }).then(() => {
+        JSON.stringify(rowData)
+        this.deleteData(rowData)
+        this.fetch()
+      }).catch(() => {})
     },
 
     async deleteData(row) {
@@ -406,8 +322,6 @@ export default {
           duration: 0,
           message
         });
-
-        this.fetch()
       } catch (error) {
         this.$message({
           type: 'error',
@@ -416,20 +330,30 @@ export default {
           message: error.body.message
         });
       }
+
+      this.fetch()
     },
 
-    rowStyle() {
-      return { cursor: 'pointer' }
+    isSetＷidth() {
+      if (this.column && this.componentWidth !== 0) {
+        if (this.column.getCloumnTextTotalWidth() >= this.componentWidth) {
+          return true
+        }
+      }
+
+      return false
     },
+
+    changeIsShowOverflowTooltip(bool) {
+      Cookies.set('isShowOverflowTooltip', bool)
+    },
+
     jsonParams(jsonString) {
       try {
         return JSONbig.parse(jsonString)
       } catch (e) {
         return jsonString
       }
-    },
-    changeIsShowOverflowTooltip(bool) {
-      Cookies.set('isShowOverflowTooltip', bool)
     },
   }
 };

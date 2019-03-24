@@ -66,8 +66,13 @@ class Column {
 
     forEach(this.columnData, (item, index) => {
       const igtr = gtr(get(item, 'column_name'))
-      this.columnData[index].text_rect = igtr
       this.cloumnTextTotalWidth = this.cloumnTextTotalWidth + igtr.width + 6
+
+      if (igtr.width < 80) {
+        igtr.width = 80
+      }
+
+      this.columnData[index].text_rect = igtr
       this.types[get(item, 'column_name')] = {
         cql: get(item, 'type', ''),
         js: getType(get(item, 'type', '')),
@@ -101,15 +106,15 @@ class Column {
   }
 
   inputType(key) {
-    if (this.getJSType(key) === 'number') {
-      return ''
-    }
-
     if (this.getJSType(key) === 'string') {
       return 'textarea'
     }
 
-    return null
+    if (this.getJSType(key) === 'object') {
+      return 'textarea'
+    }
+
+    return 'text'
   }
 }
 

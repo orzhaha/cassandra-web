@@ -6,16 +6,13 @@
     class="w100")
     el-table(
       :data="rowData"
-      :highlight-current-row="true"
       empty-text="empty data"
       stripe
-      :row-style="rowStyle"
       style="width: 100%")
         el-table-column(
           :show-overflow-tooltip="isShowOverflowTooltip"
           v-for="columnData in column.getColumnData()"
           :key="columnData['column_name']"
-          :formatter="rowFormatter"
           :width="(isSetＷidth()) ? columnData['text_rect']['width'] + 6 : undefined"
           :label="`${columnData['column_name']}`")
             template(slot-scope="scope")
@@ -27,62 +24,72 @@
                 v-if="column.isClusteringKey(columnData['column_name'])"
                 src="../../../assets/key-ring.svg"
                 title="Clustering")
-              template(v-if="column.inputType(columnData['column_name']) === ''|| column.inputType(columnData['column_name']) === 'textarea'")
-                span(
-                  v-if="!isEdit(scope.$index, columnData['column_name'])")  {{scope.row[columnData['column_name']]}}
-                el-input(
-                  v-else
-                  :type="column.inputType(columnData['column_name'])"
-                  :autosize="{ minRows: 1, maxRows: 10}"
-                  v-model="scope.row[columnData['column_name']]")
+              span {{scope.row[columnData['column_name']]}}
 
-              template(v-else)
-                span(
-                  v-if="!isEdit(scope.$index, columnData['column_name'])") {{scope.row[columnData['column_name']]}}
-                codemirror(
-                  v-else
-                  v-model="scope.row[columnData['column_name']]"
-                  :options="cmOptions")
         el-table-column(
           fixed="right"
           label="Tools"
           width="110")
           el-button-group(slot-scope="scope")
             el-button(
-              v-if="!isRowEditActive(scope.$index)"
               type="primary"
-              @click="activeRowEdit(scope.$index)"
+              @click="handleOpenEditDialog(scope.row)"
               icon="el-icon-edit"
               size="small")
 
-            template(v-else)
-              el-button-group
-                el-button(
-                  type="success"
-                  @click="handleEditRow(scope.$index, scope.row)"
-                  icon="el-icon-check"
-                  size="small")
-                el-button(
-                  type="info"
-                  @click="handleCancelRow(scope.$index)"
-                  icon="el-icon-close"
-                  size="small")
-
             el-button(
-              v-if="!isRowEditActive(scope.$index)"
               type="danger"
               icon="el-icon-delete"
               size="small"
-              @click="handleDelete(scope.row)")
+              @click="handleDeleteConfirm(scope.row)")
+
+    el-dialog(
+      :title="`${$route.params.keyspace}.${$route.params.table}`"
+      :visible.sync="editDialogVisible")
+      el-table(
+        id="editTable"
+        ref="editTable"
+        v-if="column"
+        :data="column.getColumnData()"
+        empty-text="empty data"
+        stripe)
+        el-table-column(
+          prop="column_name"
+          label="Field")
+        el-table-column(
+          prop="kind"
+          label="Kind")
+        el-table-column(
+          prop="type"
+          label="Type")
+        el-table-column(
+          prop="kind"
+          label="Value")
+          template(slot-scope="scope")
+            template(v-if="column.isPartitionKey(scope.row.column_name) || column.isClusteringKey(scope.row.column_name)")
+              el-input(
+                v-model="editInputData[scope.$index]"
+                :type="column.inputType(scope.row.column_name)"
+                :disabled="true")
+            template(v-else)
+              el-input(
+                v-model="editInputData[scope.$index]"
+                :type="column.inputType(scope.row.column_name)"
+                :autosize="{ minRows: 1, maxRows: 10}")
+      br
+      el-button(
+        type="danger"
+        icon="el-icon-check"
+        @click="handleSubmitEditDialog") Submit
+      el-button(
+        type="primary"
+        @click="handleCloseEditDialog"
+        icon="el-icon-close") Cancel
 </template>
 
 <style>
   .w100 {
     width: 100%;
-  }
-  .CodeMirror {
-    border: 1px solid #eee;
-    height: auto;
   }
   .iconKey {
     width: 15px;
@@ -94,8 +101,6 @@ import api from '@/api'
 import forEach from 'lodash/forEach'
 import cloneDeep from 'lodash/cloneDeep'
 import JSONbig from 'json-bigint'
-import 'codemirror/mode/javascript/javascript'
-import 'codemirror/theme/monokai.css'
 
 const service = api.make('root')
 
@@ -103,7 +108,6 @@ export default {
   name: 'Result',
   props: [
     'rowData',
-    'originalData',
     'column',
     'find',
     'isShowOverflowTooltip',
@@ -112,16 +116,8 @@ export default {
   data() {
     return {
       isRowEdit: null,
-      cmOptions: {
-        mode: {
-          name: 'javascript',
-          json: true
-        },
-        theme: 'monokai',
-        line: true,
-        lineWrapping: true,
-        autofocus: true,
-      },
+      editDialogVisible: false,
+      editInputData: [],
     }
   },
   created() {
@@ -129,110 +125,38 @@ export default {
   watch: {
   },
   methods: {
-    isSetＷidth() {
-      if (this.column && this.componentWidth !== 0) {
-        if (this.column.getCloumnTextTotalWidth() >= this.componentWidth) {
-          return true
+    handleOpenEditDialog(row) {
+      this.editDialogVisible = true
+
+      forEach(this.column.getColumnData(), (column, index) => {
+        if (this.column.getJSType(column.column_name) === 'boolean') {
+          this.editInputData[index] = (row[column.column_name]) ? 'true' : 'false'
+        } else {
+          this.editInputData[index] = row[column.column_name];
         }
-      }
 
-      return false
-    },
-
-    isEdit(index, rowKey) {
-      return this.isRowEditActive(index) && (!this.column.isPartitionKey(rowKey) && !this.column.isClusteringKey(rowKey))
-    },
-
-    isRowEditActive(index) {
-      return this.isRowEdit === index
-    },
-
-    async activeRowEdit(index) {
-      if (this.isRowEdit === null) {
-        this.isRowEdit = index
-
-        return
-      }
-
-      if (this.isRowEditActive(index)) {
-        this.isRowEdit = null
-
-        return
-      }
-
-      if (this.isDataChange(
-        JSON.stringify(this.originalData[this.isRowEdit]),
-        JSON.stringify(this.rowData[this.isRowEdit])
-      )) {
-        await this.$confirm('Do you want to save data on current change ?', '', {
-          confirmButtonText: 'Save',
-          cancelButtonText: 'Cancel',
-        }).then(() => {
-          this.handleEdit(this.isRowEdit, this.rowData[this.isRowEdit])
-        }).catch(() => {
-          this.find(false)
+        this.$nextTick(() => {
+          this.$refs.editTable.toggleRowExpansion(index, false);
+          this.$refs.editTable.toggleRowExpansion(index, true);
         })
-      }
-
-      this.isRowEdit = index
+      })
     },
 
-    handleDelete(rowData) {
-      this.$confirm('Are you sure ?', '', {
-        confirmButtonText: 'Delete',
-        cancelButtonText: 'Cancel',
-        confirmButtonClass: 'el-button--danger'
-      }).then(() => {
-        JSON.stringify(rowData)
-        this.deleteData(rowData)
-        this.find(false)
-      }).catch(() => {})
+    handleCloseEditDialog() {
+      this.editDialogVisible = false
     },
 
-    handleEditRow(index, rowData) {
-      if (this.isRowEditActive(index)) {
-        this.handleEdit(index, rowData)
-      }
+    async handleSubmitEditDialog() {
+      const row = {}
 
-      this.activeRowEdit(index)
-    },
-
-    handleCancelRow(index) {
-      this.find(false)
-
-      this.activeRowEdit(index)
-    },
-
-    rowFormatter(row, column, cellValue) {
-      return cellValue
-    },
-
-    isDataChange(data1, data2) {
-      return JSON.stringify(data1) !== JSON.stringify(data2)
-    },
-
-    async handleEdit(index, newRowData) {
-      if (!this.isDataChange(
-        JSON.stringify(this.originalData[index]),
-        JSON.stringify(newRowData)
-      )) {
-        return
-      }
-
-      this.updateData(newRowData)
-    },
-
-    async updateData(row) {
-      const cRow = cloneDeep(row)
-
-      forEach(cRow, (itemData, itemKey) => {
-        cRow[itemKey] = this.jsonParams(itemData)
+      forEach(this.column.getColumnData(), (column, index) => {
+        row[column.column_name] = this.jsonParams(this.editInputData[index])
       })
 
       try {
         const res = await service.request('save', {
           data: {
-            item: JSONbig.stringify(cRow),
+            item: JSONbig.stringify(row),
             table: `${this.$route.params.keyspace}.${this.$route.params.table}`,
           }
         })
@@ -254,7 +178,21 @@ export default {
         });
       }
 
+      this.editDialogVisible = false
+
       this.find(false)
+    },
+
+    handleDeleteConfirm(rowData) {
+      this.$confirm('Are you sure ?', '', {
+        confirmButtonText: 'Delete',
+        cancelButtonText: 'Cancel',
+        confirmButtonClass: 'el-button--danger'
+      }).then(() => {
+        JSON.stringify(rowData)
+        this.deleteData(rowData)
+        this.find(false)
+      }).catch(() => {})
     },
 
     async deleteData(row) {
@@ -280,8 +218,6 @@ export default {
           duration: 0,
           message
         });
-
-        this.find(false)
       } catch (error) {
         this.$message({
           type: 'error',
@@ -290,10 +226,18 @@ export default {
           message: error.body.message
         });
       }
+
+      this.find(false)
     },
 
-    rowStyle() {
-      return { cursor: 'pointer' }
+    isSetＷidth() {
+      if (this.column && this.componentWidth !== 0) {
+        if (this.column.getCloumnTextTotalWidth() >= this.componentWidth) {
+          return true
+        }
+      }
+
+      return false
     },
 
     jsonParams(jsonString) {

@@ -31,6 +31,7 @@ import {
   Select,
   Option,
   Checkbox,
+  Dialog,
 } from 'element-ui';
 import lang from 'element-ui/lib/locale/lang/en'
 import locale from 'element-ui/lib/locale'
@@ -63,6 +64,7 @@ Vue.use(Upload);
 Vue.use(Select);
 Vue.use(Option);
 Vue.use(Checkbox);
+Vue.use(Dialog);
 
 Vue.config.lang = 'en-us'
 Vue.prototype.$loading = Loading.service;
