@@ -26,7 +26,7 @@
               span {{scope.row[columnData['column_name']]}}
 
         el-table-column(
-          fixed="right"
+          fixed="left"
           label="Tools"
           width="110")
           el-button-group(slot-scope="scope")
@@ -235,7 +235,7 @@ export default {
 
     isSetＷidth() {
       if (this.column && this.componentWidth !== 0) {
-        if (this.column.getCloumnTextTotalWidth() >= this.componentWidth) {
+        if ((this.column.getCloumnTextTotalWidth() + 110) >= this.componentWidth) {
           return true
         }
       }
