@@ -2,6 +2,7 @@
 el-menu(
   :default-active="$route.params.keyspace"
   class="el-menu-vertical-demo"
+  v-loading="loading"
   :collapse-transition="false"
   :collapse="isCollapse")
 
@@ -43,6 +44,7 @@ export default {
     return {
       isCollapse: false,
       keyspace: [],
+      loading: false,
     }
   },
 
@@ -52,6 +54,8 @@ export default {
 
   methods: {
     async fetch() {
+      this.loading = true
+
       try {
         const res = await service.request('keyspace')
 
@@ -63,6 +67,8 @@ export default {
           message: error
         });
       }
+
+      this.loading = false
     },
 
     async goToKeyspace(keyspace) {

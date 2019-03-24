@@ -1,14 +1,20 @@
 <template lang="pug">
-  codemirror(
-    v-model="content"
-    :options="cmOptions")
+  div(
+    class="w100"
+    v-loading="loading")
+    codemirror(
+      v-model="content"
+      :options="cmOptions")
 </template>
 
 <style>
-.CodeMirror {
-  border: 1px solid #eee;
-  height: auto;
-}
+  .w100 {
+    width: 100%;
+  }
+  .CodeMirror {
+    border: 1px solid #eee;
+    height: auto;
+  }
 </style>
 
 <script>
@@ -23,6 +29,7 @@ export default {
   data() {
     return {
       content: null,
+      loading: false,
       cmOptions: {
         // codemirror options
         tabSize: 4,
@@ -44,6 +51,8 @@ export default {
   },
   methods: {
     async fetch() {
+      this.loading = true
+
       try {
         const res = await service.request('describe', {
           query: {
@@ -59,6 +68,8 @@ export default {
           message: error
         });
       }
+
+      this.loading = false
     }
   }
 };

@@ -1,5 +1,7 @@
 <template lang="pug">
-  div(class="w100")
+  div(
+    class="w100"
+    v-loading="loading")
     el-table(
       :data="rowdata"
       :highlight-current-row="true"
@@ -38,6 +40,7 @@ export default {
       keys: [],
       rowdata: [],
       rowcount: 0,
+      loading: false,
     }
   },
   created() {
@@ -50,6 +53,8 @@ export default {
   },
   methods: {
     async fetch() {
+      this.loading = true
+
       try {
         const res = await service.request('query', {
           data: {
@@ -66,6 +71,8 @@ export default {
             duration: 0,
             message: rows
           });
+
+          this.loading = false
 
           return;
         }
@@ -96,6 +103,8 @@ export default {
           message: error
         });
       }
+
+      this.loading = false
     },
     rowFormatter(row, column, cellValue) {
       return cellValue

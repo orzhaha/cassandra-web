@@ -1,24 +1,19 @@
 <template lang="pug">
-  div.w100
+  div(
+    class="w100"
+    v-loading="loading")
     el-table(
       :data="rowdata"
       :highlight-current-row="true"
       empty-text="empty data"
       stripe
-      :row-style="rowStyle"
       style="width: 100%")
         el-table-column(
           v-for="key in keys"
           :key="key"
-          :formatter="rowFormatter"
           :label="key")
           template(slot-scope="scope")
-            div(
-              @dblclick.stop="handleActive(`${scope.$index}${key}`, scope.row[key])")
-              span(v-if="!isEdit[`${scope.$index}${key}`]") {{scope.row[key]}}
-              el-input(v-else
-                @blur.stop="handleEdit(`${scope.$index}${key}`, scope.row[key], scope.row)"
-                v-model="scope.row[key]")
+              span {{scope.row[key]}}
 </template>
 
 <style>
@@ -40,7 +35,7 @@ export default {
       keys: [],
       rowdata: [],
       isEdit: {},
-      originalData: {}
+      loading: false,
     }
   },
   created() {
@@ -53,6 +48,8 @@ export default {
   },
   methods: {
     async fetch() {
+      this.loading = true
+
       try {
         const res = await service.request('columns', {
           query: {
@@ -87,59 +84,15 @@ export default {
           message: error
         });
       }
+
+      this.loading = false
     },
-    rowFormatter(row, column, cellValue) {
-      return cellValue
-    },
+
     handleActive() {
       return null
     },
     handleEdit() {
       return null
-    },
-    // handleActive(key, colData) {
-    //   this.originalData[key] = colData
-    //   this.$set(this.isEdit, key, !this.isEdit[key])
-    // },
-    // async handleEdit(key, colData, row) {
-    //   this.$set(this.isEdit, key, !this.isEdit[key])
-
-    //   if (this.originalData[key] === colData) {
-    //     return
-    //   }
-    //   const cRow = cloneDeep(row)
-
-    //   forEach(cRow, (itemData, itemKey) => {
-    //     cRow[itemKey] = this.jsonParams(itemData)
-    //   })
-
-    //   try {
-    //     const res = await service.request('save', {
-    //       data: {
-    //         item: JSONbig.stringify(cRow),
-    //         table: `${this.$route.params.keyspace}.${this.$route.params.table}`,
-    //       }
-    //     })
-
-    //     const message = (res.get() === []) ? 'success' : res.get()
-
-    //     this.$message({
-    //       // type: 'success',
-    //       showClose: true,
-    //       duration: 0,
-    //       message
-    //     });
-    //   } catch (error) {
-    //     this.$message({
-    //       type: 'error',
-    //       showClose: true,
-    //       duration: 0,
-    //       message: error.body.message
-    //     });
-    //   }
-    // },
-    rowStyle() {
-      return { cursor: 'pointer' }
     },
     jsonParams(jsonString) {
       try {

@@ -1,11 +1,10 @@
 <template lang="pug">
   div(
-    v-if="rowData.length === 0")
-  div(
-    v-else
+    v-if="rowData.length !== 0"
     class="w100")
     el-table(
       :data="rowData"
+      v-loading="loading"
       empty-text="empty data"
       stripe
       style="width: 100%")
@@ -118,6 +117,7 @@ export default {
       isRowEdit: null,
       editDialogVisible: false,
       editInputData: [],
+      loading: false,
     }
   },
   created() {
@@ -153,6 +153,9 @@ export default {
         row[column.column_name] = this.jsonParams(this.editInputData[index])
       })
 
+      this.editDialogVisible = false
+      this.loading = true
+
       try {
         const res = await service.request('save', {
           data: {
@@ -178,7 +181,7 @@ export default {
         });
       }
 
-      this.editDialogVisible = false
+      this.loading = false
 
       this.find(false)
     },

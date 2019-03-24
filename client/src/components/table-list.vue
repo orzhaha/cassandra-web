@@ -1,64 +1,67 @@
 <template lang="pug">
-  el-table(
-    :data="tabledata"
-    empty-text="empty data"
-    stripe
-    :row-style="rowStyle"
-    style="width: 100%")
-    el-table-column(
-      prop="table_name"
-      label="table_name")
-      template(slot-scope="scope")
-        span(
-          @click="goToTable(scope.row)")
-          i(
-            v-bind:class="[scope.row.views ? 'el-icon-view' : 'el-icon-document']"
-            class="table-list-icon")
-          span {{scope.row.table_name}}
-    el-table-column(
-      prop="table_name"
-      label="find")
-      template(slot-scope="scope")
-        span(
-          @click="goToFind(scope.row)")
-          i(class="table-list-icon el-icon-search")
-          span find
-    el-table-column(
-      prop="table_name"
-      label="columns")
-      template(slot-scope="scope")
-        span(
-          @click="goToColumns(scope.row)")
-          i(class="table-list-icon el-icon-info")
-          span columns
-    el-table-column(
-      prop="table_name"
-      label="definition")
-      template(slot-scope="scope")
-        span(
-          @click="goToDefinition(scope.row)")
-          i(class="table-list-icon el-icon-news")
-          span definition
-    el-table-column(
-      prop="table_name"
-      label="export")
-      template(slot-scope="scope")
-        span(
-          @click="goToExport(scope.row)")
-          i(class="table-list-icon el-icon-download")
-          span export
-    el-table-column(
-      prop="table_name"
-      label="import")
-      template(slot-scope="scope")
-        span(
-          @click="goToImport(scope.row)")
-          i(class="table-list-icon el-icon-upload2")
-          span import
-    el-table-column(
-      prop="id"
-      :show-overflow-tooltip="true"
-      label="id")
+  div(
+    class="w100"
+    v-loading="loading")
+    el-table(
+      :data="tabledata"
+      empty-text="empty data"
+      stripe
+      :row-style="rowStyle"
+      style="width: 100%")
+      el-table-column(
+        prop="table_name"
+        label="table_name")
+        template(slot-scope="scope")
+          span(
+            @click="goToTable(scope.row)")
+            i(
+              v-bind:class="[scope.row.views ? 'el-icon-view' : 'el-icon-document']"
+              class="table-list-icon")
+            span {{scope.row.table_name}}
+      el-table-column(
+        prop="table_name"
+        label="find")
+        template(slot-scope="scope")
+          span(
+            @click="goToFind(scope.row)")
+            i(class="table-list-icon el-icon-search")
+            span find
+      el-table-column(
+        prop="table_name"
+        label="columns")
+        template(slot-scope="scope")
+          span(
+            @click="goToColumns(scope.row)")
+            i(class="table-list-icon el-icon-info")
+            span columns
+      el-table-column(
+        prop="table_name"
+        label="definition")
+        template(slot-scope="scope")
+          span(
+            @click="goToDefinition(scope.row)")
+            i(class="table-list-icon el-icon-news")
+            span definition
+      el-table-column(
+        prop="table_name"
+        label="export")
+        template(slot-scope="scope")
+          span(
+            @click="goToExport(scope.row)")
+            i(class="table-list-icon el-icon-download")
+            span export
+      el-table-column(
+        prop="table_name"
+        label="import")
+        template(slot-scope="scope")
+          span(
+            @click="goToImport(scope.row)")
+            i(class="table-list-icon el-icon-upload2")
+            span import
+      el-table-column(
+        prop="id"
+        :show-overflow-tooltip="true"
+        label="id")
 </template>
 <style>
   .table-list-icon {
@@ -76,7 +79,8 @@ export default {
   name: 'Table',
   data() {
     return {
-      tabledata: []
+      tabledata: [],
+      loading: false,
     }
   },
   created() {
@@ -149,6 +153,8 @@ export default {
     },
 
     async fetch() {
+      this.loading = true
+
       try {
         const res = await service.request('table', {
           query: {
@@ -163,6 +169,8 @@ export default {
           message: error
         });
       }
+
+      this.loading = false
     },
     rowStyle() {
       return { cursor: 'pointer' }

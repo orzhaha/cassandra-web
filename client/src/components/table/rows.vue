@@ -2,7 +2,8 @@
   div(
     class="w100"
     id="tablerows"
-    ref="tablerows")
+    ref="tablerows"
+    v-loading="loading")
     el-checkbox(
       class="is-show-overflow-tooltip-checkbox"
       @change="changeIsShowOverflowTooltip"
@@ -139,6 +140,7 @@ export default {
       editDialogVisible: false,
       editInputData: [],
       isShowOverflowTooltip: true,
+      loading: true,
     }
   },
   created() {
@@ -195,6 +197,9 @@ export default {
         row[column.column_name] = this.jsonParams(this.editInputData[index])
       })
 
+      this.editDialogVisible = false
+      this.loading = true
+
       try {
         const res = await service.request('save', {
           data: {
@@ -220,12 +225,14 @@ export default {
         });
       }
 
-      this.editDialogVisible = false
+      this.loading = false
 
       this.fetch()
     },
 
     async fetch() {
+      this.loading = true
+
       try {
         const res = await service.request('row', {
           query: {
@@ -261,6 +268,8 @@ export default {
           message: error
         });
       }
+
+      this.loading = false
     },
 
     async fetchColumn() {

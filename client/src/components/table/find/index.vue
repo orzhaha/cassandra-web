@@ -2,7 +2,8 @@
   div(
     class="w100"
     id="tablerows"
-    ref="tablerows")
+    ref="tablerows"
+    v-loading="loading")
     div(class="w100")
       el-button(
         type="text"
@@ -114,6 +115,7 @@ export default {
       isCollapse: true,
       isNotCollapse: false,
       isShowOverflowTooltip: true,
+      loading: false,
       partitionOperator: [
         {
           value: '=',
@@ -174,6 +176,8 @@ export default {
   },
   methods: {
     async fetch() {
+      this.loading = true
+
       const column = new Column(this.$route.params.keyspace, this.$route.params.table)
       await column.init()
 
@@ -185,6 +189,8 @@ export default {
       })
 
       this.column = column
+
+      this.loading = false
     },
 
     async find(isShowMsg = true) {
@@ -200,6 +206,8 @@ export default {
           }
         }
       })
+
+      this.loading = true
 
       try {
         const res = await service.request('find', {
@@ -241,6 +249,8 @@ export default {
           message: error.body.message
         });
       }
+
+      this.loading = false
     },
 
     changeIsNotCollapse(bool) {
