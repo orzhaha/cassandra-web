@@ -13,18 +13,8 @@
           v-for="columnData in column.getColumnData()"
           :key="columnData['column_name']"
           :width="(isSetＷidth()) ? columnData['text_rect']['width'] + 6 : undefined"
+          :prop="columnData['column_name']"
           :label="`${columnData['column_name']}`")
-            template(slot-scope="scope")
-              img.iconKey(
-                v-if="column.isPartitionKey(columnData['column_name'])"
-                src="../../../assets/icon-key.svg"
-                title="PartitionKey")
-              img.iconKey(
-                v-if="column.isClusteringKey(columnData['column_name'])"
-                src="../../../assets/key-ring.svg"
-                title="Clustering")
-              span {{scope.row[columnData['column_name']]}}
-
         el-table-column(
           fixed="left"
           label="Tools"
