@@ -1,37 +1,27 @@
 <template lang="pug">
-  div(class="container")
-    div(class="content")
-      div(class="title")
-        router-link(to="/main") Cassandra-Web
+  div(class="ca-content")
+    router-link(
+      class="ca-a"
+      to="/main") Cassandra-Web
 </template>
 <style>
-  html {
-    height: 100%;
+  .ca-content {
+    position: fixed;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    margin: auto;
+    width:702px;
+    height: 135px;
   }
-  body {
-    margin: 0;
-    padding: 0;
+
+  .ca-a {
     width: 100%;
-    height: 100%;
-    color: #B0BEC5;
-    display: table;
-  }
-  .container {
-    text-align: center;
-    display: table-cell;
-    vertical-align: middle;
-  }
-  .content {
-    text-align: center;
-    display: inline-block;
-  }
-  .title {
     font-size: 96px;
     margin-bottom: 40px;
     font-weight: 100;
     font-family: 'Lato';
-  }
-  a {
     color: #B0BEC5;
     text-decoration:none;
   }
