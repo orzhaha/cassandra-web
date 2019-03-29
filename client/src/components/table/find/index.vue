@@ -77,6 +77,11 @@
       Result(
         :find="find"
         :rowData="rowData"
+        :rowCount="rowCount"
+        :handleCurrentChange="handleCurrentChange"
+        :handleSizeChange="handleSizeChange"
+        :page="page"
+        :pagesize="pagesize"
         :column="column"
         :isShowOverflowTooltip="isShowOverflowTooltip"
         :componentWidth="componentWidth")
@@ -109,9 +114,12 @@ export default {
   data() {
     return {
       rowData: [],
+      rowCount: 0,
       columnInput: [],
       column: null,
       componentWidth: 0,
+      page: 0,
+      pagesize: 50,
       isCollapse: true,
       isNotCollapse: false,
       isShowOverflowTooltip: true,
@@ -214,6 +222,8 @@ export default {
           data: {
             table: `${this.$route.params.keyspace}.${this.$route.params.table}`,
             item: reqItem,
+            page: parseInt(this.page, 10),
+            pagesize: parseInt(this.pagesize, 10),
           }
         })
 
@@ -231,8 +241,10 @@ export default {
           return item
         })
 
+        this.rowCount = res.get('count')
+
         if (isShowMsg) {
-          const message = (res.get() === []) ? 'success' : `conut: ${rows.length}`
+          const message = (res.get() === []) ? 'success' : `conut: ${this.rowCount}`
 
           this.$message({
             type: 'success',
@@ -251,6 +263,16 @@ export default {
       }
 
       this.loading = false
+    },
+
+    handleCurrentChange(page) {
+      this.page = page
+      this.find(false)
+    },
+
+    handleSizeChange(pagesize) {
+      this.pagesize = pagesize
+      this.find(false)
     },
 
     changeIsNotCollapse(bool) {

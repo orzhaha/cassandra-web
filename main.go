@@ -487,9 +487,11 @@ func (h *Handler) Delete(c echo.Context) error {
 // Find 搜尋row
 func (h *Handler) Find(c echo.Context) error {
 	req := struct {
-		Table   string                            `json:"table" form:"table" query:"table"`
-		Item    map[string]map[string]interface{} `json:"item" form:"item" query:"item"`
-		OrderBy []map[string]string               `json:"order_by" form:"order_by" query:"order_by"`
+		Table    string                            `json:"table" form:"table" query:"table"`
+		Item     map[string]map[string]interface{} `json:"item" form:"item" query:"item"`
+		OrderBy  []map[string]string               `json:"order_by" form:"order_by" query:"order_by"`
+		Pagesize int                               `json:"pagesize" form:"pagesize" query:"pagesize"`
+		Page     int                               `json:"page" form:"page" query:"page"`
 	}{}
 
 	if err := c.Bind(&req); err != nil {
@@ -538,26 +540,42 @@ func (h *Handler) Find(c echo.Context) error {
 		}
 	}
 
-	cql := `SELECT * FROM ` + req.Table + ` WHERE `
-	cql += strings.Join(append(partitionCql, clusteringCql...), " AND ")
+	data := make(map[string]interface{})
 
-	if len(orderByCql) > 0 {
-		cql += " ORDER BY "
-		cql += strings.Join(orderByCql, " , ")
+	conutCql := fmt.Sprintf("SELECT COUNT(*) FROM %s WHERE %s %s", req.Table, strings.Join(partitionCql, " AND "), strings.Join(clusteringCql, " AND "))
+	countIter := h.Session.Query(conutCql).Iter()
+	countRet, err := countIter.SliceMap()
+
+	if err != nil {
+		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
 	}
 
-	rowIter := h.Session.Query(cql).Iter()
+	data["count"] = countRet[0]["count"]
+
+	if req.Page == 0 {
+		req.Page = 1
+	}
+
+	limit_end := req.Page * req.Pagesize
+	limit_start := limit_end - req.Pagesize
+	i := 0
+
+	rowCql := fmt.Sprintf("SELECT * FROM %s WHERE %s %s LIMIT %d", req.Table, strings.Join(partitionCql, " AND "), strings.Join(clusteringCql, " AND "), limit_end)
+	rowIter := h.Session.Query(rowCql).Iter()
 	rowData := make([]map[string]interface{}, 0)
 
 	for {
+		i++
+
 		row := make(map[string]interface{})
 		if !rowIter.MapScan(row) {
 			break
 		}
-		rowData = append(rowData, OutputTransformType(row))
+		if i > limit_start {
+			rowData = append(rowData, OutputTransformType(row))
+		}
 	}
 
-	data := make(map[string]interface{})
 	data["row"] = rowData
 
 	return c.JSON(http.StatusOK, data)

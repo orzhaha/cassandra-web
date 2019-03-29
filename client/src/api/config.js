@@ -3,18 +3,6 @@ export const domain = window.location.origin
 
 const config = {
   root: {
-    keyspace: {
-      type: 'GET',
-      url: `${domain}/keyspace`
-    },
-    table: {
-      type: 'GET',
-      url: `${domain}/table`
-    },
-    row: {
-      type: 'GET',
-      url: `${domain}/row`
-    },
     find: {
       type: 'POST',
       url: `${domain}/find`
@@ -31,6 +19,26 @@ const config = {
       type: 'POST',
       url: `${domain}/delete`
     },
+    import: {
+      type: 'POST',
+      url: `${domain}/import`
+    },
+    rowtoken: {
+      type: 'POST',
+      url: `${domain}/rowtoken`
+    },
+    keyspace: {
+      type: 'GET',
+      url: `${domain}/keyspace`
+    },
+    table: {
+      type: 'GET',
+      url: `${domain}/table`
+    },
+    row: {
+      type: 'GET',
+      url: `${domain}/row`
+    },
     columns: {
       type: 'GET',
       url: `${domain}/columns`
@@ -42,10 +50,6 @@ const config = {
     export: {
       type: 'GET',
       url: `${domain}/export`
-    },
-    import: {
-      type: 'POST',
-      url: `${domain}/import`
     }
   }
 }

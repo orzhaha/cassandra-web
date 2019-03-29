@@ -31,6 +31,10 @@ export default {
           trigger: this.showRows
         },
         {
+          name: 'rowstoken',
+          trigger: this.RowsToken
+        },
+        {
           name: 'find',
           trigger: this.Find
         },
@@ -70,6 +74,15 @@ export default {
         name: 'rows',
         params: {
           page: 1,
+          pagesize: 50
+        }
+      })
+    },
+
+    RowsToken() {
+      this.$router.push({
+        name: 'rowstoken',
+        params: {
           pagesize: 50
         }
       })

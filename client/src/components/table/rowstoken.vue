@@ -1,10 +1,16 @@
 <template lang="pug">
   div(
-    v-if="rowData.length !== 0"
-    class="w100")
+    class="w100"
+    id="tablerows"
+    ref="tablerows"
+    v-loading="loading")
+    el-checkbox(
+      class="is-show-overflow-tooltip-checkbox"
+      @change="changeIsShowOverflowTooltip"
+      v-model="isShowOverflowTooltip") Show Overflow Tooltip
     el-table(
+      v-if="column"
       :data="rowData"
-      v-loading="loading"
       empty-text="empty data"
       stripe
       style="width: 100%")
@@ -31,16 +37,15 @@
               icon="el-icon-delete"
               size="small"
               @click="handleDeleteConfirm(scope.row)")
-    el-pagination(:page-size="20"
-      @current-change="handleCurrentChange"
-      @prev-click="handleCurrentChange"
-      @next-click="handleCurrentChange"
+
+    el-pagination(:page-size="50"
+      @next-click="handleNextClick"
       @size-change="handleSizeChange"
       background
       :pageSize="pagesize"
       :page-sizes="[50, 100, 200, 300, 400, 500]"
-      :total="rowCount"
-      layout="total, sizes, prev, pager, next")
+      :current-page="2"
+      layout="sizes, next")
 
     el-dialog(
       :title="`${$route.params.keyspace}.${$route.params.table}`"
@@ -84,6 +89,7 @@
         type="primary"
         @click="handleCloseEditDialog"
         icon="el-icon-close") Cancel
+
 </template>
 
 <style>
@@ -94,40 +100,62 @@
     width: 15px;
     height: auto;
   }
+  .is-show-overflow-tooltip-checkbox {
+    margin: 10px 20px;
+    padding: 12px 0px;
+  }
 </style>
 <script>
 import api from '@/api'
 import forEach from 'lodash/forEach'
 import cloneDeep from 'lodash/cloneDeep'
 import JSONbig from 'json-bigint'
+import Cookies from 'js-cookie'
+import Column from '../../utils/column'
 
 const service = api.make('root')
 
 export default {
-  name: 'Result',
-  props: [
-    'rowData',
-    'rowCount',
-    'handleCurrentChange',
-    'handleSizeChange',
-    'page',
-    'pagesize',
-    'column',
-    'find',
-    'isShowOverflowTooltip',
-    'componentWidth',
-  ],
+  name: 'Rows',
+
   data() {
     return {
-      isRowEdit: null,
+      rowData: [],
+      itemData: {},
+      prevNext: 'next',
+      column: null,
+      componentWidth: 0,
+      pagesize: 50,
       editDialogVisible: false,
       editInputData: [],
-      loading: false,
+      isShowOverflowTooltip: true,
+      loading: true,
     }
   },
   created() {
+    this.$nextTick(() => {
+      this.componentWidth = this.$refs.tablerows.clientWidth
+    });
+
+    this.fetch()
+    this.fetchColumn()
+
+    const isNotCollapse = Cookies.get('isNotCollapse')
+
+    if (isNotCollapse !== undefined) {
+      this.isNotCollapse = isNotCollapse === 'true'
+    }
+
+    const isShowOverflowTooltip = Cookies.get('isShowOverflowTooltip')
+
+    if (isShowOverflowTooltip !== undefined) {
+      this.isShowOverflowTooltip = isShowOverflowTooltip === 'true'
+    }
   },
   watch: {
+    $route() {
+      this.fetch()
+    }
   },
   methods: {
     handleOpenEditDialog(row) {
@@ -188,7 +216,79 @@ export default {
 
       this.loading = false
 
-      this.find(false)
+      this.fetch()
+    },
+
+    async fetch() {
+      this.loading = true
+
+      try {
+        const res = await service.request('rowtoken', {
+          data: {
+            table: `${this.$route.params.keyspace}.${this.$route.params.table}`,
+            item: this.itemData,
+            prevnext: this.prevNext,
+            pagesize: parseInt(this.$route.params.pagesize, 10)
+          }
+        })
+        const rows = res.get('row')
+
+        if (rows !== undefined && rows.length > 0) {
+          this.rowData = rows.map((row) => {
+            const item = row
+            forEach(item, (itemData, itemKey) => {
+              if (typeof (itemData) === 'object') {
+                item[itemKey] = JSONbig.stringify(itemData)
+              } else {
+                item[itemKey] = itemData
+              }
+            })
+            return item
+          })
+        } else {
+          this.$message({
+            type: 'error',
+            showClose: true,
+            duration: 0,
+            message: 'No data'
+          });
+        }
+      } catch (error) {
+        this.$message({
+          type: 'error',
+          showClose: true,
+          message: error
+        });
+      }
+
+      this.loading = false
+    },
+
+    async fetchColumn() {
+      const column = new Column(this.$route.params.keyspace, this.$route.params.table)
+      await column.init()
+      this.column = column
+    },
+
+    async handlePrevClick() {
+      this.itemData = this.rowData[0]
+      this.prevNext = 'prev'
+      this.fetch()
+    },
+
+    async handleNextClick() {
+      this.itemData = this.rowData[this.rowData.length - 1]
+      this.prevNext = 'next'
+      this.fetch()
+    },
+
+    handleSizeChange(pagesize) {
+      this.$router.push({
+        name: 'rowstoken',
+        params: {
+          pagesize
+        }
+      })
     },
 
     handleDeleteConfirm(rowData) {
@@ -199,7 +299,7 @@ export default {
       }).then(() => {
         JSON.stringify(rowData)
         this.deleteData(rowData)
-        this.find(false)
+        this.fetch()
       }).catch(() => {})
     },
 
@@ -235,7 +335,7 @@ export default {
         });
       }
 
-      this.find(false)
+      this.fetch()
     },
 
     isSetＷidth() {
@@ -248,13 +348,17 @@ export default {
       return false
     },
 
+    changeIsShowOverflowTooltip(bool) {
+      Cookies.set('isShowOverflowTooltip', bool)
+    },
+
     jsonParams(jsonString) {
       try {
         return JSONbig.parse(jsonString)
       } catch (e) {
         return jsonString
       }
-    }
+    },
   }
 };
 </script>

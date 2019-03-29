@@ -6,6 +6,7 @@ import TableList from '@/components/table-list'
 import Table from '@/components/table'
 import Content from '@/components/table/content'
 import Rows from '@/components/table/rows'
+import RowsToken from '@/components/table/rowstoken'
 import Columns from '@/components/table/columns'
 import Definition from '@/components/table/definition'
 import Export from '@/components/table/export'
@@ -52,6 +53,12 @@ export default new Router({
               path: 'rows/:page/:pagesize',
               name: 'rows',
               component: Rows,
+            },
+
+            {
+              path: 'rowstoken/:pagesize',
+              name: 'rowstoken',
+              component: RowsToken,
             },
 
             {
