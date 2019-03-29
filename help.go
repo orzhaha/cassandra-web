@@ -99,7 +99,53 @@ func OutputTransformType(row map[string]interface{}) map[string]interface{} {
 	return row
 }
 
-func cqlFormat(columnName string, columnType string, columnVal interface{}, operator string) string {
+func cqlFormatValue(columnType string, columnVal interface{}) string {
+	switch columnType {
+	case BigintType:
+		return fmt.Sprintf("%v", columnVal)
+	case BlobType:
+		return fmt.Sprintf("%v", columnVal)
+	case BooleanType:
+		return fmt.Sprintf("%v", columnVal)
+	case CounterType:
+		return fmt.Sprintf("%v", columnVal)
+	case DecimalType:
+		return fmt.Sprintf("%v", columnVal)
+	case DoubleType:
+		return fmt.Sprintf("%v", columnVal)
+	case FloatType:
+		return fmt.Sprintf("%v", columnVal)
+	case FrozenType:
+		return fmt.Sprintf("%v", columnVal)
+	case IntType:
+		return fmt.Sprintf("%v", columnVal)
+	case ListType:
+		b, _ := jsoni.Marshal(columnVal)
+		return fmt.Sprintf("%v", string(b))
+	case MapType:
+		b, _ := jsoni.Marshal(columnVal)
+		return fmt.Sprintf("%v", string(b))
+	case SetType:
+		b, _ := jsoni.Marshal(columnVal)
+		return fmt.Sprintf("%v", string(b))
+	case AsciiType:
+		return fmt.Sprintf("'%v'", columnVal)
+	case TextType:
+		return fmt.Sprintf("'%v'", columnVal)
+	case TimeType:
+		return fmt.Sprintf("'%v'", columnVal)
+	case DateType:
+		return fmt.Sprintf("'%v'", columnVal)
+	case InetType:
+		return fmt.Sprintf("'%v'", columnVal)
+	case VarcharType:
+		return fmt.Sprintf("'%v'", columnVal)
+	default:
+		return ""
+	}
+}
+
+func cqlFormatWhere(columnName string, columnType string, columnVal interface{}, operator string) string {
 	switch columnType {
 	case BigintType:
 		return fmt.Sprintf("%s %s %v", columnName, operator, columnVal)

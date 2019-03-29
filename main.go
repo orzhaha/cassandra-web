@@ -153,16 +153,17 @@ func run(c *cli.Context) {
 
 	e.POST("/query", h.Query)
 	e.POST("/save", h.Save)
+	e.POST("/delete", h.Delete)
+	e.POST("/find", h.Find)
+	e.POST("/import", h.Import)
+	e.POST("/rowtoken", h.RowToken)
 
 	e.GET("/keyspace", h.KeySpace)
 	e.GET("/table", h.Table)
 	e.GET("/row", h.Row)
 	e.GET("/describe", h.Describe)
 	e.GET("/columns", h.Columns)
-	e.POST("/delete", h.Delete)
-	e.POST("/find", h.Find)
 	e.GET("/export", h.Export)
-	e.POST("/import", h.Import)
 
 	// Start server
 	e.Logger.Fatal(e.Start(env.HostPort))
@@ -259,6 +260,67 @@ func (h *Handler) Table(c echo.Context) error {
 	ret = append(ret, ret2...)
 
 	return c.JSON(http.StatusOK, ret)
+}
+
+// RowToken
+func (h *Handler) RowToken(c echo.Context) error {
+	req := struct {
+		Table    string                 `json:"table" form:"table" query:"table"`
+		Item     map[string]interface{} `json:"item" form:"item" query:"item"`
+		PrevNext string                 `json:"prevnext" form:"prevnext" query:"prevnext"`
+		Pagesize int                    `json:"pagesize" form:"pagesize" query:"pagesize"`
+	}{}
+
+	var cqlColumnName []string
+	var cqlColumnValue []string
+	prevNext := ">"
+	cql := ""
+
+	if err := c.Bind(&req); err != nil {
+		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
+	}
+
+	if len(req.Item) < 1 {
+		cql = fmt.Sprintf("SELECT * FROM %s LIMIT %d", req.Table, req.Pagesize)
+	} else {
+		if req.PrevNext == "prev" {
+			prevNext = "<"
+		}
+
+		schema := h.GetSchema(req.Table)
+
+		for _, v := range schema {
+			columnName := v["column_name"].(string)
+			columnType := v["type"].(string)
+
+			if _, ok := req.Item[columnName]; !ok {
+				continue
+			}
+
+			if v["kind"].(string) == PartitionKey {
+				cqlColumnName = append(cqlColumnName, columnName)
+				cqlColumnValue = append(cqlColumnValue, cqlFormatValue(columnType, req.Item[columnName]))
+			}
+		}
+
+		cql = fmt.Sprintf("SELECT * FROM %s WHERE token(%s) %s token(%s) LIMIT %d", req.Table, strings.Join(cqlColumnName, ","), prevNext, strings.Join(cqlColumnValue, ","), req.Pagesize)
+	}
+
+	rowIter := h.Session.Query(cql).Iter()
+	rowData := make([]map[string]interface{}, 0)
+
+	for {
+		row := make(map[string]interface{})
+		if !rowIter.MapScan(row) {
+			break
+		}
+		rowData = append(rowData, OutputTransformType(row))
+	}
+
+	data := make(map[string]interface{})
+	data["row"] = rowData
+
+	return c.JSON(http.StatusOK, data)
 }
 
 // Row 取的table的row資料處理 (資量大時需耗費很多效能)
@@ -406,9 +468,9 @@ func (h *Handler) Delete(c echo.Context) error {
 		columnName := v["column_name"].(string)
 
 		if kind == PartitionKey {
-			partitionCql = append(partitionCql, cqlFormat(columnName, columnType, item[columnName], "="))
+			partitionCql = append(partitionCql, cqlFormatWhere(columnName, columnType, item[columnName], "="))
 		} else if kind == ClusteringKey {
-			clusteringCql = append(clusteringCql, cqlFormat(columnName, columnType, item[columnName], "="))
+			clusteringCql = append(clusteringCql, cqlFormatWhere(columnName, columnType, item[columnName], "="))
 		}
 	}
 
@@ -466,13 +528,13 @@ func (h *Handler) Find(c echo.Context) error {
 				continue
 			}
 
-			partitionCql = append(partitionCql, cqlFormat(columnName, columnType, req.Item[columnName]["value"], "="))
+			partitionCql = append(partitionCql, cqlFormatWhere(columnName, columnType, req.Item[columnName]["value"], "="))
 		} else if kind == ClusteringKey {
 			if _, ok := req.Item[columnName]; !ok {
 				continue
 			}
 
-			clusteringCql = append(clusteringCql, cqlFormat(columnName, columnType, req.Item[columnName]["value"], req.Item[columnName]["operator"].(string)))
+			clusteringCql = append(clusteringCql, cqlFormatWhere(columnName, columnType, req.Item[columnName]["value"], req.Item[columnName]["operator"].(string)))
 		}
 	}
 
