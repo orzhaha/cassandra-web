@@ -1,6 +1,6 @@
 # cassandra-web
 cassandra web ui
-![index](index.png)
+![index](webui.gif)
 
 ## Features
 * Table Row Prev Next Page
