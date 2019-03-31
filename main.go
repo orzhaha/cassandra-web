@@ -63,9 +63,11 @@ var env envStruct
 
 // envStruct type
 type envStruct struct {
-	HostPort      string `mapstructure:"HOST_PORT" json:"HOST_PORT"`
-	CassandraHost string `mapstructure:"CASSANDRA_HOST" json:"CASSANDRA_HOST"`
-	CassandraPort int    `mapstructure:"CASSANDRA_PORT" json:"CASSANDRA_PORT"`
+	HostPort          string `mapstructure:"HOST_PORT" json:"HOST_PORT"`
+	CassandraHost     string `mapstructure:"CASSANDRA_HOST" json:"CASSANDRA_HOST"`
+	CassandraPort     int    `mapstructure:"CASSANDRA_PORT" json:"CASSANDRA_PORT"`
+	CassandraUsername string `mapstructure:"CASSANDRA_USERNAME" json:"CASSANDRA_USERNAME"`
+	CassandraPassword string `mapstructure:"CASSANDRA_PASSWORD" json:"CASSANDRA_PASSWORD"`
 }
 
 func main() {
@@ -125,6 +127,13 @@ func run(c *cli.Context) {
 	cluster.RetryPolicy = &gocql.SimpleRetryPolicy{NumRetries: 20}
 	cluster.NumConns = 10
 	cluster.Consistency = gocql.One
+
+	if env.CassandraUsername != "" && env.CassandraPassword != "" {
+		cluster.Authenticator = gocql.PasswordAuthenticator{
+			Username: env.CassandraUsername,
+			Password: env.CassandraPassword,
+		}
+	}
 
 	session, err := cluster.CreateSession()
 
