@@ -26,12 +26,12 @@ export default {
       defaultActive: get(arr, 5),
 
       tabs: [
+        // {
+        //   name: 'rows',
+        //   trigger: this.showRows
+        // },
         {
           name: 'rows',
-          trigger: this.showRows
-        },
-        {
-          name: 'rowstoken',
           trigger: this.RowsToken
         },
         {

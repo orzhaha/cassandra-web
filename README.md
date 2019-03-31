@@ -3,7 +3,7 @@ cassandra web ui
 ![index](index.png)
 
 ## Features
-* Table Row Page
+* Table Row Prev Next Page
 * Table Row Edit
 * Table Row Delete
 * Table Rown Find

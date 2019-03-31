@@ -53,6 +53,28 @@ curl \
   http://localhost/row?table=ca.abc&limit=5&token_key=a&next_token=Serenity
 ```
 
+----
+
+##### /rowtoken (get all row in table by token)
+
+##### params
+
+* table
+* item
+* prevnext
+* pagesize
+
+##### return：Json object
+
+##### example：
+
+```sh
+curl \
+  -X POST \
+  -H 'Content-Type: application/json' \
+  -d '{"table":"table_name", "item":"{field1:value1, field2:value2}", "prevnext": "next", "pagesize": 10}'
+```
+
 ---
 
 ##### /query (cql query)
@@ -163,7 +185,9 @@ curl \
 
 * table
 * item
-* order_by array[object{name:columns_name,order:asc|desc}] 只能是clustering key 而且要按照順序來
+* order_by array[object{name:columns_name,order:asc|desc}] only clustering key and by order
+* pagesize
+* page
 
 ##### return：Json object
 
@@ -174,7 +198,7 @@ curl \
   -X POST \
   http://localhost/save \
   -H 'Content-Type: application/json' \
-  -d '{"table":"tablename","item":{"order_id":{"operator":"=","value":"123"},"order_time":{"operator":"=","value":"456"}}}'
+  -d '{"table":"tablename","item":{"order_id":{"operator":"=","value":"123"},"order_time":{"operator":"=","value":"456"}}, "page": 1, "pagesize": 10}'
 ```
 
 ---

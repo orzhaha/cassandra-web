@@ -40,12 +40,12 @@
 
     el-pagination(:page-size="50"
       @next-click="handleNextClick"
+      @prev-click="handlePrevClick"
       @size-change="handleSizeChange"
       background
-      :pageSize="pagesize"
       :page-sizes="[50, 100, 200, 300, 400, 500]"
-      :current-page="2"
-      layout="sizes, next")
+      :current-page.sync="currentPage"
+      layout="sizes, prev, next")
 
     el-dialog(
       :title="`${$route.params.keyspace}.${$route.params.table}`"
@@ -120,12 +120,13 @@ export default {
 
   data() {
     return {
+      tokenRowData: [],
       rowData: [],
       itemData: {},
       prevNext: 'next',
       column: null,
       componentWidth: 0,
-      pagesize: 50,
+      currentPage: 1,
       editDialogVisible: false,
       editInputData: [],
       isShowOverflowTooltip: true,
@@ -219,14 +220,14 @@ export default {
       this.fetch()
     },
 
-    async fetch() {
+    async fetch(findItemData) {
       this.loading = true
 
       try {
         const res = await service.request('rowtoken', {
           data: {
             table: `${this.$route.params.keyspace}.${this.$route.params.table}`,
-            item: this.itemData,
+            item: findItemData,
             prevnext: this.prevNext,
             pagesize: parseInt(this.$route.params.pagesize, 10)
           }
@@ -252,6 +253,9 @@ export default {
             duration: 0,
             message: 'No data'
           });
+
+          this.loading = false
+          return false
         }
       } catch (error) {
         this.$message({
@@ -259,9 +263,13 @@ export default {
           showClose: true,
           message: error
         });
+
+        this.loading = false
+        return false
       }
 
       this.loading = false
+      return true
     },
 
     async fetchColumn() {
@@ -270,19 +278,22 @@ export default {
       this.column = column
     },
 
-    async handlePrevClick() {
-      this.itemData = this.rowData[0]
-      this.prevNext = 'prev'
-      this.fetch()
+    async handlePrevClick(page) {
+      this.prevNext = 'next'
+      this.fetch(this.tokenRowData[page])
     },
 
-    async handleNextClick() {
-      this.itemData = this.rowData[this.rowData.length - 1]
+    async handleNextClick(page) {
+      this.tokenRowData[page] = this.rowData[this.rowData.length - 1]
       this.prevNext = 'next'
-      this.fetch()
+
+      if (!await this.fetch(this.tokenRowData[page])) {
+        this.currentPage = page - 1
+      }
     },
 
     handleSizeChange(pagesize) {
+      this.currentPage = 1
       this.$router.push({
         name: 'rowstoken',
         params: {
