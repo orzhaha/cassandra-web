@@ -1,5 +1,4 @@
 # cassandra-web
-cassandra web ui
 ![index](webui.gif)
 
 ## Features
