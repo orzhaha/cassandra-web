@@ -280,8 +280,12 @@ func (h *Handler) RowToken(c echo.Context) error {
 		Pagesize int                    `json:"pagesize" form:"pagesize" query:"pagesize"`
 	}{}
 
-	var cqlColumnName []string
-	var cqlColumnValue []string
+	var (
+		cqlColumnName  []string
+		cqlColumnValue []interface{}
+		cqlPlaceholder []string
+	)
+
 	prevNext := ">"
 	cql := ""
 
@@ -300,7 +304,6 @@ func (h *Handler) RowToken(c echo.Context) error {
 
 		for _, v := range schema {
 			columnName := v["column_name"].(string)
-			columnType := v["type"].(string)
 
 			if _, ok := req.Item[columnName]; !ok {
 				continue
@@ -308,14 +311,15 @@ func (h *Handler) RowToken(c echo.Context) error {
 
 			if v["kind"].(string) == PartitionKey {
 				cqlColumnName = append(cqlColumnName, columnName)
-				cqlColumnValue = append(cqlColumnValue, cqlFormatValue(columnType, req.Item[columnName]))
+				cqlColumnValue = append(cqlColumnValue, req.Item[columnName])
+				cqlPlaceholder = append(cqlPlaceholder, "?")
 			}
 		}
 
-		cql = fmt.Sprintf("SELECT * FROM %s WHERE token(%s) %s token(%s) LIMIT %d", req.Table, strings.Join(cqlColumnName, ","), prevNext, strings.Join(cqlColumnValue, ","), req.Pagesize)
+		cql = fmt.Sprintf("SELECT * FROM %s WHERE token(%s) %s token(%s) LIMIT %d", req.Table, strings.Join(cqlColumnName, ","), prevNext, strings.Join(cqlPlaceholder, ","), req.Pagesize)
 	}
 
-	rowIter := h.Session.Query(cql).Iter()
+	rowIter := h.Session.Query(cql, cqlColumnValue...).Iter()
 	rowData := make([]map[string]interface{}, 0)
 
 	for {
@@ -468,25 +472,28 @@ func (h *Handler) Delete(c echo.Context) error {
 
 	schema := h.GetSchema(req.Table)
 
-	var partitionCql []string
-	var clusteringCql []string
+	var (
+		partitionCql    []string
+		clusteringCql   []string
+		partitionValue  []interface{}
+		clusteringValue []interface{}
+	)
 
 	for _, v := range schema {
 		kind := v["kind"].(string)
-		columnType := v["type"].(string)
 		columnName := v["column_name"].(string)
 
 		if kind == PartitionKey {
-			partitionCql = append(partitionCql, cqlFormatWhere(columnName, columnType, item[columnName], "="))
+			partitionCql = append(partitionCql, cqlFormatWhere(columnName, "="))
+			partitionValue = append(partitionValue, item[columnName])
 		} else if kind == ClusteringKey {
-			clusteringCql = append(clusteringCql, cqlFormatWhere(columnName, columnType, item[columnName], "="))
+			clusteringCql = append(clusteringCql, cqlFormatWhere(columnName, "="))
+			clusteringValue = append(clusteringValue, item[columnName])
 		}
 	}
 
-	cql := `DELETE FROM ` + req.Table + ` WHERE `
-	cql += strings.Join(append(partitionCql, clusteringCql...), " AND ")
-
-	if err := h.Session.Query(cql).Exec(); err != nil {
+	cql := fmt.Sprintf("DELETE FROM %s WHERE %s ", req.Table, strings.Join(append(partitionCql, clusteringCql...), " AND "))
+	if err := h.Session.Query(cql, append(partitionValue, clusteringValue...)...).Exec(); err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
 	}
 
@@ -509,9 +516,13 @@ func (h *Handler) Find(c echo.Context) error {
 
 	schema := h.GetSchema(req.Table)
 
-	var partitionCql []string
-	var clusteringCql []string
-	var orderByCql []string
+	var (
+		partitionCql    []string
+		clusteringCql   []string
+		partitionValue  []interface{}
+		clusteringValue []interface{}
+		orderByCql      []string
+	)
 
 	schemaMap := make(map[string]map[string]interface{})
 
@@ -529,9 +540,12 @@ func (h *Handler) Find(c echo.Context) error {
 		}
 	}
 
+	if len(req.Item) == 0 {
+		return echo.NewHTTPError(http.StatusInternalServerError, "not find condition")
+	}
+
 	for _, v := range schema {
 		kind := v["kind"].(string)
-		columnType := v["type"].(string)
 		columnName := v["column_name"].(string)
 
 		if kind == PartitionKey {
@@ -539,26 +553,28 @@ func (h *Handler) Find(c echo.Context) error {
 				continue
 			}
 
-			partitionCql = append(partitionCql, cqlFormatWhere(columnName, columnType, req.Item[columnName]["value"], "="))
+			partitionCql = append(partitionCql, cqlFormatWhere(columnName, "="))
+			partitionValue = append(partitionValue, req.Item[columnName]["value"])
+
 		} else if kind == ClusteringKey {
 			if _, ok := req.Item[columnName]; !ok {
 				continue
 			}
 
-			clusteringCql = append(clusteringCql, cqlFormatWhere(columnName, columnType, req.Item[columnName]["value"], req.Item[columnName]["operator"].(string)))
+			clusteringCql = append(clusteringCql, cqlFormatWhere(columnName, req.Item[columnName]["operator"].(string)))
+			clusteringValue = append(clusteringValue, req.Item[columnName]["value"])
 		}
 	}
 
-	data := make(map[string]interface{})
-
-	conutCql := fmt.Sprintf("SELECT COUNT(*) FROM %s WHERE %s %s", req.Table, strings.Join(partitionCql, " AND "), strings.Join(clusteringCql, " AND "))
-	countIter := h.Session.Query(conutCql).Iter()
+	conutCql := fmt.Sprintf("SELECT COUNT(*) FROM %s WHERE %s", req.Table, strings.Join(append(partitionCql, clusteringCql...), " AND "))
+	countIter := h.Session.Query(conutCql, append(partitionValue, clusteringValue...)...).Iter()
 	countRet, err := countIter.SliceMap()
 
 	if err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
 	}
 
+	data := make(map[string]interface{})
 	data["count"] = countRet[0]["count"]
 
 	if req.Page == 0 {
@@ -569,8 +585,8 @@ func (h *Handler) Find(c echo.Context) error {
 	limit_start := limit_end - req.Pagesize
 	i := 0
 
-	rowCql := fmt.Sprintf("SELECT * FROM %s WHERE %s %s LIMIT %d", req.Table, strings.Join(partitionCql, " AND "), strings.Join(clusteringCql, " AND "), limit_end)
-	rowIter := h.Session.Query(rowCql).Iter()
+	rowCql := fmt.Sprintf("SELECT * FROM %s WHERE %s LIMIT %d", req.Table, strings.Join(append(partitionCql, clusteringCql...), " AND "), limit_end)
+	rowIter := h.Session.Query(rowCql, append(partitionValue, clusteringValue...)...).Iter()
 	rowData := make([]map[string]interface{}, 0)
 
 	for {
@@ -665,8 +681,7 @@ func (h *Handler) Import(c echo.Context) error {
 func (h *Handler) GetSchema(table string) []map[string]interface{} {
 	tablekey := strings.Split(table, ".")
 
-	iter := h.Session.Query(`SELECT * FROM system_schema.columns WHERE keyspace_name = '` + tablekey[0] + `' and table_name = '` + tablekey[1] + `' `).Iter()
-
+	iter := h.Session.Query(`SELECT * FROM system_schema.columns WHERE keyspace_name = ? and table_name = ? `, tablekey[0], tablekey[1]).Iter()
 	ret, err := iter.SliceMap()
 
 	if err != nil {
