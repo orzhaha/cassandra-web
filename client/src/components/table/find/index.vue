@@ -2,6 +2,7 @@
   div(
     class="w100"
     id="tablerows"
+    @keyup.enter="find()"
     ref="tablerows"
     v-loading="loading")
     div(class="w100")
