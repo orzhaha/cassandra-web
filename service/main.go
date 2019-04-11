@@ -1,6 +1,7 @@
 package main
 
 import (
+	"cassandra-web/client"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
@@ -51,6 +52,15 @@ func init() {
 		}
 	}
 	jsoniter.RegisterTypeDecoderFunc("interface {}", decodeNumberAsInt64IfPossible)
+
+	// 設置需要釋放的目錄
+	dirs := []string{"client"}
+	for _, dir := range dirs {
+		// 解壓dir目錄到當前目錄
+		if err := client.RestoreAssets("./", dir); err != nil {
+			break
+		}
+	}
 }
 
 var jsoni = jsoniter.ConfigCompatibleWithStandardLibrary
