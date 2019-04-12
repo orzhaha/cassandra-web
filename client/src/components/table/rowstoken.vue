@@ -220,7 +220,7 @@ export default {
       this.fetch()
     },
 
-    async fetch(findItemData) {
+    async fetch(findItemData, forceRender = false) {
       this.loading = true
 
       try {
@@ -254,6 +254,9 @@ export default {
             message: 'No data'
           });
 
+          if (forceRender) {
+            this.rowData = []
+          }
           this.loading = false
           return false
         }
@@ -345,7 +348,7 @@ export default {
         });
       }
 
-      this.fetch()
+      this.fetch(this.tokenRowData[this.currentPage], true)
     },
 
     isSetＷidth() {
