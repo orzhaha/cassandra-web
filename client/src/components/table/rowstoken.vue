@@ -217,7 +217,7 @@ export default {
 
       this.loading = false
 
-      this.fetch()
+      this.fetch(this.tokenRowData[this.currentPage])
     },
 
     async fetch(findItemData, forceRender = false) {
