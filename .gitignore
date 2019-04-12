@@ -8,3 +8,5 @@ Thumbs.db
 
 cassandra
 cassandra-web
+service/client
+service/service
