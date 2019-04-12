@@ -99,6 +99,135 @@ func OutputTransformType(row map[string]interface{}) map[string]interface{} {
 	return row
 }
 
+func cqlFormatValue(columnType string, columnVal interface{}) interface{} {
+	mapReg := regexp.MustCompile(`(?U)^map\<(.+),\s(.+)\>`)
+
+	switch columnType {
+	case BigintType:
+		val, err := cast.ToInt64E(columnVal)
+		if err != nil {
+			return columnVal
+		}
+		return val
+	case BooleanType:
+		val, err := cast.ToBoolE(columnVal)
+		if err != nil {
+			return columnVal
+		}
+		return val
+	case CounterType:
+		val, err := cast.ToInt64E(columnVal)
+		if err != nil {
+			return columnVal
+		}
+		return val
+	case DateType:
+		val, err := cast.ToStringE(columnVal)
+		if err != nil {
+			return columnVal
+		}
+		return val
+	case DecimalType:
+		val, err := cast.ToFloat64E(columnVal)
+		if err != nil {
+			return columnVal
+		}
+		return val
+	case DoubleType:
+		val, err := cast.ToFloat64E(columnVal)
+		if err != nil {
+			return columnVal
+		}
+		return val
+	case FloatType:
+		val, err := cast.ToFloat64E(columnVal)
+		if err != nil {
+			return columnVal
+		}
+		return val
+	case InetType:
+		val, err := cast.ToStringE(columnVal)
+		if err != nil {
+			return columnVal
+		}
+		return val
+	case IntType:
+		val, err := cast.ToInt32E(columnVal)
+		if err != nil {
+			return columnVal
+		}
+		return val
+	case SmallintType:
+		val, err := cast.ToInt16E(columnVal)
+		if err != nil {
+			return columnVal
+		}
+		return val
+	case TextType:
+		val, err := cast.ToStringE(columnVal)
+		if err != nil {
+			return columnVal
+		}
+		return val
+	case TimeType:
+		val, err := cast.ToStringE(columnVal)
+		if err != nil {
+			return columnVal
+		}
+		return val
+	case TimestampType:
+		val, err := cast.ToStringE(columnVal)
+		if err != nil {
+			return columnVal
+		}
+		return val
+	case TimeuuidType:
+		val, err := cast.ToStringE(columnVal)
+		if err != nil {
+			return columnVal
+		}
+		return val
+	case TinyintType:
+		val, err := cast.ToInt8E(columnVal)
+		if err != nil {
+			return columnVal
+		}
+		return val
+	case UuidType:
+		val, err := cast.ToStringE(columnVal)
+		if err != nil {
+			return columnVal
+		}
+		return val
+	case VarcharType:
+		val, err := cast.ToStringE(columnVal)
+		if err != nil {
+			return columnVal
+		}
+		return val
+	case VarintType:
+		val, err := cast.ToInt32E(columnVal)
+		if err != nil {
+			return columnVal
+		}
+		return val
+	default:
+		mapRet := mapReg.FindStringSubmatch(columnType)
+
+		if len(mapRet) == 3 {
+			val, err := MapToCassandraMapType(columnVal, mapRet[1], mapRet[2])
+
+			if err != nil {
+				return columnVal
+			}
+
+			return val
+		}
+	}
+
+	return columnVal
+}
+
 func cqlFormatWhere(columnName string, operator string) string {
 	return fmt.Sprintf("%s %s ?", columnName, operator)
 }

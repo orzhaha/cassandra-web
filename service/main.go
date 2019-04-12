@@ -291,12 +291,15 @@ func (h *Handler) RowToken(c echo.Context) error {
 	}{}
 
 	var (
-		cqlColumnName  []string
-		cqlColumnValue []interface{}
-		cqlPlaceholder []string
+		PCqlColumnName  []string
+		PCqlColumnValue []interface{}
+		PCqlPlaceholder []string
+
+		CCql            []string
+		CCqlColumnValue []interface{}
 	)
 
-	prevNext := ">"
+	prevNext := ">="
 	cql := ""
 
 	if err := c.Bind(&req); err != nil {
@@ -307,29 +310,40 @@ func (h *Handler) RowToken(c echo.Context) error {
 		cql = fmt.Sprintf("SELECT * FROM %s LIMIT %d", req.Table, req.Pagesize)
 	} else {
 		if req.PrevNext == "prev" {
-			prevNext = "<"
+			prevNext = "<="
 		}
 
 		schema := h.GetSchema(req.Table)
 
 		for _, v := range schema {
+			kind := v["kind"].(string)
 			columnName := v["column_name"].(string)
+			columnType := v["type"].(string)
 
 			if _, ok := req.Item[columnName]; !ok {
 				continue
 			}
 
-			if v["kind"].(string) == PartitionKey {
-				cqlColumnName = append(cqlColumnName, columnName)
-				cqlColumnValue = append(cqlColumnValue, req.Item[columnName])
-				cqlPlaceholder = append(cqlPlaceholder, "?")
+			if kind == PartitionKey {
+				PCqlColumnName = append(PCqlColumnName, columnName)
+				PCqlColumnValue = append(PCqlColumnValue, cqlFormatValue(columnType, req.Item[columnName]))
+				PCqlPlaceholder = append(PCqlPlaceholder, "?")
+			} else if kind == ClusteringKey {
+				CCql = append(CCql, cqlFormatWhere(columnName, ">"))
+				CCqlColumnValue = append(CCqlColumnValue, cqlFormatValue(columnType, req.Item[columnName]))
 			}
 		}
 
-		cql = fmt.Sprintf("SELECT * FROM %s WHERE token(%s) %s token(%s) LIMIT %d", req.Table, strings.Join(cqlColumnName, ","), prevNext, strings.Join(cqlPlaceholder, ","), req.Pagesize)
-	}
+		cql = fmt.Sprintf("SELECT * FROM %s WHERE token(%s) %s token(%s) ", req.Table, strings.Join(PCqlColumnName, ","), prevNext, strings.Join(PCqlPlaceholder, ","))
 
-	rowIter := h.Session.Query(cql, cqlColumnValue...).Iter()
+		if len(CCql) > 0 {
+			cql += fmt.Sprintf("AND %s ", strings.Join(CCql, " AND "))
+		}
+
+		cql += fmt.Sprintf("LIMIT %d", req.Pagesize)
+	}
+	log.Print(cql)
+	rowIter := h.Session.Query(cql, append(PCqlColumnValue, CCqlColumnValue...)...).Iter()
 	rowData := make([]map[string]interface{}, 0)
 
 	for {
@@ -492,13 +506,14 @@ func (h *Handler) Delete(c echo.Context) error {
 	for _, v := range schema {
 		kind := v["kind"].(string)
 		columnName := v["column_name"].(string)
+		columnType := v["type"].(string)
 
 		if kind == PartitionKey {
 			partitionCql = append(partitionCql, cqlFormatWhere(columnName, "="))
-			partitionValue = append(partitionValue, item[columnName])
+			partitionValue = append(partitionValue, cqlFormatValue(columnType, item[columnName]))
 		} else if kind == ClusteringKey {
 			clusteringCql = append(clusteringCql, cqlFormatWhere(columnName, "="))
-			clusteringValue = append(clusteringValue, item[columnName])
+			clusteringValue = append(clusteringValue, cqlFormatValue(columnType, item[columnName]))
 		}
 	}
 
@@ -557,6 +572,7 @@ func (h *Handler) Find(c echo.Context) error {
 	for _, v := range schema {
 		kind := v["kind"].(string)
 		columnName := v["column_name"].(string)
+		columnType := v["type"].(string)
 
 		if kind == PartitionKey {
 			if _, ok := req.Item[columnName]; !ok {
@@ -564,7 +580,7 @@ func (h *Handler) Find(c echo.Context) error {
 			}
 
 			partitionCql = append(partitionCql, cqlFormatWhere(columnName, "="))
-			partitionValue = append(partitionValue, req.Item[columnName]["value"])
+			partitionValue = append(partitionValue, cqlFormatValue(columnType, req.Item[columnName]["value"]))
 
 		} else if kind == ClusteringKey {
 			if _, ok := req.Item[columnName]; !ok {
@@ -572,7 +588,7 @@ func (h *Handler) Find(c echo.Context) error {
 			}
 
 			clusteringCql = append(clusteringCql, cqlFormatWhere(columnName, req.Item[columnName]["operator"].(string)))
-			clusteringValue = append(clusteringValue, req.Item[columnName]["value"])
+			clusteringValue = append(clusteringValue, cqlFormatValue(columnType, req.Item[columnName]["value"]))
 		}
 	}
 
