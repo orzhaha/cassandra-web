@@ -310,7 +310,6 @@ export default {
       }).then(() => {
         JSON.stringify(rowData)
         this.deleteData(rowData)
-        this.fetch()
       }).catch(() => {})
     },
 

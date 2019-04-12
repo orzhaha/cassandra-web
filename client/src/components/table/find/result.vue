@@ -199,7 +199,6 @@ export default {
       }).then(() => {
         JSON.stringify(rowData)
         this.deleteData(rowData)
-        this.find(false)
       }).catch(() => {})
     },
 
