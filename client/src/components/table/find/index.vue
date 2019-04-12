@@ -2,10 +2,10 @@
   div(
     class="w100"
     id="tablerows"
-    @keyup.enter="find()"
     ref="tablerows"
     v-loading="loading")
-    div(class="w100")
+    div(class="w100"
+        @keyup.enter="find()")
       el-button(
         type="text"
         class="caret-bottom"
