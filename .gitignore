@@ -10,3 +10,4 @@ cassandra
 cassandra-web
 service/client
 service/service
+client/client.go
