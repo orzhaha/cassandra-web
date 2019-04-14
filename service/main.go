@@ -83,7 +83,7 @@ type envStruct struct {
 func main() {
 	app := cli.NewApp()
 	app.Name = "Cassandra-Web"
-	app.Version = "1.0.2"
+	app.Version = "1.0.3"
 	app.Authors = []cli.Author{
 		cli.Author{
 			Name:  "Ken",
@@ -281,39 +281,65 @@ func (h *Handler) Table(c echo.Context) error {
 	return c.JSON(http.StatusOK, ret)
 }
 
+type RowTokenReq struct {
+	Table    string                 `json:"table" form:"table" query:"table"`
+	Item     map[string]interface{} `json:"item" form:"item" query:"item"`
+	PrevNext string                 `json:"prevnext" form:"prevnext" query:"prevnext"`
+	Pagesize int                    `json:"pagesize" form:"pagesize" query:"pagesize"`
+}
+
 // RowToken
 func (h *Handler) RowToken(c echo.Context) error {
-	req := struct {
-		Table    string                 `json:"table" form:"table" query:"table"`
-		Item     map[string]interface{} `json:"item" form:"item" query:"item"`
-		PrevNext string                 `json:"prevnext" form:"prevnext" query:"prevnext"`
-		Pagesize int                    `json:"pagesize" form:"pagesize" query:"pagesize"`
-	}{}
-
 	var (
-		PCqlColumnName  []string
-		PCqlColumnValue []interface{}
-		PCqlPlaceholder []string
-
-		CCql            []string
-		CCqlColumnValue []interface{}
+		req    RowTokenReq
+		schema []map[string]interface{}
 	)
-
-	prevNext := ">="
-	cql := ""
 
 	if err := c.Bind(&req); err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
 	}
 
+	schema = h.GetSchema(req.Table)
+	rowData, err := h.FirstQuery(&req, schema)
+
+	if err != nil {
+		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
+	}
+
+	if len(rowData) < req.Pagesize && len(req.Item) >= 1 {
+		sRowData, err := h.SecondQuery(&req, schema, req.Pagesize-len(rowData))
+
+		if err != nil {
+			return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
+		}
+
+		rowData = append(rowData, sRowData...)
+	}
+
+	data := make(map[string]interface{})
+	data["row"] = rowData
+
+	return c.JSON(http.StatusOK, data)
+}
+func (h *Handler) FirstQuery(req *RowTokenReq, schema []map[string]interface{}) ([]map[string]interface{}, error) {
+	var (
+		pCqlColumnName  []string
+		pCqlColumnValue []interface{}
+		pCqlPlaceholder []string
+		cCqlColumnName  []string
+		cCqlColumnValue []interface{}
+		cCqlPlaceholder []string
+		cPrevNext       string = ">"
+		cql             string
+		rowData         []map[string]interface{} = make([]map[string]interface{}, 0)
+	)
+
 	if len(req.Item) < 1 {
 		cql = fmt.Sprintf("SELECT * FROM %s LIMIT %d", req.Table, req.Pagesize)
 	} else {
 		if req.PrevNext == "prev" {
-			prevNext = "<="
+			cPrevNext = "<"
 		}
-
-		schema := h.GetSchema(req.Table)
 
 		for _, v := range schema {
 			kind := v["kind"].(string)
@@ -325,26 +351,27 @@ func (h *Handler) RowToken(c echo.Context) error {
 			}
 
 			if kind == PartitionKey {
-				PCqlColumnName = append(PCqlColumnName, columnName)
-				PCqlColumnValue = append(PCqlColumnValue, cqlFormatValue(columnType, req.Item[columnName]))
-				PCqlPlaceholder = append(PCqlPlaceholder, "?")
+				pCqlColumnName = append(pCqlColumnName, columnName)
+				pCqlColumnValue = append(pCqlColumnValue, cqlFormatValue(columnType, req.Item[columnName]))
+				pCqlPlaceholder = append(pCqlPlaceholder, "?")
 			} else if kind == ClusteringKey {
-				CCql = append(CCql, cqlFormatWhere(columnName, ">"))
-				CCqlColumnValue = append(CCqlColumnValue, cqlFormatValue(columnType, req.Item[columnName]))
+				cCqlColumnName = append(cCqlColumnName, columnName)
+				cCqlColumnValue = append(cCqlColumnValue, cqlFormatValue(columnType, req.Item[columnName]))
+				cCqlPlaceholder = append(cCqlPlaceholder, "?")
 			}
 		}
 
-		cql = fmt.Sprintf("SELECT * FROM %s WHERE token(%s) %s token(%s) ", req.Table, strings.Join(PCqlColumnName, ","), prevNext, strings.Join(PCqlPlaceholder, ","))
+		cql = fmt.Sprintf("SELECT * FROM %s WHERE token(%s) %s token(%s) ", req.Table, strings.Join(pCqlColumnName, ","), "=", strings.Join(pCqlPlaceholder, ","))
 
-		if len(CCql) > 0 {
-			cql += fmt.Sprintf("AND %s ", strings.Join(CCql, " AND "))
+		if len(cCqlColumnName) > 0 {
+
+			cql += fmt.Sprintf("AND (%s) %s (%s) ", strings.Join(cCqlColumnName, ","), cPrevNext, strings.Join(cCqlPlaceholder, ","))
 		}
 
 		cql += fmt.Sprintf("LIMIT %d", req.Pagesize)
 	}
-	log.Print(cql)
-	rowIter := h.Session.Query(cql, append(PCqlColumnValue, CCqlColumnValue...)...).Iter()
-	rowData := make([]map[string]interface{}, 0)
+
+	rowIter := h.Session.Query(cql, append(pCqlColumnValue, cCqlColumnValue...)...).Iter()
 
 	for {
 		row := make(map[string]interface{})
@@ -354,10 +381,57 @@ func (h *Handler) RowToken(c echo.Context) error {
 		rowData = append(rowData, OutputTransformType(row))
 	}
 
-	data := make(map[string]interface{})
-	data["row"] = rowData
+	return rowData, nil
+}
 
-	return c.JSON(http.StatusOK, data)
+func (h *Handler) SecondQuery(req *RowTokenReq, schema []map[string]interface{}, limit int) ([]map[string]interface{}, error) {
+	var (
+		pCqlColumnName  []string
+		pCqlColumnValue []interface{}
+		pCqlPlaceholder []string
+		pPrevNext       string = ">"
+		cql             string
+		rowData         []map[string]interface{} = make([]map[string]interface{}, 0)
+	)
+
+	if len(req.Item) < 1 {
+		return rowData, nil
+	} else {
+		if req.PrevNext == "prev" {
+			pPrevNext = "<"
+		}
+
+		for _, v := range schema {
+			kind := v["kind"].(string)
+			columnName := v["column_name"].(string)
+			columnType := v["type"].(string)
+
+			if _, ok := req.Item[columnName]; !ok {
+				continue
+			}
+
+			if kind == PartitionKey {
+				pCqlColumnName = append(pCqlColumnName, columnName)
+				pCqlColumnValue = append(pCqlColumnValue, cqlFormatValue(columnType, req.Item[columnName]))
+				pCqlPlaceholder = append(pCqlPlaceholder, "?")
+			}
+		}
+
+		cql = fmt.Sprintf("SELECT * FROM %s WHERE token(%s) %s token(%s) ", req.Table, strings.Join(pCqlColumnName, ","), pPrevNext, strings.Join(pCqlPlaceholder, ","))
+		cql += fmt.Sprintf("LIMIT %d", limit)
+	}
+
+	rowIter := h.Session.Query(cql, pCqlColumnValue...).Iter()
+
+	for {
+		row := make(map[string]interface{})
+		if !rowIter.MapScan(row) {
+			break
+		}
+		rowData = append(rowData, OutputTransformType(row))
+	}
+
+	return rowData, nil
 }
 
 // Row 取的table的row資料處理 (資量大時需耗費很多效能)
