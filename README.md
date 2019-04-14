@@ -11,15 +11,33 @@
 * Table Import
 * CQL Query
 
+---
+
+## Usage
+
+download
+```
+$ wget https://github.com/orzhaha/cassandra-web/releases/download/v1.0.3/linux.tar.gz
+```
+
+unzip
+```
+$ tar zxvf linux.tar.gz
+```
+
+run service
+```
+$ ./service -c config.yaml
+```
+
+---
+
 ## Docker
 
 ```sh
 docker pull ipushc/cassandra-web
 ```
-
-----
-
-## Environment
+##### Environment
 
 * HOST_PORT: ":80"
 * CASSANDRA_HOST: cassandra host
@@ -27,13 +45,9 @@ docker pull ipushc/cassandra-web
 * CASSANDRA_USERNAME: username
 * CASSANDRA_PASSWORD: password
 
-----
+---
 
 ## API
 
 API [Doc](./Doc.md)
 
-## Issue
-
-* CQL Data Types Map. JSON only allows key names to be strings.
-* JSON int64 to string
