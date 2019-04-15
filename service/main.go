@@ -361,16 +361,14 @@ func (h *Handler) FirstQuery(req *RowTokenReq, schema []map[string]interface{}) 
 			}
 		}
 
-		cql = fmt.Sprintf("SELECT * FROM %s WHERE token(%s) %s token(%s) ", req.Table, strings.Join(pCqlColumnName, ","), "=", strings.Join(pCqlPlaceholder, ","))
-
-		if len(cCqlColumnName) > 0 {
-
-			cql += fmt.Sprintf("AND (%s) %s (%s) ", strings.Join(cCqlColumnName, ","), cPrevNext, strings.Join(cCqlPlaceholder, ","))
+		if len(cCqlColumnName) == 0 {
+			return rowData, nil
 		}
 
-		cql += fmt.Sprintf("LIMIT %d", req.Pagesize)
+		cql = fmt.Sprintf("SELECT * FROM %s WHERE token(%s) %s token(%s) ", req.Table, strings.Join(pCqlColumnName, ","), "=", strings.Join(pCqlPlaceholder, ","))
+		cql += fmt.Sprintf("AND (%s) %s (%s) LIMIT %d", strings.Join(cCqlColumnName, ","), cPrevNext, strings.Join(cCqlPlaceholder, ","), req.Pagesize)
 	}
-
+	fmt.Println(cql)
 	rowIter := h.Session.Query(cql, append(pCqlColumnValue, cCqlColumnValue...)...).Iter()
 
 	for {
