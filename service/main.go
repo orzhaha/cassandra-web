@@ -183,6 +183,7 @@ func run(c *cli.Context) {
 	e.GET("/describe", h.Describe)
 	e.GET("/columns", h.Columns)
 	e.GET("/export", h.Export)
+	e.GET("/hostinfo", h.HostInfo)
 
 	// Start server
 	e.Logger.Fatal(e.Start(env.HostPort))
@@ -288,8 +289,40 @@ type RowTokenReq struct {
 	Pagesize int                    `json:"pagesize" form:"pagesize" query:"pagesize"`
 }
 
+// HostInfo
+func (h *Handler) HostInfo(c echo.Context) error {
+	hosts, err := h.Session.GetHosts()
+
+	if err != nil {
+		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
+	}
+
+	var ret []map[string]interface{}
+
+	for _, host := range hosts {
+		hostinfo := make(map[string]interface{})
+		hostinfo["ClusterName"] = host.ClusterName()
+		hostinfo["ConnectAddress"] = host.ConnectAddress()
+		hostinfo["Peer"] = host.Peer()
+		hostinfo["RPCAddress"] = host.RPCAddress()
+		hostinfo["BroadcastAddress"] = host.BroadcastAddress()
+		hostinfo["ListenAddress"] = host.ListenAddress()
+		hostinfo["PreferredIP"] = host.PreferredIP()
+		hostinfo["DataCenter"] = host.DataCenter()
+		hostinfo["HostID"] = host.HostID()
+		hostinfo["Port"] = host.Port()
+		hostinfo["State"] = host.State().String()
+		hostinfo["Version"] = host.Version().String()
+
+		ret = append(ret, hostinfo)
+	}
+
+	return c.JSON(http.StatusOK, ret)
+}
+
 // RowToken
 func (h *Handler) RowToken(c echo.Context) error {
+
 	var (
 		req    RowTokenReq
 		schema []map[string]interface{}

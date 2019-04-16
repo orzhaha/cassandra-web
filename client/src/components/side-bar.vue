@@ -22,10 +22,17 @@ el-menu(
       i(class="el-icon-edit")
       span(lot="title") Query
 
+  //- NOTE: query
+  el-menu-item(
+    @click="goHostInfo"
+    index="-2")
+      i(class="el-icon-printer")
+      span(lot="title") HostInfo
+
   //- NOTE: folding menu
   el-menu-item(
     @click="toggleMenu"
-    index="-2")
+    index="-3")
       i(v-bind:class="[isCollapse ? 'el-icon-caret-right' : 'el-icon-caret-left']")
       span(lot="title") Folding menu
 </template>
@@ -77,6 +84,12 @@ export default {
         params: {
           keyspace
         }
+      })
+    },
+
+    async goHostInfo() {
+      this.$router.push({
+        name: 'hostinfo'
       })
     },
 

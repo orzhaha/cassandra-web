@@ -665,6 +665,12 @@ func (s *Session) connect(host *HostInfo, errorHandler ConnErrorHandler) (*Conn,
 	return s.dial(host, s.connCfg, errorHandler)
 }
 
+func (s *Session) GetHosts() ([]*HostInfo, error) {
+	h, _, err := s.hostSource.GetHosts()
+
+	return h, err
+}
+
 type hostMetrics struct {
 	Attempts     int
 	TotalLatency int64

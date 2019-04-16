@@ -50,6 +50,10 @@ const config = {
     export: {
       type: 'GET',
       url: `${domain}/export`
+    },
+    hostinfo: {
+      type: 'GET',
+      url: `${domain}/hostinfo`
     }
   }
 }

@@ -29,7 +29,7 @@ import JSONbig from 'json-bigint'
 const service = api.make('root')
 
 export default {
-  name: 'Columns',
+  name: 'HostInfo',
   data() {
     return {
       keys: [],
@@ -51,13 +51,7 @@ export default {
       this.loading = true
 
       try {
-        const res = await service.request('columns', {
-          query: {
-            keyspace: this.$route.params.keyspace,
-            table: this.$route.params.table,
-          }
-        })
-
+        const res = await service.request('hostinfo', {})
         const rows = res.get()
 
         if (rows !== undefined && rows.length > 0) {

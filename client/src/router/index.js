@@ -13,6 +13,7 @@ import Export from '@/components/table/export'
 import Import from '@/components/table/import'
 import Find from '@/components/table/find'
 import Query from '@/components/query'
+import HostInfo from '@/components/hostinfo'
 
 Vue.use(Router);
 
@@ -29,10 +30,17 @@ export default new Router({
       component: Main,
       children: [
         {
+          path: 'hostinfo',
+          name: 'hostinfo',
+          component: HostInfo,
+        },
+
+        {
           path: 'query/:query',
           name: 'query',
           component: Query,
         },
+
         {
           path: 'keyspace/:keyspace',
           name: 'table-list',
