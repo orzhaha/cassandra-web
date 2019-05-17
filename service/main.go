@@ -633,11 +633,12 @@ func (h *Handler) Delete(c echo.Context) error {
 // Find 搜尋row
 func (h *Handler) Find(c echo.Context) error {
 	req := struct {
-		Table    string                            `json:"table" form:"table" query:"table"`
-		Item     map[string]map[string]interface{} `json:"item" form:"item" query:"item"`
-		OrderBy  []map[string]string               `json:"order_by" form:"order_by" query:"order_by"`
-		Pagesize int                               `json:"pagesize" form:"pagesize" query:"pagesize"`
-		Page     int                               `json:"page" form:"page" query:"page"`
+		Table         string                            `json:"table" form:"table" query:"table"`
+		Item          map[string]map[string]interface{} `json:"item" form:"item" query:"item"`
+		OrderBy       []map[string]string               `json:"order_by" form:"order_by" query:"order_by"`
+		Pagesize      int                               `json:"pagesize" form:"pagesize" query:"pagesize"`
+		Page          int                               `json:"page" form:"page" query:"page"`
+		IsAllowFilter bool                              `json:"isallowfilter" form:"isallowfilter" query:"isallowfilter"`
 	}{}
 
 	if err := c.Bind(&req); err != nil {
@@ -652,7 +653,12 @@ func (h *Handler) Find(c echo.Context) error {
 		partitionValue  []interface{}
 		clusteringValue []interface{}
 		orderByCql      []string
+		AllowFilter     string
 	)
+
+	if req.IsAllowFilter {
+		AllowFilter = "ALLOW FILTERING"
+	}
 
 	schemaMap := make(map[string]map[string]interface{})
 
@@ -687,7 +693,7 @@ func (h *Handler) Find(c echo.Context) error {
 			partitionCql = append(partitionCql, cqlFormatWhere(columnName, "="))
 			partitionValue = append(partitionValue, cqlFormatValue(columnType, req.Item[columnName]["value"]))
 
-		} else if kind == ClusteringKey {
+		} else if kind == ClusteringKey || req.IsAllowFilter {
 			if _, ok := req.Item[columnName]; !ok {
 				continue
 			}
@@ -697,7 +703,7 @@ func (h *Handler) Find(c echo.Context) error {
 		}
 	}
 
-	conutCql := fmt.Sprintf("SELECT COUNT(*) FROM %s WHERE %s", req.Table, strings.Join(append(partitionCql, clusteringCql...), " AND "))
+	conutCql := fmt.Sprintf("SELECT COUNT(*) FROM %s WHERE %s %s", req.Table, strings.Join(append(partitionCql, clusteringCql...), " AND "), AllowFilter)
 	countIter := h.Session.Query(conutCql, append(partitionValue, clusteringValue...)...).Iter()
 	countRet, err := countIter.SliceMap()
 
@@ -716,7 +722,7 @@ func (h *Handler) Find(c echo.Context) error {
 	limit_start := limit_end - req.Pagesize
 	i := 0
 
-	rowCql := fmt.Sprintf("SELECT * FROM %s WHERE %s LIMIT %d", req.Table, strings.Join(append(partitionCql, clusteringCql...), " AND "), limit_end)
+	rowCql := fmt.Sprintf("SELECT * FROM %s WHERE %s LIMIT %d %s", req.Table, strings.Join(append(partitionCql, clusteringCql...), " AND "), limit_end, AllowFilter)
 	rowIter := h.Session.Query(rowCql, append(partitionValue, clusteringValue...)...).Iter()
 	rowData := make([]map[string]interface{}, 0)
 

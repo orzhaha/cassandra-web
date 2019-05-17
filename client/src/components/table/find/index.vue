@@ -17,6 +17,9 @@
       el-checkbox(
         @change="changeIsShowOverflowTooltip"
         v-model="isShowOverflowTooltip") Show Overflow Tooltip
+      el-checkbox(
+        @change="changeIsAllowFilter"
+        v-model="isAllowFilter") Allow Filter
       template(
         v-if="isNotCollapse || isCollapse")
         el-table(
@@ -42,12 +45,19 @@
                 el-select(
                   v-model="columnInput[scope.$index].operator"
                   placeholder='operator')
-                  el-option(
-                    v-for="item in partitionOperator"
-                    :key="item.value"
-                    :label="item.label"
-                    :value="item.value")
-              template(v-else-if="column.isClusteringKey(scope.row.column_name)")
+                  template(v-if="isAllowFilter")
+                    el-option(
+                      v-for="item in clusteringOperator"
+                      :key="item.value"
+                      :label="item.label"
+                      :value="item.value")
+                  template(v-else="isAllowFilter")
+                    el-option(
+                      v-for="item in partitionOperator"
+                      :key="item.value"
+                      :label="item.label"
+                      :value="item.value")
+              template(v-else-if="isAllowFilter || column.isClusteringKey(scope.row.column_name)")
                 el-select(
                   v-model="columnInput[scope.$index].operator"
                   placeholder='operator')
@@ -56,13 +66,11 @@
                     :key="item.value"
                     :label="item.label"
                     :value="item.value")
-
-              template(v-else)
           el-table-column(
             prop="kind"
             label="Value")
             template(slot-scope="scope")
-              template(v-if="column.isPartitionKey(scope.row.column_name) || column.isClusteringKey(scope.row.column_name)")
+              template(v-if="isAllowFilter || column.isPartitionKey(scope.row.column_name) || column.isClusteringKey(scope.row.column_name)")
                 el-input(
                   v-model="columnInput[scope.$index].value"
                   :type="column.inputType(scope.row.column_name)"
@@ -124,6 +132,7 @@ export default {
       isCollapse: true,
       isNotCollapse: false,
       isShowOverflowTooltip: true,
+      isAllowFilter: false,
       loading: false,
       partitionOperator: [
         {
@@ -172,6 +181,12 @@ export default {
 
     if (isShowOverflowTooltip !== undefined) {
       this.isShowOverflowTooltip = isShowOverflowTooltip === 'true'
+    }
+
+    const isAllowFilter = Cookies.get('isAllowFilter')
+
+    if (isAllowFilter !== undefined) {
+      this.isAllowFilter = isAllowFilter === 'true'
     }
 
     this.$nextTick(() => {
@@ -225,6 +240,7 @@ export default {
             item: reqItem,
             page: parseInt(this.page, 10),
             pagesize: parseInt(this.pagesize, 10),
+            isallowfilter: this.isAllowFilter,
           }
         })
 
@@ -282,6 +298,10 @@ export default {
 
     changeIsShowOverflowTooltip(bool) {
       Cookies.set('isShowOverflowTooltip', bool)
+    },
+
+    changeIsAllowFilter(bool) {
+      Cookies.set('isAllowFilter', bool)
     },
   },
 };
