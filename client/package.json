@@ -52,6 +52,7 @@
     "cross-spawn": "^5.0.1",
     "css-loader": "^0.28.0",
     "element-theme-chalk": "^2.5.4",
+    "element-theme-dark": "^1.0.3",
     "eslint": "^4.15.0",
     "eslint-config-airbnb-base": "^11.3.0",
     "eslint-friendly-formatter": "^3.0.0",

@@ -1,12 +1,34 @@
-<template>
-  <el-color-picker
-    v-model="theme"
-    class="theme-picker"
-    popper-class="theme-picker-dropdown"/>
+<template lang="pug">
+  div(
+    class="tieme-picker-div")
+    el-color-picker(
+      class="ml20"
+      v-model="theme"
+      class="theme-picker"
+      popper-class="theme-picker-dropdown")
+    el-switch(
+      class="pb20 ml20"
+      active-text="theme dark"
+      inactive-text="theme white"
+      active-color="#FFFFFF"
+      inactive-color="#000000"
+      @change="changeTheme"
+      v-model="isThemeDark"
+    )
 </template>
+
+<style>
+  .tieme-picker-div .ml20 {
+    margin-right: 20px;
+  }
+  .tieme-picker-div .pb20 {
+    padding-bottom: 20px;
+  }
+</style>
 
 <script>
 import { version } from 'element-ui/package.json' // element-ui version from node_modules
+import Cookies from 'js-cookie'
 import concat from 'lodash/concat'
 
 const ORIGINAL_THEME = '#409EFF' // default color
@@ -15,7 +37,8 @@ export default {
   data() {
     return {
       chalk: '', // content of theme-chalk css
-      theme: ORIGINAL_THEME
+      theme: ORIGINAL_THEME,
+      isThemeDark: false,
     }
   },
   watch: {
@@ -68,7 +91,18 @@ export default {
       })
     }
   },
+  created() {
+    const isThemeDark = Cookies.get('isThemeDark')
+
+    if (isThemeDark !== undefined) {
+      this.isThemeDark = isThemeDark === 'true'
+    }
+  },
   methods: {
+    changeTheme() {
+      Cookies.set('isThemeDark', this.isThemeDark)
+      this.$router.go(0)
+    },
     updateStyle(style, oldCluster, newCluster) {
       const colorOverrides = [] // only capture color overides
       oldCluster.forEach((color, index) => {
