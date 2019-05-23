@@ -6,15 +6,15 @@
       v-model="theme"
       class="theme-picker"
       popper-class="theme-picker-dropdown")
-    el-switch(
-      class="pb20 ml20"
-      active-text="theme dark"
-      inactive-text="theme white"
-      active-color="#FFFFFF"
-      inactive-color="#000000"
-      @change="changeTheme"
-      v-model="isThemeDark"
-    )
+    //- el-switch(
+    //-   class="pb20 ml20"
+    //-   active-text="theme dark"
+    //-   inactive-text="theme white"
+    //-   active-color="#FFFFFF"
+    //-   inactive-color="#000000"
+    //-   @change="changeTheme"
+    //-   v-model="isThemeDark"
+    //- )
 </template>
 
 <style>
