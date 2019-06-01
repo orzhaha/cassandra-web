@@ -1,61 +1,61 @@
-export const domain = window.location.origin
-// export const domain = 'http://localhost:8083'
+export const domain = window.location.origin;
+// export const domain = "http://localhost:8083";
 
 const config = {
   root: {
     find: {
-      type: 'POST',
+      type: "POST",
       url: `${domain}/find`
     },
     query: {
-      type: 'POST',
+      type: "POST",
       url: `${domain}/query`
     },
     save: {
-      type: 'POST',
+      type: "POST",
       url: `${domain}/save`
     },
     delete: {
-      type: 'POST',
+      type: "POST",
       url: `${domain}/delete`
     },
     import: {
-      type: 'POST',
+      type: "POST",
       url: `${domain}/import`
     },
     rowtoken: {
-      type: 'POST',
+      type: "POST",
       url: `${domain}/rowtoken`
     },
     keyspace: {
-      type: 'GET',
+      type: "GET",
       url: `${domain}/keyspace`
     },
     table: {
-      type: 'GET',
+      type: "GET",
       url: `${domain}/table`
     },
     row: {
-      type: 'GET',
+      type: "GET",
       url: `${domain}/row`
     },
     columns: {
-      type: 'GET',
+      type: "GET",
       url: `${domain}/columns`
     },
     describe: {
-      type: 'GET',
+      type: "GET",
       url: `${domain}/describe`
     },
     export: {
-      type: 'GET',
+      type: "GET",
       url: `${domain}/export`
     },
     hostinfo: {
-      type: 'GET',
+      type: "GET",
       url: `${domain}/hostinfo`
     }
   }
-}
+};
 
-export default config
+export default config;

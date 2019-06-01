@@ -11,3 +11,5 @@ cassandra-web
 service/client
 service/service
 client/client.go
+.vscode
+untitled.sql

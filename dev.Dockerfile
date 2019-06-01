@@ -4,8 +4,9 @@ RUN echo "deb http://www.apache.org/dist/cassandra/debian 311x main" | tee -a /e
     && curl https://www.apache.org/dist/cassandra/KEYS | apt-key add - \
     && apt-get update && apt-get install cassandra -y
 
-RUN wget https://nodejs.org/dist/v8.5.0/node-v8.5.0-linux-x64.tar.gz \
-    && tar -xf node-v8.5.0-linux-x64.tar.gz --directory /usr/local --strip-components 1 \
-    && rm -rf node-v8.5.0-linux-x64.tar.gz
+RUN wget https://nodejs.org/dist/v12.3.1/node-v12.3.1-linux-x64.tar.gz \
+    && tar -xf node-v12.3.1-linux-x64.tar.gz --directory /usr/local --strip-components 1 \
+    && rm -rf node-v12.3.1-linux-x64.tar.gz
+    && npm install -g @vue/cli
 
 CMD ["tail", "-f", "/dev/null"]
