@@ -18,7 +18,7 @@
         el-table-column(
           fixed="left"
           label="Tools"
-          width="110")
+          width="150")
           el-button-group(slot-scope="scope")
             el-button(
               type="primary"
@@ -31,6 +31,12 @@
               icon="el-icon-delete"
               size="small"
               @click="handleDeleteConfirm(scope.row)")
+
+            el-button(
+              type="info"
+              icon="el-icon-share"
+              size="small"
+              @click="handleShareData(scope.row)")
     el-pagination(:page-size="20"
       @current-change="handleCurrentChange"
       @prev-click="handleCurrentChange"
@@ -99,6 +105,8 @@
 import api from '@/api'
 import forEach from 'lodash/forEach'
 import cloneDeep from 'lodash/cloneDeep'
+import copy from 'copy-to-clipboard'
+import stringify from 'stringify-object'
 import JSONbig from 'json-bigint'
 
 const service = api.make('root')
@@ -235,6 +243,17 @@ export default {
       }
 
       this.find(false)
+    },
+
+    handleShareData(rowData) {
+      copy(stringify(rowData));
+
+      this.$message({
+        type: 'success',
+        showClose: true,
+        duration: 0,
+        message: `copy to clipboard`
+      });
     },
 
     isSetＷidth() {

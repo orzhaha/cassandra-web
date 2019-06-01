@@ -24,8 +24,9 @@
         el-table-column(
           fixed="left"
           label="Tools"
-          width="110")
+          width="150")
           el-button-group(slot-scope="scope")
+
             el-button(
               type="primary"
               @click="handleOpenEditDialog(scope.row)"
@@ -38,6 +39,11 @@
               size="small"
               @click="handleDeleteConfirm(scope.row)")
 
+            el-button(
+              type="info"
+              icon="el-icon-share"
+              size="small"
+              @click="handleShareData(scope.row)")
     el-pagination(:page-size="50"
       @next-click="handleNextClick"
       @prev-click="handlePrevClick"
@@ -109,6 +115,8 @@
 import api from '@/api'
 import forEach from 'lodash/forEach'
 import cloneDeep from 'lodash/cloneDeep'
+import copy from 'copy-to-clipboard'
+import stringify from 'stringify-object'
 import JSONbig from 'json-bigint'
 import Cookies from 'js-cookie'
 import Column from '../../utils/column'
@@ -349,6 +357,17 @@ export default {
       }
 
       this.fetch(this.tokenRowData[this.currentPage], true)
+    },
+
+    handleShareData(rowData) {
+      copy(stringify(rowData));
+
+      this.$message({
+        type: 'success',
+        showClose: true,
+        duration: 0,
+        message: `copy to clipboard`
+      });
     },
 
     isSetＷidth() {

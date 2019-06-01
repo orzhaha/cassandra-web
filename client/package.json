@@ -11,6 +11,7 @@
     "test:unit": "vue-cli-service test:unit"
   },
   "dependencies": {
+    "copy-to-clipboard": "^3.2.0",
     "core-js": "^2.6.5",
     "element-ui": "^2.8.2",
     "js-cookie": "^2.2.0",
@@ -20,6 +21,7 @@
     "pug-loader": "^2.4.0",
     "sass": "^1.20.1",
     "service-proxy": "^0.4.2",
+    "stringify-object": "^3.3.0",
     "vue": "^2.6.10",
     "vue-codemirror": "^4.0.6",
     "vue-localstorage": "^0.6.2",
