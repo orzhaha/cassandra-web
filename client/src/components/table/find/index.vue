@@ -20,6 +20,11 @@
       el-checkbox(
         @change="changeIsAllowFilter"
         v-model="isAllowFilter") Allow Filter
+      el-button(
+        type="info"
+        class="copy-to-clipboard-all-bottom"
+        icon="el-icon-share"
+        @click.stop="handleCopyAllData()") copy all
       template(
         v-if="isNotCollapse || isCollapse")
         el-table(
@@ -103,9 +108,14 @@
   .caret-bottom {
     margin: 10px 20px;
   }
+  .copy-to-clipboard-all-bottom {
+    margin: 10px 20px;
+  }
 </style>
 
 <script>
+import copy from 'copy-to-clipboard'
+import stringify from 'stringify-object'
 import JSONbig from 'json-bigint'
 import forEach from 'lodash/forEach'
 import Cookies from 'js-cookie'
@@ -290,6 +300,17 @@ export default {
     handleSizeChange(pagesize) {
       this.pagesize = pagesize
       this.find(false)
+    },
+
+    handleCopyAllData() {
+      copy(stringify(this.rowData));
+
+      this.$message({
+        type: 'success',
+        showClose: true,
+        duration: 0,
+        message: `copy to clipboard`
+      });
     },
 
     changeIsNotCollapse(bool) {

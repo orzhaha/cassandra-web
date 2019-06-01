@@ -36,7 +36,7 @@
               type="info"
               icon="el-icon-share"
               size="small"
-              @click="handleShareData(scope.row)")
+              @click="handleCopyData(scope.row)")
     el-pagination(:page-size="20"
       @current-change="handleCurrentChange"
       @prev-click="handleCurrentChange"
@@ -245,7 +245,7 @@ export default {
       this.find(false)
     },
 
-    handleShareData(rowData) {
+    handleCopyData(rowData) {
       copy(stringify(rowData));
 
       this.$message({

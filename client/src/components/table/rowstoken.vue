@@ -8,6 +8,11 @@
       class="is-show-overflow-tooltip-checkbox"
       @change="changeIsShowOverflowTooltip"
       v-model="isShowOverflowTooltip") Show Overflow Tooltip
+    el-button(
+      type="info"
+      class="copy-to-clipboard-all-bottom"
+      icon="el-icon-share"
+      @click.stop="handleCopyAllData()") copy all
     el-table(
       v-if="column"
       :data="rowData"
@@ -43,7 +48,7 @@
               type="info"
               icon="el-icon-share"
               size="small"
-              @click="handleShareData(scope.row)")
+              @click="handleCopyData(scope.row)")
     el-pagination(:page-size="50"
       @next-click="handleNextClick"
       @prev-click="handlePrevClick"
@@ -109,6 +114,9 @@
   .is-show-overflow-tooltip-checkbox {
     margin: 10px 20px;
     padding: 12px 0px;
+  }
+  .copy-to-clipboard-all-bottom {
+    margin: 10px 20px;
   }
 </style>
 <script>
@@ -359,8 +367,19 @@ export default {
       this.fetch(this.tokenRowData[this.currentPage], true)
     },
 
-    handleShareData(rowData) {
+    handleCopyData(rowData) {
       copy(stringify(rowData));
+
+      this.$message({
+        type: 'success',
+        showClose: true,
+        duration: 0,
+        message: `copy to clipboard`
+      });
+    },
+
+    handleCopyAllData() {
+      copy(stringify(this.rowData));
 
       this.$message({
         type: 'success',
