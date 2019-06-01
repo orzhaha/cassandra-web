@@ -94,7 +94,7 @@ export default {
   methods: {
     goToTable(row) {
       this.$router.push({
-        path: `${row.keyspace_name}/${row.table_name}`,
+        path: `${row.keyspace_name}/${row.table_name}/rowstoken/50`,
         params: {
           keyspace: row.keyspace_name,
           table: row.table_name
