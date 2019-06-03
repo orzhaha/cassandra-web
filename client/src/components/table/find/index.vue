@@ -24,6 +24,7 @@
         type="info"
         class="copy-to-clipboard-all-bottom"
         icon="el-icon-share"
+        size="small"
         @click.stop="handleCopyAllData()") copy all
       template(
         v-if="isNotCollapse || isCollapse")
@@ -109,7 +110,7 @@
     margin: 10px 20px;
   }
   .copy-to-clipboard-all-bottom {
-    margin: 10px 20px;
+    margin: 0px 20px;
   }
 </style>
 

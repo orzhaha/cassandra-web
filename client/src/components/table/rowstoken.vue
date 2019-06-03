@@ -12,6 +12,7 @@
       type="info"
       class="copy-to-clipboard-all-bottom"
       icon="el-icon-share"
+      size="small"
       @click.stop="handleCopyAllData()") copy all
     el-table(
       v-if="column"
@@ -116,7 +117,7 @@
     padding: 12px 0px;
   }
   .copy-to-clipboard-all-bottom {
-    margin: 10px 20px;
+    margin: 0px 20px;
   }
 </style>
 <script>
