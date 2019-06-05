@@ -1,9 +1,30 @@
+const path = require('path')
 module.exports = {
   root: true,
   env: {
     node: true
   },
-  extends: ["plugin:vue/essential", "@vue/prettier"],
+  extends: ["plugin:vue/essential", 'airbnb-base'],
+  // https://github.com/vuejs/eslint-plugin-vue#priority-a-essential-error-prevention
+  // consider switching to `plugin:vue/strongly-recommended` or `plugin:vue/recommended` for stricter rules.
+  plugins: [
+    'vue'
+  ],
+  settings: {
+    'import/resolver': {
+      webpack: {
+        config: {
+          resolve: {
+            extensions: ['.js', '.json', '.vue'],
+              alias: {
+              '@': path.resolve(__dirname, 'src')
+            }
+          }
+        }
+      }
+    },
+    "import/core-modules": ["codemirror"],
+  },
   rules: {
     'max-len': ["error", { "code": 200 }],
     // don't require .vue extension when importing
