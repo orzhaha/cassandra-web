@@ -34,7 +34,7 @@
 
             el-button(
               type="info"
-              icon="el-icon-share"
+              icon="el-icon-document-copy"
               size="small"
               @click="handleCopyData(scope.row)")
     el-pagination(:page-size="20"
@@ -252,7 +252,7 @@ export default {
         type: 'success',
         showClose: true,
         duration: 0,
-        message: `copy to clipboard`
+        message: 'copy to clipboard'
       });
     },
 

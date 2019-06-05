@@ -6,24 +6,33 @@
     v-loading="loading")
     div(class="w100"
         @keyup.enter="find()")
+      el-divider(
+        direction="vertical")
       el-button(
         type="text"
         class="caret-bottom"
         v-bind:class="[isCollapse ? 'el-icon-caret-top' : 'el-icon-caret-bottom']"
         @click.stop="isCollapse = !isCollapse") Folding Find Column
+      el-divider(
+        direction="vertical")
       el-checkbox(
         @change="changeIsNotCollapse"
         v-model="isNotCollapse") Do Not Collapse
+      el-divider(
+        direction="vertical")
       el-checkbox(
         @change="changeIsShowOverflowTooltip"
         v-model="isShowOverflowTooltip") Show Overflow Tooltip
+      el-divider(
+        direction="vertical")
       el-checkbox(
         @change="changeIsAllowFilter"
         v-model="isAllowFilter") Allow Filter
+      el-divider(
+        direction="vertical")
       el-button(
         type="info"
-        class="copy-to-clipboard-all-bottom"
-        icon="el-icon-share"
+        icon="el-icon-copy-document"
         size="small"
         @click.stop="handleCopyAllData()") copy all
       template(
@@ -107,10 +116,7 @@
     width: 100%;
   }
   .caret-bottom {
-    margin: 10px 20px;
-  }
-  .copy-to-clipboard-all-bottom {
-    margin: 0px 20px;
+    margin: 10px 0px;
   }
 </style>
 
@@ -310,7 +316,7 @@ export default {
         type: 'success',
         showClose: true,
         duration: 0,
-        message: `copy to clipboard`
+        message: 'copy to clipboard'
       });
     },
 

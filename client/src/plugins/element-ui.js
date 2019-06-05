@@ -33,11 +33,15 @@ import {
   Checkbox,
   Dialog,
   Switch,
+  Icon,
+  Divider,
 } from 'element-ui';
 // import Cookies from 'js-cookie';
+
 import lang from 'element-ui/lib/locale/lang/en'
 import locale from 'element-ui/lib/locale'
 import '@/style/theme/index.css';
+
 
 // const isThemeDark = Cookies.get('isThemeDark')
 // const themeDark = () => import('element-theme-dark');
@@ -75,6 +79,8 @@ Vue.use(Option);
 Vue.use(Checkbox);
 Vue.use(Dialog);
 Vue.use(Switch);
+Vue.use(Icon);
+Vue.use(Divider);
 
 Vue.config.lang = 'en-us'
 Vue.prototype.$loading = Loading.service;

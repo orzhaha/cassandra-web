@@ -26,7 +26,7 @@ el-menu(
   el-menu-item(
     @click="goHostInfo"
     index="-2")
-      i(class="el-icon-printer")
+      i(class="el-icon-s-platform")
       span(lot="title") HostInfo
 
   //- NOTE: folding menu

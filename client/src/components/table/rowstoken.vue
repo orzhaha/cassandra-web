@@ -4,14 +4,17 @@
     id="tablerows"
     ref="tablerows"
     v-loading="loading")
+    el-divider(
+      direction="vertical")
     el-checkbox(
       class="is-show-overflow-tooltip-checkbox"
       @change="changeIsShowOverflowTooltip"
       v-model="isShowOverflowTooltip") Show Overflow Tooltip
+    el-divider(
+      direction="vertical")
     el-button(
       type="info"
-      class="copy-to-clipboard-all-bottom"
-      icon="el-icon-share"
+      icon="el-icon-copy-document"
       size="small"
       @click.stop="handleCopyAllData()") copy all
     el-table(
@@ -47,7 +50,7 @@
 
             el-button(
               type="info"
-              icon="el-icon-share"
+              icon="el-icon-copy-document"
               size="small"
               @click="handleCopyData(scope.row)")
     el-pagination(:page-size="50"
@@ -113,11 +116,7 @@
     height: auto;
   }
   .is-show-overflow-tooltip-checkbox {
-    margin: 10px 20px;
-    padding: 12px 0px;
-  }
-  .copy-to-clipboard-all-bottom {
-    margin: 0px 20px;
+    margin: 10px 0px;
   }
 </style>
 <script>
@@ -375,7 +374,7 @@ export default {
         type: 'success',
         showClose: true,
         duration: 0,
-        message: `copy to clipboard`
+        message: 'copy to clipboard'
       });
     },
 
@@ -386,7 +385,7 @@ export default {
         type: 'success',
         showClose: true,
         duration: 0,
-        message: `copy to clipboard`
+        message: 'copy to clipboard'
       });
     },
 
