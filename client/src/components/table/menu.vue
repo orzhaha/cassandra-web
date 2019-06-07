@@ -53,6 +53,10 @@ export default {
         {
           name: 'import',
           trigger: this.Import
+        },
+        {
+          name: 'truncate',
+          trigger: this.Truncate
         }
       ]
     }
@@ -115,6 +119,12 @@ export default {
     Import() {
       this.$router.push({
         name: 'import'
+      })
+    },
+
+    Truncate() {
+      this.$router.push({
+        name: 'truncate'
       })
     },
   }

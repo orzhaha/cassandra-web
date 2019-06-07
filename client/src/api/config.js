@@ -27,6 +27,10 @@ const config = {
       type: 'POST',
       url: `${domain}/rowtoken`
     },
+    truncate: {
+      type: 'POST',
+      url: `${domain}/truncate`
+    },
     keyspace: {
       type: 'GET',
       url: `${domain}/keyspace`

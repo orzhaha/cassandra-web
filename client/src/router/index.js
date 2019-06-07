@@ -11,6 +11,7 @@ import Columns from '@/components/table/columns'
 import Definition from '@/components/table/definition'
 import Export from '@/components/table/export'
 import Import from '@/components/table/import'
+import Truncate from '@/components/table/truncate'
 import Find from '@/components/table/find'
 import Query from '@/components/query'
 import HostInfo from '@/components/hostinfo'
@@ -97,6 +98,12 @@ export default new Router({
               path: 'import',
               name: 'import',
               component: Import,
+            },
+
+            {
+              path: 'truncate',
+              name: 'truncate',
+              component: Truncate,
             },
 
             {

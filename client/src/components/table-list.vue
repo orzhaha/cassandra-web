@@ -32,7 +32,7 @@
         template(slot-scope="scope")
           span(
             @click="goToColumns(scope.row)")
-            i(class="table-list-icon el-icon-info")
+            i(class="table-list-icon el-icon-data-analysis")
             span columns
       el-table-column(
         prop="table_name"
@@ -58,6 +58,14 @@
             @click="goToImport(scope.row)")
             i(class="table-list-icon el-icon-upload2")
             span import
+      el-table-column(
+        prop="table_name"
+        label="truncate")
+        template(slot-scope="scope")
+          span(
+            @click="goToTruncate(scope.row)")
+            i(class="table-list-icon el-icon-folder-delete")
+            span truncate
       el-table-column(
         prop="id"
         :show-overflow-tooltip="true"
@@ -145,6 +153,16 @@ export default {
     goToImport(row) {
       this.$router.push({
         path: `${row.keyspace_name}/${row.table_name}/import`,
+        params: {
+          keyspace: row.keyspace_name,
+          table: row.table_name
+        }
+      })
+    },
+
+    goToTruncate(row) {
+      this.$router.push({
+        path: `${row.keyspace_name}/${row.table_name}/truncate`,
         params: {
           keyspace: row.keyspace_name,
           table: row.table_name

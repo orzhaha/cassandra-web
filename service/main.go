@@ -176,6 +176,7 @@ func run(c *cli.Context) {
 	e.POST("/find", h.Find)
 	e.POST("/import", h.Import)
 	e.POST("/rowtoken", h.RowToken)
+	e.POST("/truncate", h.Truncate)
 
 	e.GET("/keyspace", h.KeySpace)
 	e.GET("/table", h.Table)
@@ -808,6 +809,25 @@ func (h *Handler) Import(c echo.Context) error {
 	cmd := exec.Command("cqlsh", env.CassandraHost, "--connect-timeout=600", "--request-timeout=600", "-e", cql)
 	_, err = cmd.CombinedOutput()
 	if err != nil {
+		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
+	}
+
+	return c.JSON(http.StatusOK, "success")
+}
+
+// Truncate 清除table資料
+func (h *Handler) Truncate(c echo.Context) error {
+	req := struct {
+		Table string `json:"table" form:"table" query:"table"`
+	}{}
+
+	if err := c.Bind(&req); err != nil {
+		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
+	}
+
+	cql := fmt.Sprintf("TRUNCATE TABLE %s;", req.Table)
+
+	if err := h.Session.Query(cql).Exec(); err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
 	}
 

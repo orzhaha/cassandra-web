@@ -9,8 +9,8 @@
 ```sh
 curl \
   -X GET \
-  -H 'Content-Type: application/json' \
-  http://localhost/keyspace
+  http://localhost/keyspace \
+  -H 'Content-Type: application/json'
 ```
 
 ----
@@ -28,8 +28,8 @@ curl \
 ```sh
 curl \
   -X GET \
-  -H 'Content-Type: application/json' \
-  http://localhost/table?keyspace=abc
+  http://localhost/table?keyspace=abc \
+  -H 'Content-Type: application/json'
 ```
 
 ----
@@ -49,8 +49,8 @@ curl \
 ```sh
 curl \
   -X GET \
-  -H 'Content-Type: application/json' \
-  http://localhost/row?table=ca.abc&limit=5&token_key=a&next_token=Serenity
+  http://localhost/row?table=ca.abc&limit=5&token_key=a&next_token=Serenity \
+  -H 'Content-Type: application/json'
 ```
 
 ----
@@ -71,6 +71,7 @@ curl \
 ```sh
 curl \
   -X POST \
+  http://localhost/rowtoken \
   -H 'Content-Type: application/json' \
   -d '{"table":"table_name", "item":"{field1:value1, field2:value2}", "prevnext": "next", "pagesize": 10}'
 ```
@@ -172,7 +173,7 @@ curl \
 ```sh
 curl \
   -X POST \
-  http://localhost/save \
+  http://localhost/delete \
   -H 'Content-Type: application/json' \
   -d '{"table":"table_name", "item":"{field1:value1, field2:value2}"}'
 ```
@@ -196,7 +197,7 @@ curl \
 ```sh
 curl \
   -X POST \
-  http://localhost/save \
+  http://localhost/find \
   -H 'Content-Type: application/json' \
   -d '{"table":"tablename","item":{"order_id":{"operator":"=","value":"123"},"order_time":{"operator":"=","value":"456"}}, "page": 1, "pagesize": 10}'
 ```
@@ -242,6 +243,27 @@ curl \
   -F "table=keyspace.table" \
   -F "filecomment=This is an image file" \
   -F "file=@/home/user/Desktop/importfile" \
+```
+
+---
+
+
+##### /truncate (truncate table data)
+
+##### params
+
+* table
+
+##### return：Json object
+
+##### example：
+
+```sh
+curl \
+  -X POST \
+  http://localhost/truncate \
+  -H 'Content-Type: application/json' \
+  -d '{"table":"table_name"}'
 ```
 
 ---
