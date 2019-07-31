@@ -34,7 +34,9 @@ export default {
   data() {
     return {}
   },
-  created() {},
+  created() {
+    document.title = 'Cassandra-Web'
+  },
   methods: {}
 };
 </script>

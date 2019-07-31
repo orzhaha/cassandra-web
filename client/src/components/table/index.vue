@@ -13,6 +13,9 @@
 import Menu from './menu'
 
 export default {
+  created() {
+    document.title = 'Index'
+  },
   components: {
     'menu-component': Menu
   }

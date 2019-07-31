@@ -22,9 +22,9 @@
   }
 </style>
 <script>
-import api from '@/api'
 import { forEach } from 'lodash'
 import JSONbig from 'json-bigint'
+import api from '@/api'
 
 const service = api.make('root')
 
@@ -39,6 +39,7 @@ export default {
     }
   },
   created() {
+    document.title = `Columns-${this.$route.params.table}`
     this.fetch()
   },
   watch: {

@@ -31,5 +31,8 @@ export default {
       href: `${domain}/export?table=${this.$route.params.keyspace}.${this.$route.params.table}`,
     }
   },
+  created() {
+    document.title = `Export-${this.$route.params.table}`
+  },
 };
 </script>

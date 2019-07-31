@@ -120,7 +120,6 @@
   }
 </style>
 <script>
-import api from '@/api'
 import forEach from 'lodash/forEach'
 import cloneDeep from 'lodash/cloneDeep'
 import copy from 'copy-to-clipboard'
@@ -128,6 +127,7 @@ import stringify from 'stringify-object'
 import JSONbig from 'json-bigint'
 import Cookies from 'js-cookie'
 import Column from '../../utils/column'
+import api from '@/api'
 
 const service = api.make('root')
 
@@ -150,6 +150,7 @@ export default {
     }
   },
   created() {
+    document.title = `Rows-${this.$route.params.table}`
     this.$nextTick(() => {
       this.componentWidth = this.$refs.tablerows.clientWidth
     });
@@ -171,6 +172,7 @@ export default {
   },
   watch: {
     $route() {
+      document.title = `Rows-${this.$route.params.table}`
       this.fetch()
     }
   },

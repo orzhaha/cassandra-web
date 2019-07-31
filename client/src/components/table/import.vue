@@ -40,7 +40,9 @@ export default {
       href: `${domain}/import?table=${this.$route.params.keyspace}.${this.$route.params.table}`,
     }
   },
-  created() {},
+  created() {
+    document.title = `Import-${this.$route.params.table}`
+  },
   watch: {
     $route() {}
   },

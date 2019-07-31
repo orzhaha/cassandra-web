@@ -18,6 +18,7 @@
 </style>
 
 <script>
+/* eslint import/no-extraneous-dependencies: ["error", {"peerDependencies": true}] */
 import 'codemirror/mode/sql/sql'
 import 'codemirror/theme/monokai.css'
 import api from '@/api'
@@ -42,6 +43,7 @@ export default {
     }
   },
   created() {
+    document.title = `Definition-${this.$route.params.table}`
     this.fetch()
   },
   watch: {

@@ -186,6 +186,7 @@ export default {
     }
   },
   created() {
+    document.title = `Find-${this.$route.params.table}`
     this.fetch()
 
     const isNotCollapse = Cookies.get('isNotCollapse')

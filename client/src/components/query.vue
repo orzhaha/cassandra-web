@@ -28,8 +28,8 @@
   }
 </style>
 <script>
-import api from '@/api'
 import { forEach, isArray } from 'lodash'
+import api from '@/api'
 
 const service = api.make('root')
 
@@ -44,6 +44,7 @@ export default {
     }
   },
   created() {
+    document.title = 'Query'
     this.fetch()
   },
   watch: {

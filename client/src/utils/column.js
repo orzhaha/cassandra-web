@@ -1,8 +1,8 @@
 import get from 'lodash/get'
 import forEach from 'lodash/forEach'
 import includes from 'lodash/includes'
-import api from '@/api'
 import getType from '@/config/data-type'
+import api from '@/api'
 
 const service = api.make('root')
 

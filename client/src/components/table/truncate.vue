@@ -25,6 +25,9 @@ const service = api.make('root')
 
 export default {
   name: 'Truncate',
+  created() {
+    document.title = `Truncate-${this.$route.params.table}`
+  },
   methods: {
     handleTruncateConfirm() {
       const table = `${this.$route.params.keyspace}.${this.$route.params.table}`
@@ -41,7 +44,7 @@ export default {
       try {
         const res = await service.request('truncate', {
           data: {
-            table: table,
+            table,
           }
         })
 

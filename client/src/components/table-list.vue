@@ -92,10 +92,12 @@ export default {
     }
   },
   created() {
+    document.title = `Keyspace-${this.$route.params.keyspace}`
     this.fetch()
   },
   watch: {
     $route() {
+      document.title = `Keyspace-${this.$route.params.keyspace}`
       this.fetch()
     }
   },
