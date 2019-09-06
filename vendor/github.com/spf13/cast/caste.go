@@ -846,6 +846,9 @@ func ToStringE(i interface{}) (string, error) {
 		return s.String(), nil
 	case error:
 		return s.Error(), nil
+	case map[string]string, map[string]interface{}, map[interface{}]interface{}:
+		b, err := json.Marshal(s)
+		return string(b), err
 	default:
 		return "", fmt.Errorf("unable to cast %#v of type %T to string", i, i)
 	}
