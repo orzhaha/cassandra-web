@@ -3,70 +3,52 @@
     class="w100"
     v-loading="loading")
     el-table(
+      @cell-click="handlerCellClick"
       :data="tabledata"
       empty-text="empty data"
       stripe
       :row-style="rowStyle"
       style="width: 100%")
       el-table-column(
-        prop="table_name"
+        column-key="table_name"
         label="table_name")
         template(slot-scope="scope")
-          span(
-            @click="goToTable(scope.row)")
-            i(
-              v-bind:class="[scope.row.views ? 'el-icon-view' : 'el-icon-document']"
-              class="table-list-icon")
-            span {{scope.row.table_name}}
+          i(
+            v-bind:class="[scope.row.views ? 'el-icon-view' : 'el-icon-document']"
+            class="table-list-icon")
+          span {{scope.row.table_name}}
       el-table-column(
-        prop="table_name"
+        column-key="find"
         label="find")
-        template(slot-scope="scope")
-          span(
-            @click="goToFind(scope.row)")
-            i(class="table-list-icon el-icon-search")
-            span find
+        i(class="table-list-icon el-icon-search")
+        span find
       el-table-column(
-        prop="table_name"
+        column-key="columns"
         label="columns")
-        template(slot-scope="scope")
-          span(
-            @click="goToColumns(scope.row)")
-            i(class="table-list-icon el-icon-data-analysis")
-            span columns
+        i(class="table-list-icon el-icon-data-analysis")
+        span columns
       el-table-column(
-        prop="table_name"
+        column-key="definition"
         label="definition")
-        template(slot-scope="scope")
-          span(
-            @click="goToDefinition(scope.row)")
-            i(class="table-list-icon el-icon-news")
-            span definition
+        i(class="table-list-icon el-icon-news")
+        span definition
       el-table-column(
-        prop="table_name"
+        column-key="export"
         label="export")
-        template(slot-scope="scope")
-          span(
-            @click="goToExport(scope.row)")
-            i(class="table-list-icon el-icon-download")
-            span export
+        i(class="table-list-icon el-icon-download")
+        span export
       el-table-column(
-        prop="table_name"
+        column-key="import"
         label="import")
-        template(slot-scope="scope")
-          span(
-            @click="goToImport(scope.row)")
-            i(class="table-list-icon el-icon-upload2")
-            span import
+        i(class="table-list-icon el-icon-upload2")
+        span import
       el-table-column(
-        prop="table_name"
+        column-key="truncate"
         label="truncate")
-        template(slot-scope="scope")
-          span(
-            @click="goToTruncate(scope.row)")
-            i(class="table-list-icon el-icon-folder-delete")
-            span truncate
+        i(class="table-list-icon el-icon-folder-delete")
+        span truncate
       el-table-column(
+        column-key="id"
         prop="id"
         :show-overflow-tooltip="true"
         label="id")
@@ -102,6 +84,41 @@ export default {
     }
   },
   methods: {
+    handlerCellClick(row, column) {
+      switch (column.columnKey) {
+        case 'table_name': {
+          this.goToTable(row)
+          break
+        }
+        case 'find': {
+          this.goToFind(row)
+          break
+        }
+        case 'columns': {
+          this.goToColumns(row)
+          break
+        }
+        case 'definition': {
+          this.goToDefinition(row)
+          break
+        }
+        case 'export': {
+          this.goToExport(row)
+          break
+        }
+        case 'import': {
+          this.goToImport(row)
+          break
+        }
+        case 'truncate': {
+          this.goToTruncate(row)
+          break
+        }
+        default: {
+          break
+        }
+      }
+    },
     goToTable(row) {
       this.$router.push({
         path: `${row.keyspace_name}/${row.table_name}/rowstoken/50`,
