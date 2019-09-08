@@ -6,8 +6,6 @@
     v-loading="loading")
     div(class="w100"
         @keyup.enter="find()")
-      el-divider(
-        direction="vertical")
       el-button(
         type="text"
         class="caret-bottom"
@@ -31,10 +29,27 @@
       el-divider(
         direction="vertical")
       el-button(
-        type="info"
         icon="el-icon-copy-document"
         size="small"
         @click.stop="handleCopyAllData()") copy all
+      el-button(
+        icon="el-icon-brush"
+        size="small"
+        @click.stop="triggerFilterList()") filter
+      div(v-show="showFilterList")
+        el-divider(
+          content-position="left")
+          el-checkbox(
+            :indeterminate="isIndeterminate"
+            v-model="isFilterColumnAll"
+            @change="handleFilterColumnAll") check all
+        el-checkbox-group(
+          v-model="customColumn"
+          @change="handleFilterColumn")
+          el-checkbox(
+            v-for="name in columnNames"
+            :label="name"
+            :key="name") {{name}}
       template(
         v-if="isNotCollapse || isCollapse")
         el-table(
@@ -108,7 +123,8 @@
         :pagesize="pagesize"
         :column="column"
         :isShowOverflowTooltip="isShowOverflowTooltip"
-        :componentWidth="componentWidth")
+        :componentWidth="componentWidth"
+        :customColumn="customColumn")
 </template>
 
 <style>
@@ -183,6 +199,10 @@ export default {
           label: 'in',
         },
       ],
+      customColumn: [],
+      isFilterColumnAll: true,
+      isIndeterminate: false,
+      showFilterList: false,
     }
   },
   created() {
@@ -216,7 +236,24 @@ export default {
       this.fetch()
     },
   },
+  computed: {
+    columnNames() {
+      return this.column ? this.column.getColumnData().map(data => data.column_name) : []
+    }
+  },
   methods: {
+    triggerFilterList() {
+      this.showFilterList = !this.showFilterList
+    },
+    handleFilterColumn(val) {
+      this.customColumn = val || []
+      this.isFilterColumnAll = this.customColumn.length === this.columnNames.length
+      this.isIndeterminate = this.customColumn.length > 0 && this.customColumn.length < this.columnNames.length
+    },
+    handleFilterColumnAll(val) {
+      this.customColumn = val ? this.columnNames : [];
+      this.isIndeterminate = false;
+    },
     async fetch() {
       this.loading = true
 
@@ -231,7 +268,7 @@ export default {
       })
 
       this.column = column
-
+      this.customColumn = this.columnNames
       this.loading = false
     },
 

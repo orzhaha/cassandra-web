@@ -11,10 +11,11 @@
         el-table-column(
           :show-overflow-tooltip="isShowOverflowTooltip"
           v-for="columnData in column.getColumnData()"
-          :key="columnData['column_name']"
-          :width="(isSetＷidth()) ? columnData['text_rect']['width'] + 6 : undefined"
-          :prop="columnData['column_name']"
-          :label="`${columnData['column_name']}`")
+          v-if="filterColumn(columnData.column_name)"
+          :key="columnData.column_name"
+          :width="(isSetＷidth()) ? columnData.text_rect.width + 6 : undefined"
+          :prop="columnData.column_name"
+          :label="`${columnData.column_name}`")
         el-table-column(
           fixed="left"
           label="Tools"
@@ -102,6 +103,7 @@
   }
 </style>
 <script>
+import includes from 'lodash/includes'
 import forEach from 'lodash/forEach'
 import cloneDeep from 'lodash/cloneDeep'
 import copy from 'copy-to-clipboard'
@@ -124,6 +126,7 @@ export default {
     'find',
     'isShowOverflowTooltip',
     'componentWidth',
+    'customColumn',
   ],
   data() {
     return {
@@ -139,6 +142,9 @@ export default {
   watch: {
   },
   methods: {
+    filterColumn(name) {
+      return includes(this.customColumn, name)
+    },
     handleOpenEditDialog(row) {
       this.editDialogVisible = true
 

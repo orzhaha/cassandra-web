@@ -4,8 +4,6 @@
     id="tablerows"
     ref="tablerows"
     v-loading="loading")
-    el-divider(
-      direction="vertical")
     el-checkbox(
       class="is-show-overflow-tooltip-checkbox"
       @change="changeIsShowOverflowTooltip"
@@ -13,10 +11,27 @@
     el-divider(
       direction="vertical")
     el-button(
-      type="info"
       icon="el-icon-copy-document"
       size="small"
       @click.stop="handleCopyAllData()") copy all
+    el-button(
+      icon="el-icon-brush"
+      size="small"
+      @click.stop="triggerFilterList()") filter
+    div(v-show="showFilterList")
+      el-divider(
+        content-position="left")
+        el-checkbox(
+          :indeterminate="isIndeterminate"
+          v-model="isFilterColumnAll"
+          @change="handleFilterColumnAll") check all
+      el-checkbox-group(
+        v-model="customColumn"
+        @change="handleFilterColumn")
+        el-checkbox(
+          v-for="name in columnNames"
+          :label="name"
+          :key="name") {{name}}
     el-table(
       v-if="column"
       :data="rowData"
@@ -26,10 +41,11 @@
         el-table-column(
           :show-overflow-tooltip="isShowOverflowTooltip"
           v-for="columnData in column.getColumnData()"
-          :key="columnData['column_name']"
-          :width="(isSetＷidth()) ? columnData['text_rect']['width'] + 6 : undefined"
-          :prop="columnData['column_name']"
-          :label="`${columnData['column_name']}`")
+          v-if="filterColumn(columnData.column_name)"
+          :key="columnData.column_name"
+          :width="(isSetＷidth()) ? columnData.text_rect.width + 6 : undefined"
+          :prop="columnData.column_name"
+          :label="`${columnData.column_name}`")
         el-table-column(
           fixed="left"
           label="Tools"
@@ -120,6 +136,7 @@
   }
 </style>
 <script>
+import includes from 'lodash/includes'
 import forEach from 'lodash/forEach'
 import cloneDeep from 'lodash/cloneDeep'
 import copy from 'copy-to-clipboard'
@@ -147,6 +164,10 @@ export default {
       editInputData: [],
       isShowOverflowTooltip: true,
       loading: true,
+      customColumn: [],
+      isFilterColumnAll: true,
+      isIndeterminate: false,
+      showFilterList: false,
     }
   },
   created() {
@@ -176,7 +197,27 @@ export default {
       this.fetch()
     }
   },
+  computed: {
+    columnNames() {
+      return this.column ? this.column.getColumnData().map(data => data.column_name) : []
+    }
+  },
   methods: {
+    triggerFilterList() {
+      this.showFilterList = !this.showFilterList
+    },
+    handleFilterColumn(val) {
+      this.customColumn = val || []
+      this.isFilterColumnAll = this.customColumn.length === this.columnNames.length
+      this.isIndeterminate = this.customColumn.length > 0 && this.customColumn.length < this.columnNames.length
+    },
+    handleFilterColumnAll(val) {
+      this.customColumn = val ? this.columnNames : [];
+      this.isIndeterminate = false;
+    },
+    filterColumn(name) {
+      return includes(this.customColumn, name)
+    },
     handleOpenEditDialog(row) {
       this.editDialogVisible = true
 
@@ -297,6 +338,7 @@ export default {
       const column = new Column(this.$route.params.keyspace, this.$route.params.table)
       await column.init()
       this.column = column
+      this.customColumn = this.columnNames
     },
 
     async handlePrevClick(page) {

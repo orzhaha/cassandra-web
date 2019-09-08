@@ -31,6 +31,7 @@ import {
   Select,
   Option,
   Checkbox,
+  CheckboxGroup,
   Dialog,
   Switch,
   Icon,
@@ -77,6 +78,7 @@ Vue.use(Upload);
 Vue.use(Select);
 Vue.use(Option);
 Vue.use(Checkbox);
+Vue.use(CheckboxGroup);
 Vue.use(Dialog);
 Vue.use(Switch);
 Vue.use(Icon);

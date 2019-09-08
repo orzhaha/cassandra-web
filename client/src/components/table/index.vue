@@ -1,10 +1,7 @@
 <template lang="pug">
   div
-    el-header
-      menu-component
-
-    el-container
-      router-view
+    menu-component
+    router-view
 </template>
 <style>
 </style>
