@@ -1,7 +1,9 @@
 # build stage
-FROM golang:1.9.1 AS build-env
+FROM ipushc/golangxnode:1.9.1-v12 AS build-env
 
 RUN cd /go/src/ && git clone https://github.com/orzhaha/cassandra-web.git
+
+RUN cd /go/src/cassandra-web/client && npm i && npm run build
 
 RUN go get -u github.com/jteeuwen/go-bindata/... \
     && cd /go/src/cassandra-web/ \
