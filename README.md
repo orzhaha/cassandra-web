@@ -1,9 +1,12 @@
 # cassandra-web
+
+## Demo
 ![index](webui.gif)
 
 ## Features
 * Table Row Prev Next Page
 * Table Row Edit
+* Table Row filter
 * Table Row Delete
 * Table Rown Find
 * Table Definition
@@ -25,10 +28,19 @@ unzip
 $ tar zxvf linux.tar.gz
 ```
 
+npm install 
+```
+$ cd client && npm i && npm run build
+```
+
 run service
 ```
 $ ./service -c config.yaml
 ```
+
+#### depend
+
+cqlsh 
 
 ---
 
