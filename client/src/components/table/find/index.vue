@@ -54,7 +54,7 @@
         v-if="isNotCollapse || isCollapse")
         el-table(
           v-if="column"
-          :data="column.getColumnData()"
+          :data="allowFilterColumn"
           :highlight-current-row="true"
           empty-text="empty data"
           stripe)
@@ -239,6 +239,12 @@ export default {
   computed: {
     columnNames() {
       return this.column ? this.column.getColumnData().map(data => data.column_name) : []
+    },
+    allowFilterColumn() {
+      return this.column
+        ? this.column.getColumnData()
+          .filter(data => this.isAllowFilter || (data.kind === 'partition_key' || data.kind === 'clustering'))
+        : []
     }
   },
   methods: {
