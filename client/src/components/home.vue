@@ -1,11 +1,64 @@
 <template lang="pug">
-  div(class="ca-content")
-    router-link(
-      class="ca-a"
-      to="/main") Cassandra-Web
+  div
+    div(class="ca-content")
+      div(class="ca-ll-bg")
+      div(class="ca-rr-bg")
+      div(class="ca-box")
+        div(class="ca-a") Cassandra-Web
+
+    div(class="ca-content")
+      router-link(
+        class="ca-ll"
+        to="/main?theme=white")
+      router-link(
+        class="ca-rr"
+        to="/main?theme=dark")
 </template>
 <style>
+  .ca-rr-bg {
+    background: #222933;
+    width: 50%;
+    position: relative;
+    display: inline-block;
+    height: 100%;
+  }
+
+  .ca-rr {
+    width: 50%;
+    position:absolute;
+    display: inline-block;
+    height: 100%;
+    opacity:0.9;
+  }
+
+  .ca-ll-bg{
+    background: #FFF;
+    width: 50%;
+    position:relative;
+    display: inline-block;
+    height: 100%;
+  }
+
+
+  .ca-ll {
+    width: 50%;
+    position:relative;
+    display: inline-block;
+    height: 100%;
+  }
+
   .ca-content {
+    position: fixed;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    margin: auto;
+    width:100%;
+    height: 100%;
+  }
+
+  .ca-box {
     position: fixed;
     top: 0;
     bottom: 0;

@@ -16,12 +16,27 @@ el-container
 </style>
 
 <script>
+import Cookies from 'js-cookie'
 import ThemePicker from '@/components/theme-picker'
 import SideBar from './side-bar'
 
 export default {
   name: 'Main',
+  created() {
+    if (this.$route.query.theme === 'dark') {
+      Cookies.set('theme', 'dark')
+    } else if (this.$route.query.theme === 'white') {
+      Cookies.set('theme', 'white')
+    }
 
+    const theme = Cookies.get('theme')
+
+    if (theme === 'dark') {
+      document.getElementById('caw-html').className = 'custom-dark';
+    } else if (theme === 'white') {
+      document.getElementById('caw-html').className = '';
+    }
+  },
   components: {
     'side-bar-component': SideBar,
     'theme-picker-component': ThemePicker

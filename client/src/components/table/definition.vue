@@ -20,6 +20,7 @@
 <script>
 /* eslint import/no-extraneous-dependencies: ["error", {"peerDependencies": true}] */
 import 'codemirror/mode/sql/sql'
+/* eslint import/no-extraneous-dependencies: ["error", {"peerDependencies": true}] */
 import 'codemirror/theme/monokai.css'
 import api from '@/api'
 

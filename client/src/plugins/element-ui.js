@@ -37,19 +37,12 @@ import {
   Icon,
   Divider,
 } from 'element-ui';
-// import Cookies from 'js-cookie';
 
 import lang from 'element-ui/lib/locale/lang/en'
 import locale from 'element-ui/lib/locale'
+
 import '@/style/theme/index.css';
-
-
-// const isThemeDark = Cookies.get('isThemeDark')
-// const themeDark = () => import('element-theme-dark');
-
-// if (isThemeDark !== undefined && isThemeDark === 'true') {
-//   themeDark()
-// }
+import '@/style/theme/index-dark.css';
 
 locale.use(lang)
 
