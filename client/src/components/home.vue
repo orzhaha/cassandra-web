@@ -1,47 +1,25 @@
 <template lang="pug">
   div
     div(class="ca-content")
-      div(class="ca-ll-bg")
-      div(class="ca-rr-bg")
+      div(class="ca-bg")
       div(class="ca-box")
         div(class="ca-a") Cassandra-Web
 
     div(class="ca-content")
       router-link(
-        class="ca-ll"
-        to="/main?theme=white")
-      router-link(
-        class="ca-rr"
-        to="/main?theme=dark")
+        class="ca-link"
+        to="/main")
 </template>
 <style>
-  .ca-rr-bg {
-    background: #222933;
-    width: 50%;
+  .ca-bg {
+    width: 100%;
     position: relative;
     display: inline-block;
     height: 100%;
   }
 
-  .ca-rr {
-    width: 50%;
-    position:absolute;
-    display: inline-block;
-    height: 100%;
-    opacity:0.9;
-  }
-
-  .ca-ll-bg{
-    background: #FFF;
-    width: 50%;
-    position:relative;
-    display: inline-block;
-    height: 100%;
-  }
-
-
-  .ca-ll {
-    width: 50%;
+  .ca-link {
+    width: 100%;
     position:relative;
     display: inline-block;
     height: 100%;
@@ -82,6 +60,8 @@
 
 <script>
 
+import Cookies from 'js-cookie'
+
 export default {
   name: 'Home',
   data() {
@@ -89,6 +69,16 @@ export default {
   },
   created() {
     document.title = 'Cassandra-Web'
+
+    const ct = Cookies.get('theme')
+
+    if (ct === 'dark') {
+      this.theme = 'dark'
+      document.getElementById('caw-html').className = 'custom-dark';
+    } else if (ct === 'white') {
+      this.theme = 'white'
+      document.getElementById('caw-html').className = '';
+    }
   },
   methods: {}
 };

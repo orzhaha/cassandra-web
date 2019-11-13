@@ -10,7 +10,19 @@ el-container
        router-view
   el-footer
     //- NOTE: 主題
-    theme-picker-component
+    //- theme-picker-component
+    br
+    el-switch(
+      style="display: block"
+      v-model="theme"
+      @change="changeThemeColor"
+      active-color="#FFF"
+      inactive-color="#222933"
+      active-value="dark"
+      inactive-value="white"
+      active-text="dark"
+      inactive-text="white")
+</el-switch>
 </template>
 <style>
 </style>
@@ -22,24 +34,44 @@ import SideBar from './side-bar'
 
 export default {
   name: 'Main',
-  created() {
-    if (this.$route.query.theme === 'dark') {
-      Cookies.set('theme', 'dark')
-    } else if (this.$route.query.theme === 'white') {
-      Cookies.set('theme', 'white')
+  data() {
+    return {
+      theme: 'white'
     }
-
+  },
+  created() {
     const theme = Cookies.get('theme')
 
     if (theme === 'dark') {
+      this.theme = 'dark'
       document.getElementById('caw-html').className = 'custom-dark';
     } else if (theme === 'white') {
+      this.theme = 'white'
       document.getElementById('caw-html').className = '';
     }
   },
   components: {
     'side-bar-component': SideBar,
     'theme-picker-component': ThemePicker
+  },
+  methods: {
+    changeThemeColor(theme) {
+      if (theme === 'dark') {
+        Cookies.set('theme', 'dark')
+      } else if (theme === 'white') {
+        Cookies.set('theme', 'white')
+      }
+
+      const ct = Cookies.get('theme')
+
+      if (ct === 'dark') {
+        this.theme = 'dark'
+        document.getElementById('caw-html').className = 'custom-dark';
+      } else if (ct === 'white') {
+        this.theme = 'white'
+        document.getElementById('caw-html').className = '';
+      }
+    },
   }
 };
 </script>
