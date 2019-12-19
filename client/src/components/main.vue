@@ -7,7 +7,7 @@ el-container
       side-bar-component
 
     el-main
-       router-view
+       router-view(:key="$route.fullPath")
   el-footer
     //- NOTE: 主題
     //- theme-picker-component

@@ -245,6 +245,32 @@ func (h *Handler) KeySpace(c echo.Context) error {
 	}
 
 	for i, v := range ret {
+		tableIter := h.Session.Query(`SELECT table_name FROM system_schema.tables WHERE  keyspace_name = ?`, v["keyspace_name"]).Iter()
+		tableRet, err := tableIter.SliceMap()
+
+		if err != nil {
+			return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
+		}
+
+		for i, _ := range tableRet {
+			tableRet[i]["views"] = false
+		}
+
+		viewIter := h.Session.Query(`SELECT view_name as table_name FROM system_schema.views WHERE  keyspace_name = ?`, v["keyspace_name"]).Iter()
+		viewRet, err := viewIter.SliceMap()
+
+		if err != nil {
+			return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
+		}
+
+		for i, _ := range viewRet {
+			viewRet[i]["views"] = true
+		}
+
+		tableRet = append(tableRet, viewRet...)
+
+		ret[i]["table"] = tableRet
+
 		// 避免前端element table出現關鍵字bug
 		if v["keyspace_name"] == "system_distributed" {
 			ret[i]["keyspace_name"] = "system_distributed!"
@@ -273,6 +299,10 @@ func (h *Handler) Table(c echo.Context) error {
 	// 查詢 虛擬view
 	iter2 := h.Session.Query(`SELECT keyspace_name, view_name as table_name, id FROM system_schema.views WHERE  keyspace_name = ?`, keyspace).Iter()
 	ret2, err := iter2.SliceMap()
+
+	if err != nil {
+		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
+	}
 
 	for i, _ := range ret2 {
 		ret2[i]["views"] = true

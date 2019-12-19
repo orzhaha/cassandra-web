@@ -7,13 +7,27 @@ el-menu(
   :collapse="isCollapse")
 
   //- NOTE: keyspace
-  el-menu-item(
+  el-submenu(
     v-for="v,i in keyspace"
     :key="v.keyspace_name"
-    @click="goToKeyspace(v.keyspace_name)"
+    :collapse="isCollapse"
     :index="v.keyspace_name")
+    template(slot="title")
       i(class="el-icon-tickets")
-      span(lot="title") {{v.keyspace_name}}
+      span(
+        style="padding-right: 36px;"
+        @click="goToKeyspace(v.keyspace_name)"
+        lot="title") {{v.keyspace_name}}
+    el-menu-item-group()
+      el-menu-item(
+        v-for="vv in v.table"
+        :key="`${v.keyspace_name}.${vv.table_name}`"
+        :index="`${v.keyspace_name}.${vv.table_name}`")
+        template(slot="title")
+          i(v-bind:class="[vv.views ? 'el-icon-view' : 'el-icon-document']")
+          span(
+          @click="goToTable(v.keyspace_name, vv.table_name)"
+          lot="title") {{vv.table_name}}
 
   //- NOTE: query
   el-menu-item(
@@ -76,6 +90,12 @@ export default {
       }
 
       this.loading = false
+    },
+
+    goToTable(keyspaceName, tableName) {
+      this.$router.push({
+        path: `/main/keyspace/${keyspaceName}/${tableName}/rowstoken/50`,
+      })
     },
 
     async goToKeyspace(keyspace) {
