@@ -1,10 +1,10 @@
 <template lang="pug">
 el-container
-  el-container(style="height: 100%; border: 1px solid #eee")
+  el-container(:style="`height: ${wh}px; border: 1px solid #eee`")
     el-aside(style="width: auto")
 
       //- NOTE: side bar
-      side-bar-component
+      side-bar-component(:style="`min-height: ${wh}px;`")
 
     el-main
        router-view(:key="$route.fullPath")
@@ -36,6 +36,7 @@ export default {
   name: 'Main',
   data() {
     return {
+      wh: window.innerHeight - 70,
       theme: 'white'
     }
   },

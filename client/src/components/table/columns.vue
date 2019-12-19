@@ -7,6 +7,7 @@
       :highlight-current-row="true"
       empty-text="empty data"
       stripe
+      :height="wh"
       style="width: 100%")
         el-table-column(
           v-for="key in keys"
@@ -32,6 +33,7 @@ export default {
   name: 'Columns',
   data() {
     return {
+      wh: window.innerHeight - 170,
       keys: [],
       rowdata: [],
       isEdit: {},

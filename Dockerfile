@@ -9,7 +9,7 @@ RUN go get -u github.com/jteeuwen/go-bindata/... \
     && cd /go/src/cassandra-web/ \
     && go-bindata -o=client/client.go -pkg=client client/dist/...
 
-RUN cd /go/src/cassandra-web/service && go build 
+RUN cd /go/src/cassandra-web/service && go build
 
 # final stage
 FROM debian:stable
@@ -20,7 +20,7 @@ RUN apt-get update && apt-get install --no-install-recommends curl gnupg -y \
     # && curl https://www.apache.org/dist/cassandra/KEYS | apt-key add - \
     && apt-get update && apt-get install cassandra -y \
     && apt-get clean -y \
-    && rm -fr /var/lib/apt/lists/* 
+    && rm -fr /var/lib/apt/lists/*
 
 COPY --from=build-env /go/src/cassandra-web/service/service /
 COPY --from=build-env /go/src/cassandra-web/service/config.yaml /

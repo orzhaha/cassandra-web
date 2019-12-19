@@ -37,6 +37,7 @@
       :data="rowData"
       empty-text="empty data"
       stripe
+      :height="wh"
       style="width: 100%")
         el-table-column(
           :show-overflow-tooltip="isShowOverflowTooltip"
@@ -153,6 +154,7 @@ export default {
 
   data() {
     return {
+      wh: window.innerHeight - 270,
       tokenRowData: [],
       rowData: [],
       itemData: {},
