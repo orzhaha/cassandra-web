@@ -4,6 +4,7 @@ el-menu(
   class="el-menu-vertical-demo"
   v-loading="loading"
   :collapse-transition="false"
+  @open="goToKeyspace"
   :collapse="isCollapse")
 
   //- NOTE: keyspace
@@ -16,17 +17,16 @@ el-menu(
       i(class="el-icon-tickets")
       span(
         style="padding-right: 36px;"
-        @click="goToKeyspace(v.keyspace_name)"
         lot="title") {{v.keyspace_name}}
     el-menu-item-group()
       el-menu-item(
         v-for="vv in v.table"
+        @click="goToTable(v.keyspace_name, vv.table_name)"
         :key="`${v.keyspace_name}.${vv.table_name}`"
         :index="`${v.keyspace_name}.${vv.table_name}`")
         template(slot="title")
           i(v-bind:class="[vv.views ? 'el-icon-view' : 'el-icon-document']")
           span(
-          @click="goToTable(v.keyspace_name, vv.table_name)"
           lot="title") {{vv.table_name}}
 
   //- NOTE: query
