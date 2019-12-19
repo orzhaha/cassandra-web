@@ -327,7 +327,6 @@ export default {
           this.$message({
             type: 'success',
             showClose: true,
-            duration: 0,
             message
           });
         }
@@ -335,7 +334,6 @@ export default {
         this.$message({
           type: 'error',
           showClose: true,
-          duration: 0,
           message: error.body.message
         });
       }
@@ -359,7 +357,6 @@ export default {
       this.$message({
         type: 'success',
         showClose: true,
-        duration: 0,
         message: 'copy to clipboard'
       });
     },

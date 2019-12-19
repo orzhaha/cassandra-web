@@ -69,7 +69,6 @@ export default {
           this.$message({
             type: 'success',
             showClose: true,
-            duration: 0,
             message: rows
           });
 
