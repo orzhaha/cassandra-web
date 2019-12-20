@@ -30,11 +30,11 @@
         direction="vertical")
       el-button(
         icon="el-icon-copy-document"
-        size="small"
+        size="mini"
         @click.stop="handleCopyAllData()") copy all
       el-button(
         icon="el-icon-brush"
-        size="small"
+        size="mini"
         @click.stop="triggerFilterList()") filter
       div(v-show="showFilterList")
         el-divider(

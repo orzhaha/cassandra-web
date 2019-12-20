@@ -26,18 +26,18 @@
               type="primary"
               @click="handleOpenEditDialog(scope.row)"
               icon="el-icon-edit"
-              size="small")
+              size="mini")
 
             el-button(
               type="danger"
               icon="el-icon-delete"
-              size="small"
+              size="mini"
               @click="handleDeleteConfirm(scope.row)")
 
             el-button(
               type="info"
               icon="el-icon-document-copy"
-              size="small"
+              size="mini"
               @click="handleCopyData(scope.row)")
     el-pagination(:page-size="20"
       @current-change="handleCurrentChange"

@@ -12,11 +12,11 @@
       direction="vertical")
     el-button(
       icon="el-icon-copy-document"
-      size="small"
+      size="mini"
       @click.stop="handleCopyAllData()") copy all
     el-button(
       icon="el-icon-brush"
-      size="small"
+      size="mini"
       @click.stop="triggerFilterList()") filter
     div(v-show="showFilterList")
       el-divider(
@@ -57,18 +57,18 @@
               type="primary"
               @click="handleOpenEditDialog(scope.row)"
               icon="el-icon-edit"
-              size="small")
+              size="mini")
 
             el-button(
               type="danger"
               icon="el-icon-delete"
-              size="small"
+              size="mini"
               @click="handleDeleteConfirm(scope.row)")
 
             el-button(
               type="info"
               icon="el-icon-copy-document"
-              size="small"
+              size="mini"
               @click="handleCopyData(scope.row)")
     el-pagination(:page-size="50"
       @next-click="handleNextClick"
