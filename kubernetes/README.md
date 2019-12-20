@@ -2,9 +2,9 @@
 ## Installing the Chart
 1.  To install the chart with the release name `cassandra-web` in namespace $NAMESPACE you defined above:
 
-   ```bash
-        $ helm install cassandra-web --name cassandra-web --namespace $NAMESPACE
-    ```
+```bash
+$ helm install cassandra-web --name cassandra-web --namespace $NAMESPACE
+```
 
 ## Configuration
 
