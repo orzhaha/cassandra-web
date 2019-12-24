@@ -117,7 +117,7 @@ export default {
       this.$router.push({
         name: 'table-list',
         params: {
-          keyspace
+          keyspace: (keyspace === 'system_distributed!') ? 'system_distributed' : keyspace
         }
       }).catch(err => err)
 
