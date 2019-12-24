@@ -4,7 +4,8 @@ el-menu(
   class="el-menu-vertical-demo"
   v-loading="loading"
   :collapse-transition="false"
-  @open="goToKeyspace"
+  @open="openSubmenu"
+  @close="closeSubmenu"
   :collapse="isCollapse")
 
   //- NOTE: keyspace
@@ -14,10 +15,11 @@ el-menu(
     :collapse="isCollapse"
     :index="v.keyspace_name")
     template(slot="title")
-      i(class="el-icon-tickets")
-      span(
-        style="padding-right: 36px;"
-        lot="title") {{v.keyspace_name}}
+      div(@click="goToKeyspace(v.keyspace_name, $event)")
+        i(class="el-icon-tickets")
+        span(
+          style="padding-right: 36px;"
+          lot="title") {{v.keyspace_name}}
     el-menu-item-group()
       el-menu-item(
         v-for="vv in v.table"
@@ -65,6 +67,7 @@ export default {
     return {
       isCollapse: false,
       keyspace: [],
+      keyspaceOpen: {},
       loading: false,
     }
   },
@@ -98,13 +101,29 @@ export default {
       })
     },
 
-    async goToKeyspace(keyspace) {
+    async openSubmenu(keyspace) {
+      if (!this.keyspaceOpen[keyspace]) {
+        this.keyspaceOpen[keyspace] = true
+      }
+    },
+
+    async closeSubmenu(keyspace) {
+      if (this.keyspaceOpen[keyspace]) {
+        this.keyspaceOpen[keyspace] = false
+      }
+    },
+
+    async goToKeyspace(keyspace, event) {
       this.$router.push({
         name: 'table-list',
         params: {
           keyspace
         }
       })
+
+      if (this.keyspaceOpen[keyspace]) {
+        event.stopPropagation()
+      }
     },
 
     async goHostInfo() {
