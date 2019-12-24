@@ -274,7 +274,7 @@ export default {
         params: {
           page
         }
-      })
+      }).catch(err => err)
     },
 
     handleSizeChange(pagesize) {
@@ -283,7 +283,7 @@ export default {
         params: {
           pagesize
         }
-      })
+      }).catch(err => err)
     },
 
     handleDeleteConfirm(rowData) {

@@ -126,7 +126,7 @@ export default {
           keyspace: row.keyspace_name,
           table: row.table_name
         }
-      })
+      }).catch(err => err)
     },
 
     goToFind(row) {
@@ -136,7 +136,7 @@ export default {
           keyspace: row.keyspace_name,
           table: row.table_name
         }
-      })
+      }).catch(err => err)
     },
 
     goToColumns(row) {
@@ -146,7 +146,7 @@ export default {
           keyspace: row.keyspace_name,
           table: row.table_name
         }
-      })
+      }).catch(err => err)
     },
 
     goToDefinition(row) {
@@ -156,7 +156,7 @@ export default {
           keyspace: row.keyspace_name,
           table: row.table_name
         }
-      })
+      }).catch(err => err)
     },
 
     goToExport(row) {
@@ -176,7 +176,7 @@ export default {
           keyspace: row.keyspace_name,
           table: row.table_name
         }
-      })
+      }).catch(err => err)
     },
 
     goToTruncate(row) {
@@ -186,7 +186,7 @@ export default {
           keyspace: row.keyspace_name,
           table: row.table_name
         }
-      })
+      }).catch(err => err)
     },
 
     async fetch() {

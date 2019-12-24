@@ -98,7 +98,7 @@ export default {
     goToTable(keyspaceName, tableName) {
       this.$router.push({
         path: `/main/keyspace/${keyspaceName}/${tableName}/rowstoken/50`,
-      })
+      }).catch(err => err)
     },
 
     async openSubmenu(keyspace) {
@@ -119,7 +119,7 @@ export default {
         params: {
           keyspace
         }
-      })
+      }).catch(err => err)
 
       if (this.keyspaceOpen[keyspace]) {
         event.stopPropagation()
@@ -129,7 +129,7 @@ export default {
     async goHostInfo() {
       this.$router.push({
         name: 'hostinfo'
-      })
+      }).catch(err => err)
     },
 
     openQuery() {
@@ -143,7 +143,7 @@ export default {
           params: {
             query: `${value}`
           }
-        })
+        }).catch(err => err)
       }).catch(() => {
         this.$message({
           type: 'info',

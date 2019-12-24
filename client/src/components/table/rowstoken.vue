@@ -361,7 +361,7 @@ export default {
         params: {
           pagesize
         }
-      })
+      }).catch(err => err)
     },
 
     handleDeleteConfirm(rowData) {

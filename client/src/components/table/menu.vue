@@ -80,7 +80,7 @@ export default {
           page: 1,
           pagesize: 50
         }
-      })
+      }).catch(err => err)
     },
 
     RowsToken() {
@@ -89,43 +89,43 @@ export default {
         params: {
           pagesize: 50
         }
-      })
+      }).catch(err => err)
     },
 
     Find() {
       this.$router.push({
         name: 'find'
-      })
+      }).catch(err => err)
     },
 
     Columns() {
       this.$router.push({
         name: 'columns'
-      })
+      }).catch(err => err)
     },
 
     Definition() {
       this.$router.push({
         name: 'definition'
-      })
+      }).catch(err => err)
     },
 
     Export() {
       this.$router.push({
         name: 'export'
-      })
+      }).catch(err => err)
     },
 
     Import() {
       this.$router.push({
         name: 'import'
-      })
+      }).catch(err => err)
     },
 
     Truncate() {
       this.$router.push({
         name: 'truncate'
-      })
+      }).catch(err => err)
     },
   }
 }
