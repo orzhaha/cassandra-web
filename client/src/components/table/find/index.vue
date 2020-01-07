@@ -132,7 +132,7 @@
     width: 100%;
   }
   .caret-bottom {
-    margin: 10px 0px;
+    margin: 10px 0px !important;
   }
 </style>
 
