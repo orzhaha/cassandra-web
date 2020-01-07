@@ -4,6 +4,7 @@
 ![index](webui.gif)
 
 ## Features
+* Theme Dark
 * Table Row Prev Next Page
 * Table Row Edit
 * Table Row filter
@@ -20,7 +21,7 @@
 
 download
 ```
-$ wget https://github.com/orzhaha/cassandra-web/releases/download/v1.0.3/linux.tar.gz
+$ wget https://github.com/orzhaha/cassandra-web/releases/download/v1.0.5/linux.tar.gz
 ```
 
 unzip
