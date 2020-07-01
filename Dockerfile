@@ -14,10 +14,9 @@ RUN cd /go/src/cassandra-web/service && go build
 # final stage
 FROM debian:stable
 
-RUN apt-get update && apt-get install --no-install-recommends curl gnupg -y \
+RUN apt-get update && apt-get install --no-install-recommends gnupg wget ca-certificates -y \
     && echo "deb http://www.apache.org/dist/cassandra/debian 311x main" | tee -a /etc/apt/sources.list.d/cassandra.sources.list \
-    && apt-key adv --keyserver keyserver.ubuntu.com --recv-keys A278B781FE4B2BDA \
-    # && curl https://www.apache.org/dist/cassandra/KEYS | apt-key add - \
+    && wget https://www.apache.org/dist/cassandra/KEYS && cat KEYS | apt-key add - \
     && apt-get update && apt-get install cassandra -y \
     && apt-get clean -y \
     && rm -fr /var/lib/apt/lists/*

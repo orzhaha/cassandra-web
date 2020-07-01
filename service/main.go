@@ -20,6 +20,7 @@ import (
 	"github.com/labstack/echo/middleware"
 	"github.com/labstack/gommon/log"
 	"github.com/spf13/viper"
+	"github.com/tidwall/gjson"
 	"github.com/urfave/cli"
 )
 
@@ -721,16 +722,52 @@ func (h *Handler) Find(c echo.Context) error {
 				continue
 			}
 
-			partitionCql = append(partitionCql, cqlFormatWhere(columnName, "="))
-			partitionValue = append(partitionValue, cqlFormatValue(columnType, req.Item[columnName]["value"]))
+			if req.Item[columnName]["operator"].(string) == "in" {
+				value := gjson.Parse(req.Item[columnName]["value"].(string))
+
+				cql := fmt.Sprintf("%s %s (", columnName, req.Item[columnName]["operator"].(string))
+
+				for i := 0; i < len(value.Array()); i++ {
+					cql += "?,"
+				}
+
+				cql = cql[0 : len(cql)-1]
+				cql += ")"
+
+				partitionCql = append(partitionCql, cql)
+				for _, v := range value.Array() {
+					partitionValue = append(partitionValue, cqlFormatValue(columnType, v.Value()))
+				}
+			} else {
+				partitionCql = append(partitionCql, cqlFormatWhere(columnName, req.Item[columnName]["operator"].(string)))
+				partitionValue = append(partitionValue, cqlFormatValue(columnType, req.Item[columnName]["value"]))
+			}
 
 		} else if kind == ClusteringKey || req.IsAllowFilter {
 			if _, ok := req.Item[columnName]; !ok {
 				continue
 			}
 
-			clusteringCql = append(clusteringCql, cqlFormatWhere(columnName, req.Item[columnName]["operator"].(string)))
-			clusteringValue = append(clusteringValue, cqlFormatValue(columnType, req.Item[columnName]["value"]))
+			if req.Item[columnName]["operator"].(string) == "in" {
+				value := gjson.Parse(req.Item[columnName]["value"].(string))
+
+				cql := fmt.Sprintf("%s %s (", columnName, req.Item[columnName]["operator"].(string))
+
+				for i := 0; i < len(value.Array()); i++ {
+					cql += "?,"
+				}
+
+				cql = cql[0 : len(cql)-1]
+				cql += ")"
+
+				clusteringCql = append(clusteringCql, cql)
+				for _, v := range value.Array() {
+					clusteringValue = append(clusteringValue, cqlFormatValue(columnType, v.Value()))
+				}
+			} else {
+				clusteringCql = append(clusteringCql, cqlFormatWhere(columnName, req.Item[columnName]["operator"].(string)))
+				clusteringValue = append(clusteringValue, cqlFormatValue(columnType, req.Item[columnName]["value"]))
+			}
 		}
 	}
 

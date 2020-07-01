@@ -75,13 +75,6 @@
                 el-select(
                   v-model="columnInput[scope.$index].operator"
                   placeholder='operator')
-                  template(v-if="isAllowFilter")
-                    el-option(
-                      v-for="item in clusteringOperator"
-                      :key="item.value"
-                      :label="item.label"
-                      :value="item.value")
-                  template(v-else="isAllowFilter")
                     el-option(
                       v-for="item in partitionOperator"
                       :key="item.value"
@@ -171,6 +164,10 @@ export default {
         {
           value: '=',
           label: '=',
+        },
+        {
+          value: 'in',
+          label: 'in',
         },
       ],
       clusteringOperator: [
