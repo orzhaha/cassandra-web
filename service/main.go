@@ -17,7 +17,7 @@ import (
 	"github.com/gocql/gocql"
 	"github.com/json-iterator/go"
 	"github.com/labstack/echo"
-	"github.com/labstack/echo/middleware"
+	// "github.com/labstack/echo/middleware"
 	"github.com/labstack/gommon/log"
 	"github.com/spf13/viper"
 	"github.com/tidwall/gjson"
@@ -159,7 +159,7 @@ func run(c *cli.Context) {
 	// Echo instance
 	e := echo.New()
 
-	e.Use(middleware.Logger())
+	// e.Use(middleware.Logger())
 
 	// 跨網域用
 	// e.Use(middleware.CORSWithConfig(middleware.CORSConfig{
@@ -213,6 +213,8 @@ func (h *Handler) Query(c echo.Context) error {
 		if q == "" {
 			continue
 		}
+
+		log.Info("query cql: ", q)
 
 		iter := h.Session.Query(q).Iter()
 
@@ -433,7 +435,9 @@ func (h *Handler) FirstQuery(req *RowTokenReq, schema []map[string]interface{}) 
 		cql = fmt.Sprintf("SELECT * FROM %s WHERE token(%s) %s token(%s) ", req.Table, strings.Join(pCqlColumnName, ","), "=", strings.Join(pCqlPlaceholder, ","))
 		cql += fmt.Sprintf("AND (%s) %s (%s) LIMIT %d", strings.Join(cCqlColumnName, ","), cPrevNext, strings.Join(cCqlPlaceholder, ","), req.Pagesize)
 	}
-	fmt.Println(cql)
+
+	log.Info("first query cql: ", cql, append(pCqlColumnValue, cCqlColumnValue...))
+
 	rowIter := h.Session.Query(cql, append(pCqlColumnValue, cCqlColumnValue...)...).Iter()
 
 	for {
@@ -483,6 +487,8 @@ func (h *Handler) SecondQuery(req *RowTokenReq, schema []map[string]interface{},
 		cql = fmt.Sprintf("SELECT * FROM %s WHERE token(%s) %s token(%s) ", req.Table, strings.Join(pCqlColumnName, ","), pPrevNext, strings.Join(pCqlPlaceholder, ","))
 		cql += fmt.Sprintf("LIMIT %d", limit)
 	}
+
+	log.Info("second query cql: ", cql, pCqlColumnValue)
 
 	rowIter := h.Session.Query(cql, pCqlColumnValue...).Iter()
 
@@ -605,6 +611,8 @@ func (h *Handler) Save(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
 	}
 
+	log.Info("save cql: ", `INSERT INTO `+req.Table+` (`+strings.Join(itemKey, ",")+`) VALUES(`+strings.Join(itemPlaceholder, ",")+`)`, itemData)
+
 	if err := h.Session.Query(`INSERT INTO `+req.Table+` (`+strings.Join(itemKey, ",")+`) VALUES(`+strings.Join(itemPlaceholder, ",")+`)`, itemData...).Exec(); err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
 	}
@@ -655,6 +663,9 @@ func (h *Handler) Delete(c echo.Context) error {
 	}
 
 	cql := fmt.Sprintf("DELETE FROM %s WHERE %s ", req.Table, strings.Join(append(partitionCql, clusteringCql...), " AND "))
+
+	log.Info("delete cql: ", cql, append(partitionValue, clusteringValue...))
+
 	if err := h.Session.Query(cql, append(partitionValue, clusteringValue...)...).Exec(); err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
 	}
@@ -794,6 +805,8 @@ func (h *Handler) Find(c echo.Context) error {
 	rowIter := h.Session.Query(rowCql, append(partitionValue, clusteringValue...)...).Iter()
 	rowData := make([]map[string]interface{}, 0)
 
+	log.Info("find cql: ", rowCql, append(partitionValue, clusteringValue...))
+
 	for {
 		i++
 
@@ -804,6 +817,10 @@ func (h *Handler) Find(c echo.Context) error {
 		if i > limit_start {
 			rowData = append(rowData, OutputTransformType(row))
 		}
+	}
+
+	if err = rowIter.Close(); err != nil {
+		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
 	}
 
 	data["row"] = rowData
