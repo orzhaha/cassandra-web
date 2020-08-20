@@ -17,6 +17,17 @@
 
 ---
 
+## Supported Cassandra Versions
+------------------
+
+ 2.1.x | 2.2.x | 3.x.x
+ -------| ------| ---------
+ yes | yes | yes
+
+
+
+---
+
 ## Usage
 
 download
