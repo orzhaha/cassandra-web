@@ -120,7 +120,7 @@ func run(c *cli.Context) {
 
 	log.Info("Cofing 設定成功")
 
-	cluster := gocql.NewCluster(env.CassandraHost)
+	cluster := gocql.NewCluster(strings.Split(env.CassandraHost, ",")...)
 	cluster.Port = env.CassandraPort
 	cluster.Keyspace = SystemSchemaKey
 	cluster.Timeout = 30 * time.Second
