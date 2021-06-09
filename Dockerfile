@@ -31,7 +31,7 @@ RUN wget https://downloads.datastax.com/enterprise/cqlsh-astra.tar.gz \
 
 COPY --from=build-server-env /go/src/cassandra-web/service/service /
 COPY --from=build-client-env /go/src/cassandra-web/service/config.yaml /
-COPY --from=build-client-env /go/src/cassandra-web/client/dist /go/src/cassandra-web/client/dist
+COPY --from=build-client-env /go/src/cassandra-web/client/dist /client/dist
 
 WORKDIR /
 
