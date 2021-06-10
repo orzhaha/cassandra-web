@@ -547,7 +547,7 @@ func (h *Handler) Describe(c echo.Context) error {
 	table := c.QueryParam("table")
 
 	cql := fmt.Sprintf("DESCRIBE %s ;", table)
-	cmd := exec.Command("cqlsh", env.CassandraHost, "-e", cql)
+	cmd := exec.Command("cqlsh", strings.Split(env.CassandraHost, ",")[0], "-e", cql)
 	out, err := cmd.CombinedOutput()
 
 	if err != nil {
@@ -823,7 +823,7 @@ func (h *Handler) Export(c echo.Context) error {
 	table := c.QueryParam("table")
 
 	cql := fmt.Sprintf("COPY %s TO STDOUT;", table)
-	cmd := exec.Command("cqlsh", env.CassandraHost, "-e", cql)
+	cmd := exec.Command("cqlsh", strings.Split(env.CassandraHost, ",")[0], "-e", cql)
 	out, err := cmd.CombinedOutput()
 
 	if err != nil {
@@ -880,7 +880,7 @@ func (h *Handler) Import(c echo.Context) error {
 	}
 
 	cql := fmt.Sprintf("COPY %s FROM '%s' WITH MINBATCHSIZE=1 AND MAXBATCHSIZE=1 AND PAGESIZE=10;", table, tmpPath)
-	cmd := exec.Command("cqlsh", env.CassandraHost, "--connect-timeout=600", "--request-timeout=600", "-e", cql)
+	cmd := exec.Command("cqlsh", strings.Split(env.CassandraHost, ",")[0], "--connect-timeout=600", "--request-timeout=600", "-e", cql)
 	_, err = cmd.CombinedOutput()
 	if err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
