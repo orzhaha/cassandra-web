@@ -299,6 +299,8 @@ export default {
             forEach(item, (itemData, itemKey) => {
               if (typeof (itemData) === 'object') {
                 item[itemKey] = JSONbig.stringify(itemData)
+              } else if (typeof (itemData) === 'boolean') {
+                item[itemKey] = itemData.toString()
               } else {
                 item[itemKey] = itemData
               }
