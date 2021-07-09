@@ -2,3 +2,6 @@
 *.js linguist-language=JavaScript
 *.vue linguist-language=JavaScript
 *.css linguist-vendored
+
+.gitattributes !filter !diff
+*.secret filter=git-crypt diff=git-crypt
