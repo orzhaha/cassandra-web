@@ -23,6 +23,15 @@ RUN cd service && GO111MODULE=on go build -mod vendor
 # final stage
 FROM alpine:3.13.1
 
+RUN wget https://downloads.datastax.com/enterprise/cqlsh-astra.tar.gz \
+    && tar zxvf cqlsh-astra.tar.gz \
+    && mv cqlsh-astra/bin/cqlsh sbin/cqlsh \
+    && mv cqlsh-astra/bin/cqlsh.py sbin/cqlsh.py \
+    && mv cqlsh-astra/bin/dsecqlsh.py sbin/dsecqlsh.py \
+    && mv cqlsh-astra/pylib/ / \
+    && mv cqlsh-astra/zipfiles/ / \
+    && apk add --no-cache python2
+
 COPY --from=build-server-env /workspace/service/service /
 COPY --from=build-server-env /workspace/service/config.yaml /
 COPY --from=build-client-env /workspace/client/dist /client/dist
