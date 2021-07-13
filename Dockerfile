@@ -23,6 +23,10 @@ RUN cd service && GO111MODULE=on go build -mod vendor
 # final stage
 FROM alpine:3.13.1
 
+RUN apk add --no-cache python2 \
+    && python2 -m ensurepip \
+    && python2 -m pip install cqlsh
+
 COPY --from=build-server-env /workspace/service/service /
 COPY --from=build-server-env /workspace/service/config.yaml /
 COPY --from=build-client-env /workspace/client/dist /client/dist
