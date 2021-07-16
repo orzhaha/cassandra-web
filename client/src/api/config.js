@@ -58,6 +58,10 @@ const config = {
     hostinfo: {
       type: 'GET',
       url: `${domain}/hostinfo`
+    },
+    readonly: {
+      type: 'GET',
+      url: `${domain}/readonly`
     }
   }
 }

@@ -25,11 +25,28 @@ export default {
     return {
       defaultActive: get(arr, 5),
 
-      tabs: [
-        // {
-        //   name: 'rows',
-        //   trigger: this.showRows
-        // },
+      tabs: this.$readonly ? [
+        {
+          name: 'rows',
+          trigger: this.RowsToken
+        },
+        {
+          name: 'find',
+          trigger: this.Find
+        },
+        {
+          name: 'columns',
+          trigger: this.Columns
+        },
+        {
+          name: 'definition',
+          trigger: this.Definition
+        },
+        {
+          name: 'export',
+          trigger: this.Export
+        }
+      ] : [
         {
           name: 'rows',
           trigger: this.RowsToken
