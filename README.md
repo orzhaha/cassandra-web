@@ -64,6 +64,7 @@ docker pull ipushc/cassandra-web
 ##### Environment
 
 * HOST_PORT: ":80"
+* READ_ONLY: false (default)
 * CASSANDRA_HOST: cassandra host
 * CASSANDRA_PORT: 9042
 * CASSANDRA_USERNAME: username
