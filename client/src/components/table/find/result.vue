@@ -23,12 +23,14 @@
           width="150")
           el-button-group(slot-scope="scope")
             el-button(
+              v-if="!$readonly"
               type="primary"
               @click="handleOpenEditDialog(scope.row)"
               icon="el-icon-edit"
               size="mini")
 
             el-button(
+              v-if="!$readonly"
               type="danger"
               icon="el-icon-delete"
               size="mini"

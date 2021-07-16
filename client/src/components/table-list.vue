@@ -38,11 +38,13 @@
         i(class="table-list-icon el-icon-download")
         span export
       el-table-column(
+        v-if="!$readonly"
         column-key="import"
         label="import")
         i(class="table-list-icon el-icon-upload2")
         span import
       el-table-column(
+        v-if="!$readonly"
         column-key="truncate"
         label="truncate")
         i(class="table-list-icon el-icon-folder-delete")

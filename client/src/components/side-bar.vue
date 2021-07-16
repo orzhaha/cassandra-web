@@ -33,12 +33,13 @@ el-menu(
 
   //- NOTE: query
   el-menu-item(
+    v-if="!$readonly"
     @click="openQuery"
     index="-1")
       i(class="el-icon-edit")
       span(lot="title") Query
 
-  //- NOTE: query
+  //- NOTE: host info
   el-menu-item(
     @click="goHostInfo"
     index="-2")
