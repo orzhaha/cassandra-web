@@ -24,8 +24,9 @@ import (
 )
 
 const (
-	PartitionKey  = "partition_key"
-	ClusteringKey = "clustering"
+	PartitionKey    = "partition_key"
+	ClusteringKey   = "clustering"
+	ReadOnlyMessage = "Update/Insert action are not allowed"
 )
 
 // init 初始化
@@ -65,6 +66,7 @@ var env envStruct
 // envStruct type
 type envStruct struct {
 	HostPort          string `mapstructure:"HOST_PORT" json:"HOST_PORT"`
+	ReadOnly          bool   `mapstructure:"READ_ONLY" json:"READ_ONLY"`
 	CassandraHost     string `mapstructure:"CASSANDRA_HOST" json:"CASSANDRA_HOST"`
 	CassandraPort     int    `mapstructure:"CASSANDRA_PORT" json:"CASSANDRA_PORT"`
 	CassandraUsername string `mapstructure:"CASSANDRA_USERNAME" json:"CASSANDRA_USERNAME"`
@@ -144,7 +146,7 @@ func run(c *cli.Context) {
 		log.Fatal(err)
 	}
 
-	h := &Handler{Session: session}
+	h := &Handler{Session: session, ReadOnly: env.ReadOnly}
 
 	// Echo instance
 	e := echo.New()
@@ -176,17 +178,27 @@ func run(c *cli.Context) {
 	e.GET("/columns", h.Columns)
 	e.GET("/export", h.Export)
 	e.GET("/hostinfo", h.HostInfo)
+	e.GET("/readonly", h.ReadOnlyInfo)
 
 	// Start server
 	e.Logger.Fatal(e.Start(env.HostPort))
 }
 
 type Handler struct {
-	Session *gocql.Session
+	Session  *gocql.Session
+	ReadOnly bool
+}
+
+func (h *Handler) ReadOnlyInfo(c echo.Context) error {
+	return c.JSON(http.StatusOK, map[string]bool{"readonly": h.ReadOnly})
 }
 
 // Query Query cql語法處理
 func (h *Handler) Query(c echo.Context) error {
+	if h.ReadOnly {
+		return echo.NewHTTPError(http.StatusForbidden, ReadOnlyMessage)
+	}
+
 	req := struct {
 		Query string `json:"query" form:"query" query:"query"`
 	}{}
@@ -346,7 +358,6 @@ func (h *Handler) HostInfo(c echo.Context) error {
 
 // RowToken
 func (h *Handler) RowToken(c echo.Context) error {
-
 	var (
 		req    RowTokenReq
 		schema []map[string]interface{}
@@ -579,6 +590,10 @@ func (h *Handler) Columns(c echo.Context) error {
 }
 
 func (h *Handler) Save(c echo.Context) error {
+	if h.ReadOnly {
+		return echo.NewHTTPError(http.StatusForbidden, ReadOnlyMessage)
+	}
+
 	req := struct {
 		Table string `json:"table" form:"table" query:"table"`
 		Item  string `json:"item" form:"item" query:"item"`
@@ -624,6 +639,10 @@ func (h *Handler) Save(c echo.Context) error {
 
 // Delete 刪除row
 func (h *Handler) Delete(c echo.Context) error {
+	if h.ReadOnly {
+		return echo.NewHTTPError(http.StatusForbidden, ReadOnlyMessage)
+	}
+
 	req := struct {
 		Table string `json:"table" form:"table" query:"table"`
 		Item  string `json:"item" form:"item" query:"item"`
@@ -860,6 +879,10 @@ func (h *Handler) Export(c echo.Context) error {
 
 // Export 匯入copy file
 func (h *Handler) Import(c echo.Context) error {
+	if h.ReadOnly {
+		return echo.NewHTTPError(http.StatusForbidden, ReadOnlyMessage)
+	}
+
 	file, err := c.FormFile("file")
 	table := c.FormValue("table")
 
@@ -928,6 +951,10 @@ func (h *Handler) Import(c echo.Context) error {
 
 // Truncate 清除table資料
 func (h *Handler) Truncate(c echo.Context) error {
+	if h.ReadOnly {
+		return echo.NewHTTPError(http.StatusForbidden, ReadOnlyMessage)
+	}
+
 	req := struct {
 		Table string `json:"table" form:"table" query:"table"`
 	}{}
