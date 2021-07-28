@@ -16,7 +16,7 @@ require (
 	github.com/spf13/pflag v1.0.5 // indirect
 	github.com/spf13/viper v1.7.1
 	github.com/stretchr/testify v1.7.0 // indirect
-	github.com/tidwall/gjson v1.6.0
+	github.com/tidwall/gjson v1.7.5
 	github.com/tidwall/pretty v1.0.1 // indirect
 	github.com/urfave/cli v0.0.0-20180226030253-8e01ec4cd3e2
 	github.com/valyala/bytebufferpool v1.0.0 // indirect
