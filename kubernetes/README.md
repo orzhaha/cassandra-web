@@ -1,25 +1,27 @@
 # [cassandra-web](https://orzhaha.github.io/cassandra-web/) 
-## Installing the Chart
+## Installing the Chart - In this git repo
 1.  To install the chart with the release name `cassandra-web` in namespace $NAMESPACE you defined above:
 
 ```bash
 $ helm install cassandra-web --name cassandra-web --namespace $NAMESPACE
 ```
 
+## Installing the Chart - Use our official helm chart repo
+
+```bash
+helm repo add orzhaha https://orzhaha.github.io/charts/orzhaha
+helm search repo orzhaha
+helm install my-release orzhaha/<chart>
+```
+
 ## Configuration
 
 Set the db host and port in the kubernetes/helm/cassandra-web/values.yaml
 
-## Uninstalling the Chart
+## Uninstall the Chart
 
-To uninstall/delete the `cassandra-web` release but continue to track the release:
-
-```bash
-$ helm delete cassandra-web
-```
-
-To uninstall/delete the `cassandra-web` release completely and make its name free for later use:
+To uninstall the `cassandra-web` release:
 
 ```bash
-$ helm del --purge cassandra-web
+$ helm uninstall cassandra-web
 ```
