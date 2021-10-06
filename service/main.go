@@ -1,6 +1,8 @@
 package main
 
 import (
+	"crypto/tls"
+	"crypto/x509"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
@@ -71,18 +73,16 @@ type envStruct struct {
 	CassandraPort     int    `mapstructure:"CASSANDRA_PORT" json:"CASSANDRA_PORT"`
 	CassandraUsername string `mapstructure:"CASSANDRA_USERNAME" json:"CASSANDRA_USERNAME"`
 	CassandraPassword string `mapstructure:"CASSANDRA_PASSWORD" json:"CASSANDRA_PASSWORD"`
+	CassandraCertificate []byte `mapstructure:"CASSANDRA_CERTIFICATE" json:"CASSANDRA_CERTIFICATE"`
+	CassandraRootCa []byte `mapstructure:"CASSANDRA_ROOTCA" json:"CASSANDRA_ROOTCA"`
+
 }
 
 func main() {
 	app := cli.NewApp()
 	app.Name = "Cassandra-Web"
 	app.Version = "1.0.15"
-	app.Authors = []cli.Author{
-		cli.Author{
-			Name:  "Ken",
-			Email: "ipushc@gmail.com",
-		},
-	}
+
 	app.Flags = []cli.Flag{
 		cli.StringFlag{
 			Name:   "config, c",
@@ -120,7 +120,21 @@ func run(c *cli.Context) {
 
 	env = *envTmp
 
-	log.Info("Cofing 設定成功")
+	log.Info("Cofing ")
+	log.Info(fmt.Sprintf("CassandraHost        : %s ", env.CassandraHost))
+	log.Info(fmt.Sprintf("CassandraPort        : %s ", env.CassandraPort))
+	if env.CassandraUsername != "" {
+		log.Info(fmt.Sprintf("CassandraUsername    : %s ", env.CassandraUsername))
+	}
+	if env.CassandraPassword != "" {
+		log.Info(fmt.Sprintf("CassandraPassword    : *************"))
+	}
+	if env.CassandraRootCa != nil {
+		log.Info(fmt.Sprintf("CassandraRootCa      : %s ", env.CassandraRootCa))
+	}
+	if env.CassandraCertificate != nil {
+		log.Info(fmt.Sprintf("CassandraCertificate : %s ", env.CassandraCertificate))
+	}
 
 	cluster := gocql.NewCluster(strings.Split(env.CassandraHost, ",")...)
 	cluster.Port = env.CassandraPort
@@ -132,9 +146,35 @@ func run(c *cli.Context) {
 	cluster.Consistency = gocql.One
 
 	if env.CassandraUsername != "" && env.CassandraPassword != "" {
+		log.Info("Using Username/password to connect to cassandra cluster ...")
 		cluster.Authenticator = gocql.PasswordAuthenticator{
 			Username: env.CassandraUsername,
 			Password: env.CassandraPassword,
+		}
+	}
+
+	// encryption with a given root ca certificate
+	if env.CassandraCertificate != nil || env.CassandraRootCa != nil {
+		log.Info("Using SSL certificate to connect to cassandra cluster ...")
+		var rootCaPool *x509.CertPool
+		if env.CassandraRootCa != nil {
+			rootCaPool = x509.NewCertPool()
+			rootCaPool.AppendCertsFromPEM(env.CassandraRootCa)
+		}
+
+		var certificate tls.Certificate
+		if env.CassandraCertificate != nil {
+			certificate = tls.Certificate{
+				Certificate: [][]byte{env.CassandraCertificate},
+			}
+		}
+
+		cluster.SslOpts = &gocql.SslOptions{
+			Config: &tls.Config{
+				RootCAs:            rootCaPool,
+				Certificates:       []tls.Certificate{certificate},
+				InsecureSkipVerify: true,
+			},
 		}
 	}
 
