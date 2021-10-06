@@ -31,9 +31,9 @@ const (
 	ReadOnlyMessage = "Update/Insert action are not allowed"
 )
 
-// init 初始化
+// init
 func init() {
-	// 反序列化float64精准度問題處理
+
 	decodeNumberAsInt64IfPossible := func(ptr unsafe.Pointer, iter *jsoniter.Iterator) {
 		switch iter.WhatIsNext() {
 		case jsoniter.NumberValue:
@@ -73,9 +73,7 @@ type envStruct struct {
 	CassandraPort     int    `mapstructure:"CASSANDRA_PORT" json:"CASSANDRA_PORT"`
 	CassandraUsername string `mapstructure:"CASSANDRA_USERNAME" json:"CASSANDRA_USERNAME"`
 	CassandraPassword string `mapstructure:"CASSANDRA_PASSWORD" json:"CASSANDRA_PASSWORD"`
-	CassandraCertificate []byte `mapstructure:"CASSANDRA_CERTIFICATE" json:"CASSANDRA_CERTIFICATE"`
-	CassandraRootCa []byte `mapstructure:"CASSANDRA_ROOTCA" json:"CASSANDRA_ROOTCA"`
-
+	CassandraRootCa   string `mapstructure:"CASSANDRA_ROOTCA" json:"CASSANDRA_ROOTCA"`
 }
 
 func main() {
@@ -120,7 +118,8 @@ func run(c *cli.Context) {
 
 	env = *envTmp
 
-	log.Info("Cofing ")
+	log.Info("Config ")
+
 	log.Info(fmt.Sprintf("CassandraHost        : %s ", env.CassandraHost))
 	log.Info(fmt.Sprintf("CassandraPort        : %s ", env.CassandraPort))
 	if env.CassandraUsername != "" {
@@ -129,11 +128,8 @@ func run(c *cli.Context) {
 	if env.CassandraPassword != "" {
 		log.Info(fmt.Sprintf("CassandraPassword    : *************"))
 	}
-	if env.CassandraRootCa != nil {
+	if env.CassandraRootCa != "" {
 		log.Info(fmt.Sprintf("CassandraRootCa      : %s ", env.CassandraRootCa))
-	}
-	if env.CassandraCertificate != nil {
-		log.Info(fmt.Sprintf("CassandraCertificate : %s ", env.CassandraCertificate))
 	}
 
 	cluster := gocql.NewCluster(strings.Split(env.CassandraHost, ",")...)
@@ -144,6 +140,7 @@ func run(c *cli.Context) {
 	cluster.RetryPolicy = &gocql.SimpleRetryPolicy{NumRetries: 20}
 	cluster.NumConns = 10
 	cluster.Consistency = gocql.One
+	cluster.ProtoVersion = 3
 
 	if env.CassandraUsername != "" && env.CassandraPassword != "" {
 		log.Info("Using Username/password to connect to cassandra cluster ...")
@@ -154,31 +151,23 @@ func run(c *cli.Context) {
 	}
 
 	// encryption with a given root ca certificate
-	if env.CassandraCertificate != nil || env.CassandraRootCa != nil {
+	if env.CassandraRootCa != "" {
 		log.Info("Using SSL certificate to connect to cassandra cluster ...")
 		var rootCaPool *x509.CertPool
-		if env.CassandraRootCa != nil {
-			rootCaPool = x509.NewCertPool()
-			rootCaPool.AppendCertsFromPEM(env.CassandraRootCa)
-		}
-
-		var certificate tls.Certificate
-		if env.CassandraCertificate != nil {
-			certificate = tls.Certificate{
-				Certificate: [][]byte{env.CassandraCertificate},
-			}
-		}
+		rootCaPool = x509.NewCertPool()
+		rootCaPool.AppendCertsFromPEM([]byte(env.CassandraRootCa))
 
 		cluster.SslOpts = &gocql.SslOptions{
 			Config: &tls.Config{
 				RootCAs:            rootCaPool,
-				Certificates:       []tls.Certificate{certificate},
 				InsecureSkipVerify: true,
 			},
+			EnableHostVerification: false,
 		}
 	}
-
+	log.Info("CreateSession  ...")
 	session, err := cluster.CreateSession()
+	log.Info("CreateSession Successfully ...")
 
 	defer session.Close()
 
@@ -193,13 +182,11 @@ func run(c *cli.Context) {
 
 	// e.Use(middleware.Logger())
 
-	// 跨網域用
 	// e.Use(middleware.CORSWithConfig(middleware.CORSConfig{
 	// 	AllowOrigins: []string{"http://localhost:8083", "http://localhost:8084"},
 	// 	AllowHeaders: []string{echo.HeaderOrigin, echo.HeaderContentType, echo.HeaderAccept},
 	// }))
 
-	// 讀靜態檔(前端)
 	e.Static("/static", "client/dist/static")
 	e.File("/", "client/dist/index.html")
 
