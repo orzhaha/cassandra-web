@@ -232,6 +232,9 @@ func cqlFormatWhere(columnName string, operator string) string {
 	return fmt.Sprintf("%s %s ?", columnName, operator)
 }
 
+var mapReg = regexp.MustCompile(`(?U)^map\<(.+),\s(.+)\>`)
+var listReg = regexp.MustCompile(`(?U)^list\<(.+)>`)
+
 // InputTransformType 對應table schema型別作轉換
 func InputTransformType(item map[string]interface{}, schema map[string]string) ([]string, []interface{}, []string, error) {
 	var (
@@ -239,8 +242,6 @@ func InputTransformType(item map[string]interface{}, schema map[string]string) (
 		itemData        []interface{}
 		itemPlaceholder []string
 	)
-
-	mapReg := regexp.MustCompile(`(?U)^map\<(.+),\s(.+)\>`)
 
 	for k, v := range item {
 		switch schema[k] {
@@ -364,6 +365,22 @@ func InputTransformType(item map[string]interface{}, schema map[string]string) (
 				if err != nil {
 					return nil, nil, nil, err
 				}
+
+				itemData = append(itemData, val)
+				break
+			}
+
+			listRet := listReg.FindStringSubmatch(schema[k])
+
+			if len(listRet) == 2 {
+				val, err = ListToCassandraListType(v, listRet[1])
+
+				if err != nil {
+					return nil, nil, nil, err
+				}
+
+				itemData = append(itemData, val)
+				break
 			}
 
 			itemData = append(itemData, val)
@@ -374,6 +391,33 @@ func InputTransformType(item map[string]interface{}, schema map[string]string) (
 	}
 
 	return itemKey, itemData, itemPlaceholder, nil
+}
+
+// ListToCassandraListType list對應cassandra list的型別
+func ListToCassandraListType(i interface{}, valType string) (interface{}, error) {
+	var l = []interface{}{}
+
+	switch v := i.(type) {
+	case []interface{}:
+		for _, val := range v {
+			valRet, err := CassandraTypeToGoType(val, valType)
+
+			if err != nil {
+				return nil, err
+			}
+
+			l = append(l, valRet)
+		}
+
+		return l, nil
+	case string:
+		err := JsonStringToObject(v, &l)
+		return l, err
+	case nil:
+		return l, nil
+	default:
+		return l, fmt.Errorf("unable to cast %#v of type %T to []interface{}", i, i)
+	}
 }
 
 // MapToCassandraMapType map對應cassandra map的型別
@@ -405,7 +449,7 @@ func MapToCassandraMapType(i interface{}, keyType string, valType string) (inter
 	case nil:
 		return m, nil
 	default:
-		return m, fmt.Errorf("unable to cast %#v of type %T to map[string]string", i, i)
+		return m, fmt.Errorf("unable to cast %#v of type %T to map[string]interface{}", i, i)
 	}
 }
 
