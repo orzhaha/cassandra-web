@@ -227,7 +227,7 @@ export default {
 
       forEach(this.column.getColumnData(), (column, index) => {
         if (this.column.getJSType(column.column_name) === 'boolean') {
-          this.editInputData[index] = (row[column.column_name]) ? 'true' : 'false'
+          this.editInputData[index] = (row[column.column_name]) === 'true' ? 'true' : 'false'
         } else {
           this.editInputData[index] = row[column.column_name];
         }
