@@ -18,7 +18,7 @@ RUN cd /go/src/cassandra-web/service && go build -mod vendor
 
 
 # final stage
-FROM alpine:3.13.8
+FROM alpine:3.13.10
 
 RUN wget https://downloads.datastax.com/enterprise/cqlsh-astra.tar.gz \
     && tar zxvf cqlsh-astra.tar.gz \
