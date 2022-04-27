@@ -27,14 +27,14 @@ spec:
           imagePullPolicy: {{ .Values.image.pullPolicy }}
           env:
           - name: HOST_PORT
-            value: ":{{ .Values.service.port }}"
+            value: ":{{ .Values.service.targetPort }}"
           - name: CASSANDRA_HOST
             value: {{ .Values.db.host }}
           - name: CASSANDRA_PORT
             value: "{{ .Values.db.port }}"
           ports:
             - name: http
-              containerPort: 80
+              containerPort: {{ .Values.service.targetPort }}
               protocol: TCP
           resources:
 {{ toYaml .Values.resources | indent 12 }}
