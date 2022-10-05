@@ -885,7 +885,7 @@ func (h *Handler) Export(c echo.Context) error {
 	err := cmd.Run()
 
 	if err != nil {
-		log.Error(stderr.String())
+		log.Info(stderr.String())
 
 		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
 	}
@@ -968,7 +968,7 @@ func (h *Handler) Import(c echo.Context) error {
 	err = cmd.Run()
 
 	if err != nil {
-		log.Error(stderr.String())
+		log.Info(stderr.String())
 
 		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
 	}
