@@ -873,7 +873,7 @@ func (h *Handler) Export(c echo.Context) error {
 	// 建立隨機目錄避免衝突
 	os.Mkdir(tmpPath, 0755)
 
-	cmdStr := fmt.Sprintf("HOST=%s KEYSPACE=%s TABLE=%s DIRECTORY=%s cexprot", strings.Split(env.CassandraHost, ",")[0], strings.Split(table, ".")[0], strings.Split(table, ".")[1], tmpPath)
+	cmdStr := fmt.Sprintf("HOST=%s KEYSPACE=%s TABLE=%s DIRECTORY=%s cexport", strings.Split(env.CassandraHost, ",")[0], strings.Split(table, ".")[0], strings.Split(table, ".")[1], tmpPath)
 
 	cmd := exec.Command("/bin/sh", "-c", cmdStr)
 
