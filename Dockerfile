@@ -32,8 +32,8 @@ RUN wget https://downloads.datastax.com/enterprise/cqlsh-astra.tar.gz \
 RUN wget https://github.com/masumsoft/cassandra-exporter/releases/download/v1.0.4/cassandra-exporter-linux.zip \
     && apk add zip \
     && unzip cassandra-exporter-linux.zip \
-    && mv cassandra-exporter-linux/export-linux /sbin/export \
-    && mv cassandra-exporter-linux/import-linux /sbin/import
+    && mv cassandra-exporter-linux/export-linux /sbin/cexport \
+    && mv cassandra-exporter-linux/import-linux /sbin/cimport
 
 COPY --from=build-server-env /go/src/cassandra-web/service/service /
 COPY --from=build-client-env /go/src/cassandra-web/service/config.yaml /
