@@ -875,7 +875,7 @@ func (h *Handler) Export(c echo.Context) error {
 
 	cmdStr := fmt.Sprintf("HOST=%s KEYSPACE=%s TABLE=%s DIRECTORY=%s cexprot", strings.Split(env.CassandraHost, ",")[0], strings.Split(table, ".")[0], strings.Split(table, ".")[1], tmpPath)
 
-	cmd := exec.Command("/bin/bash", "-c", cmdStr)
+	cmd := exec.Command("/bin/sh", "-c", cmdStr)
 
 	var out bytes.Buffer
 	var stderr bytes.Buffer
@@ -958,7 +958,7 @@ func (h *Handler) Import(c echo.Context) error {
 
 	cmdStr := fmt.Sprintf("HOST=%s KEYSPACE=%s TABLE=%s DIRECTORY=/tmp cimport", strings.Split(env.CassandraHost, ",")[0], strings.Split(table, ".")[0], strings.Split(table, ".")[1])
 
-	cmd := exec.Command("/bin/bash", "-c", cmdStr)
+	cmd := exec.Command("/bin/sh", "-c", cmdStr)
 
 	var out bytes.Buffer
 	var stderr bytes.Buffer
