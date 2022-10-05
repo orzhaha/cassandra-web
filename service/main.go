@@ -1,9 +1,11 @@
 package main
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
+	"math/rand"
 	"net/http"
 	"os"
 	"os/exec"
@@ -849,32 +851,59 @@ func (h *Handler) Find(c echo.Context) error {
 	return c.JSON(http.StatusOK, data)
 }
 
+var letters = []rune("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ")
+
+func randStr(n int) string {
+	b := make([]rune, n)
+	for i := range b {
+		b[i] = letters[rand.Intn(len(letters))]
+	}
+	return string(b)
+}
+
 // Export 匯出copy file
 func (h *Handler) Export(c echo.Context) error {
 	table := c.QueryParam("table")
 
-	cql := fmt.Sprintf("COPY %s TO STDOUT;", table)
+	rand.Seed(time.Now().UnixNano())
+	rs := randStr(10)
 
-	cmdSlice := make([]string, 0)
-	cmdSlice = append(cmdSlice, strings.Split(env.CassandraHost, ",")[0], "-e", cql)
+	tmpPath := fmt.Sprintf("/tmp/%s", rs)
 
-	if env.CassandraUsername != "" {
-		cmdSlice = append(cmdSlice, "-u", env.CassandraUsername)
+	// 建立隨機目錄避免衝突
+	os.Mkdir(tmpPath, 0755)
+
+	cmdStr := fmt.Sprintf("HOST=%s KEYSPACE=%s TABLE=%s DIRECTORY=%s exprot", strings.Split(env.CassandraHost, ",")[0], strings.Split(table, ".")[0], strings.Split(table, ".")[1], tmpPath)
+
+	cmd := exec.Command("/bin/bash", "-c", cmdStr)
+
+	var out bytes.Buffer
+	var stderr bytes.Buffer
+	cmd.Stdout = &out
+	cmd.Stderr = &stderr
+
+	err := cmd.Run()
+
+	if err != nil {
+		log.Error(stderr.String())
+
+		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
 	}
 
-	if env.CassandraPassword != "" {
-		cmdSlice = append(cmdSlice, "-p", env.CassandraPassword)
-	}
+	log.Info(out.String())
 
-	cmd := exec.Command("cqlsh", cmdSlice...)
-	out, err := cmd.CombinedOutput()
+	fileName := fmt.Sprintf("%s/%s.json", tmpPath, strings.Split(table, ".")[1])
+	fileData, err := ioutil.ReadFile(fileName)
 
 	if err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
 	}
 
+	// 移除檔案
+	os.RemoveAll(tmpPath)
+
 	c.Response().Header().Set(echo.HeaderContentDisposition, fmt.Sprintf("%s; filename=%q", "cql", strings.Replace(table, ".", "-", -1)))
-	return c.Blob(http.StatusOK, "application/force-download", out)
+	return c.Blob(http.StatusOK, "application/force-download", fileData)
 }
 
 // Export 匯入copy file
@@ -896,7 +925,8 @@ func (h *Handler) Import(c echo.Context) error {
 	}
 	defer f.Close()
 
-	tmpPath := "/tmp/importfile"
+	tmpPath := fmt.Sprintf("/tmp/%s.json", strings.Split(table, ".")[1])
+
 	if _, err := os.Stat(tmpPath); err != nil {
 		if os.IsNotExist(err) {
 			CreateTmpFile(tmpPath)
@@ -926,25 +956,24 @@ func (h *Handler) Import(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
 	}
 
-	cql := fmt.Sprintf("COPY %s FROM '%s' WITH MINBATCHSIZE=1 AND MAXBATCHSIZE=1 AND PAGESIZE=10;", table, tmpPath)
+	cmdStr := fmt.Sprintf("HOST=%s KEYSPACE=%s TABLE=%s DIRECTORY=/tmp import", strings.Split(env.CassandraHost, ",")[0], strings.Split(table, ".")[0], strings.Split(table, ".")[1])
 
-	cmdSlice := make([]string, 0)
-	cmdSlice = append(cmdSlice, strings.Split(env.CassandraHost, ",")[0], "--connect-timeout=600", "--request-timeout=600", "-e", cql)
+	cmd := exec.Command("/bin/bash", "-c", cmdStr)
 
-	if env.CassandraUsername != "" {
-		cmdSlice = append(cmdSlice, "-u", env.CassandraUsername)
-	}
+	var out bytes.Buffer
+	var stderr bytes.Buffer
+	cmd.Stdout = &out
+	cmd.Stderr = &stderr
 
-	if env.CassandraPassword != "" {
-		cmdSlice = append(cmdSlice, "-p", env.CassandraPassword)
-	}
+	err = cmd.Run()
 
-	cmd := exec.Command("cqlsh", cmdSlice...)
-
-	_, err = cmd.CombinedOutput()
 	if err != nil {
+		log.Error(stderr.String())
+
 		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
 	}
+
+	log.Info(out.String())
 
 	return c.JSON(http.StatusOK, "success")
 }
