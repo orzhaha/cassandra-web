@@ -25,7 +25,8 @@ FROM alpine:3.13.1
 
 RUN apk add --no-cache python2 \
     && python2 -m ensurepip \
-    && python2 -m pip install cqlsh
+    && python2 -m pip install cqlsh \
+    && apk upgrade zlib expat
 
 COPY --from=build-server-env /workspace/service/service /
 COPY --from=build-server-env /workspace/service/config.yaml /
