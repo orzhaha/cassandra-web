@@ -36,7 +36,8 @@ RUN wget https://github.com/masumsoft/cassandra-exporter/releases/download/v1.0.
     && mv cassandra-exporter-linux/import-linux /sbin/cimport
 
 RUN apk add gcompat \
-    && apk add build-base
+    && apk add build-base \
+    && apk upgrade zlib expat
 
 COPY --from=build-server-env /go/src/cassandra-web/service/service /
 COPY --from=build-client-env /go/src/cassandra-web/service/config.yaml /
