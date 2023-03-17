@@ -2,7 +2,7 @@ gocql
 =====
 
 [![Join the chat at https://gitter.im/gocql/gocql](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/gocql/gocql?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
-[![Build Status](https://travis-ci.org/gocql/gocql.svg?branch=master)](https://travis-ci.org/gocql/gocql)
+![go build](https://github.com/gocql/gocql/actions/workflows/main.yml/badge.svg)
 [![GoDoc](https://godoc.org/github.com/gocql/gocql?status.svg)](https://godoc.org/github.com/gocql/gocql)
 
 Package gocql implements a fast and robust Cassandra client for the
@@ -17,12 +17,14 @@ Supported Versions
 
 The following matrix shows the versions of Go and Cassandra that are tested with the integration test suite as part of the CI build:
 
-Go/Cassandra | 2.1.x | 2.2.x | 3.x.x
--------------| -------| ------| ---------
-1.13 | yes | yes | yes
-1.14 | yes | yes | yes
+Go/Cassandra | 3.0.x | 3.11.x | 4.0.x
+-------------| ------| -------| --------
+1.18 | yes | yes | WIP
+1.19 | yes | yes | WIP
 
-Gocql has been tested in production against many different versions of Cassandra. Due to limits in our CI setup we only test against the latest 3 major releases, which coincide with the official support from the Apache project.
+Gocql has been tested in production against many different versions of Cassandra. Due to limits in our CI setup we only
+test against the latest 3 major releases, which coincides with the official support from the Apache project. We are
+currently adding CI jobs against Cassandra 4.0.
 
 Sunsetting Model
 ----------------
@@ -114,73 +116,7 @@ statement.
 Example
 -------
 
-```go
-/* Before you execute the program, Launch `cqlsh` and execute:
-create keyspace example with replication = { 'class' : 'SimpleStrategy', 'replication_factor' : 1 };
-create table example.tweet(timeline text, id UUID, text text, PRIMARY KEY(id));
-create index on example.tweet(timeline);
-*/
-package main
-
-import (
-	"fmt"
-	"log"
-
-	"github.com/gocql/gocql"
-)
-
-func main() {
-	// connect to the cluster
-	cluster := gocql.NewCluster("192.168.1.1", "192.168.1.2", "192.168.1.3")
-	cluster.Keyspace = "example"
-	cluster.Consistency = gocql.Quorum
-	session, _ := cluster.CreateSession()
-	defer session.Close()
-
-	// insert a tweet
-	if err := session.Query(`INSERT INTO tweet (timeline, id, text) VALUES (?, ?, ?)`,
-		"me", gocql.TimeUUID(), "hello world").Exec(); err != nil {
-		log.Fatal(err)
-	}
-
-	var id gocql.UUID
-	var text string
-
-	/* Search for a specific set of records whose 'timeline' column matches
-	 * the value 'me'. The secondary index that we created earlier will be
-	 * used for optimizing the search */
-	if err := session.Query(`SELECT id, text FROM tweet WHERE timeline = ? LIMIT 1`,
-		"me").Consistency(gocql.One).Scan(&id, &text); err != nil {
-		log.Fatal(err)
-	}
-	fmt.Println("Tweet:", id, text)
-
-	// list all tweets
-	iter := session.Query(`SELECT id, text FROM tweet WHERE timeline = ?`, "me").Iter()
-	for iter.Scan(&id, &text) {
-		fmt.Println("Tweet:", id, text)
-	}
-	if err := iter.Close(); err != nil {
-		log.Fatal(err)
-	}
-}
-```
-
-
-Authentication 
--------
-
-```go
-cluster := gocql.NewCluster("192.168.1.1", "192.168.1.2", "192.168.1.3")
-cluster.Authenticator = gocql.PasswordAuthenticator{
-	Username: "user",
-	Password: "password"
-}
-cluster.Keyspace = "example"
-cluster.Consistency = gocql.Quorum
-session, _ := cluster.CreateSession()
-defer session.Close()
-```
+See [package documentation](https://pkg.go.dev/github.com/gocql/gocql#pkg-examples).
 
 Data Binding
 ------------
