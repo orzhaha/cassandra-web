@@ -846,9 +846,6 @@ func ToStringE(i interface{}) (string, error) {
 		return s.String(), nil
 	case error:
 		return s.Error(), nil
-	case map[string]string, map[string]interface{}, map[interface{}]interface{}:
-		b, err := json.Marshal(s)
-		return string(b), err
 	default:
 		return "", fmt.Errorf("unable to cast %#v of type %T to string", i, i)
 	}
@@ -862,77 +859,6 @@ func ToStringMapStringE(i interface{}) (map[string]string, error) {
 	case map[string]string:
 		return v, nil
 	case map[string]interface{}:
-		for k, val := range v {
-			m[ToString(k)] = ToString(val)
-		}
-		return m, nil
-	case map[interface{}]string:
-		for k, val := range v {
-			m[ToString(k)] = ToString(val)
-		}
-		return m, nil
-	case map[interface{}]interface{}:
-		for k, val := range v {
-			m[ToString(k)] = ToString(val)
-		}
-		return m, nil
-	case string:
-		err := jsonStringToObject(v, &m)
-		return m, err
-	default:
-		return m, fmt.Errorf("unable to cast %#v of type %T to map[string]string", i, i)
-	}
-}
-
-// FToStringMapStringE casts an interface to a map[string]string type.
-func FToStringMapStringE(i interface{}) (map[string]string, error) {
-	var m = map[string]string{}
-
-	switch v := i.(type) {
-	case map[string]string:
-		return v, nil
-	case map[string]interface{}:
-		for k, val := range v {
-			m[ToString(k)] = ToString(val)
-		}
-		return m, nil
-
-	case map[string]int64:
-		for k, val := range v {
-			m[ToString(k)] = ToString(val)
-		}
-		return m, nil
-	case map[int64]int64:
-		for k, val := range v {
-			m[ToString(k)] = ToString(val)
-		}
-		return m, nil
-	case map[int32]int64:
-		for k, val := range v {
-			m[ToString(k)] = ToString(val)
-		}
-		return m, nil
-	case map[int16]int64:
-		for k, val := range v {
-			m[ToString(k)] = ToString(val)
-		}
-		return m, nil
-	case map[int8]int64:
-		for k, val := range v {
-			m[ToString(k)] = ToString(val)
-		}
-		return m, nil
-	case map[float64]int64:
-		for k, val := range v {
-			m[ToString(k)] = ToString(val)
-		}
-		return m, nil
-	case map[float32]int64:
-		for k, val := range v {
-			m[ToString(k)] = ToString(val)
-		}
-		return m, nil
-	case map[bool]int64:
 		for k, val := range v {
 			m[ToString(k)] = ToString(val)
 		}
@@ -1064,6 +990,87 @@ func ToStringMapE(i interface{}) (map[string]interface{}, error) {
 	}
 }
 
+// ToStringMapIntE casts an interface to a map[string]int{} type.
+func ToStringMapIntE(i interface{}) (map[string]int, error) {
+	var m = map[string]int{}
+	if i == nil {
+		return m, fmt.Errorf("unable to cast %#v of type %T to map[string]int", i, i)
+	}
+
+	switch v := i.(type) {
+	case map[interface{}]interface{}:
+		for k, val := range v {
+			m[ToString(k)] = ToInt(val)
+		}
+		return m, nil
+	case map[string]interface{}:
+		for k, val := range v {
+			m[k] = ToInt(val)
+		}
+		return m, nil
+	case map[string]int:
+		return v, nil
+	case string:
+		err := jsonStringToObject(v, &m)
+		return m, err
+	}
+
+	if reflect.TypeOf(i).Kind() != reflect.Map {
+		return m, fmt.Errorf("unable to cast %#v of type %T to map[string]int", i, i)
+	}
+
+	mVal := reflect.ValueOf(m)
+	v := reflect.ValueOf(i)
+	for _, keyVal := range v.MapKeys() {
+		val, err := ToIntE(v.MapIndex(keyVal).Interface())
+		if err != nil {
+			return m, fmt.Errorf("unable to cast %#v of type %T to map[string]int", i, i)
+		}
+		mVal.SetMapIndex(keyVal, reflect.ValueOf(val))
+	}
+	return m, nil
+}
+
+// ToStringMapInt64E casts an interface to a map[string]int64{} type.
+func ToStringMapInt64E(i interface{}) (map[string]int64, error) {
+	var m = map[string]int64{}
+	if i == nil {
+		return m, fmt.Errorf("unable to cast %#v of type %T to map[string]int64", i, i)
+	}
+
+	switch v := i.(type) {
+	case map[interface{}]interface{}:
+		for k, val := range v {
+			m[ToString(k)] = ToInt64(val)
+		}
+		return m, nil
+	case map[string]interface{}:
+		for k, val := range v {
+			m[k] = ToInt64(val)
+		}
+		return m, nil
+	case map[string]int64:
+		return v, nil
+	case string:
+		err := jsonStringToObject(v, &m)
+		return m, err
+	}
+
+	if reflect.TypeOf(i).Kind() != reflect.Map {
+		return m, fmt.Errorf("unable to cast %#v of type %T to map[string]int64", i, i)
+	}
+	mVal := reflect.ValueOf(m)
+	v := reflect.ValueOf(i)
+	for _, keyVal := range v.MapKeys() {
+		val, err := ToInt64E(v.MapIndex(keyVal).Interface())
+		if err != nil {
+			return m, fmt.Errorf("unable to cast %#v of type %T to map[string]int64", i, i)
+		}
+		mVal.SetMapIndex(keyVal, reflect.ValueOf(val))
+	}
+	return m, nil
+}
+
 // ToSliceE casts an interface to a []interface{} type.
 func ToSliceE(i interface{}) ([]interface{}, error) {
 	var s []interface{}
@@ -1116,11 +1123,6 @@ func ToStringSliceE(i interface{}) ([]string, error) {
 
 	switch v := i.(type) {
 	case []interface{}:
-		for _, u := range v {
-			a = append(a, ToString(u))
-		}
-		return a, nil
-	case []int64:
 		for _, u := range v {
 			a = append(a, ToString(u))
 		}
@@ -1216,9 +1218,11 @@ func StringToDate(s string) (time.Time, error) {
 		"2006-01-02 15:04:05.999999999 -0700 MST", // Time.String()
 		"2006-01-02",
 		"02 Jan 2006",
+		"2006-01-02T15:04:05-0700", // RFC3339 without timezone hh:mm colon
 		"2006-01-02 15:04:05 -07:00",
 		"2006-01-02 15:04:05 -0700",
 		"2006-01-02 15:04:05Z07:00", // RFC3339 without T
+		"2006-01-02 15:04:05Z0700",  // RFC3339 without T or timezone hh:mm colon
 		"2006-01-02 15:04:05",
 		time.Kitchen,
 		time.Stamp,
@@ -1242,4 +1246,75 @@ func parseDateWith(s string, dates []string) (d time.Time, e error) {
 func jsonStringToObject(s string, v interface{}) error {
 	data := []byte(s)
 	return json.Unmarshal(data, v)
+}
+
+// FToStringMapStringE casts an interface to a map[string]string type.
+func FToStringMapStringE(i interface{}) (map[string]string, error) {
+	var m = map[string]string{}
+
+	switch v := i.(type) {
+	case map[string]string:
+		return v, nil
+	case map[string]interface{}:
+		for k, val := range v {
+			m[ToString(k)] = ToString(val)
+		}
+		return m, nil
+
+	case map[string]int64:
+		for k, val := range v {
+			m[ToString(k)] = ToString(val)
+		}
+		return m, nil
+	case map[int64]int64:
+		for k, val := range v {
+			m[ToString(k)] = ToString(val)
+		}
+		return m, nil
+	case map[int32]int64:
+		for k, val := range v {
+			m[ToString(k)] = ToString(val)
+		}
+		return m, nil
+	case map[int16]int64:
+		for k, val := range v {
+			m[ToString(k)] = ToString(val)
+		}
+		return m, nil
+	case map[int8]int64:
+		for k, val := range v {
+			m[ToString(k)] = ToString(val)
+		}
+		return m, nil
+	case map[float64]int64:
+		for k, val := range v {
+			m[ToString(k)] = ToString(val)
+		}
+		return m, nil
+	case map[float32]int64:
+		for k, val := range v {
+			m[ToString(k)] = ToString(val)
+		}
+		return m, nil
+	case map[bool]int64:
+		for k, val := range v {
+			m[ToString(k)] = ToString(val)
+		}
+		return m, nil
+	case map[interface{}]string:
+		for k, val := range v {
+			m[ToString(k)] = ToString(val)
+		}
+		return m, nil
+	case map[interface{}]interface{}:
+		for k, val := range v {
+			m[ToString(k)] = ToString(val)
+		}
+		return m, nil
+	case string:
+		err := jsonStringToObject(v, &m)
+		return m, err
+	default:
+		return m, fmt.Errorf("unable to cast %#v of type %T to map[string]string", i, i)
+	}
 }
