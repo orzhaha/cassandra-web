@@ -178,12 +178,6 @@ func NewSession(cfg ClusterConfig) (*Session, error) {
 	return s, nil
 }
 
-func (s *Session) GetHosts() ([]*HostInfo, error) {
-	h, _, err := s.hostSource.GetHosts()
-
-	return h, err
-}
-
 func (s *Session) init() error {
 	hosts, err := addrsToHosts(s.cfg.Hosts, s.cfg.Port)
 	if err != nil {
