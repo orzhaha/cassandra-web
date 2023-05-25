@@ -450,9 +450,9 @@ export default {
       try {
         if (columnType === 'string') {
           return jsonString
-        } else {
-          return JSONbig.parse(jsonString)
         }
+
+        return JSONbig.parse(jsonString)
       } catch (e) {
         return jsonString
       }
