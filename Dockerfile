@@ -1,7 +1,7 @@
 # build client stage
-FROM ipushc/golangxnode:1.16-v12 AS build-client-env
+FROM ipushc/golangxnode:1.20.2-v16.15.1 AS build-client-env
 
-RUN cd /go/src/ && git clone https://github.com/orzhaha/cassandra-web.git
+RUN cd /go/src/ && git clone https://github.com/orzhaha/cassandra-web.git --depth=1
 
 RUN cd /go/src/cassandra-web/client && npm i && npm run build
 
