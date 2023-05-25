@@ -2,7 +2,7 @@ version: '3'
 
 services:
   web:
-    image: ipushc/golangxnode:1.9.1-v12
+    image: ipushc/golangxnode:1.20.2-v16.15.1
     environment:
       TZ: Asia/Taipei
     volumes:
