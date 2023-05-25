@@ -186,7 +186,7 @@ export default {
       const row = {}
 
       forEach(this.column.getColumnData(), (column, index) => {
-        row[column.column_name] = this.jsonParams(this.editInputData[index])
+        row[column.column_name] = this.jsonParams(this.editInputData[index], this.column.getJSType(column.column_name))
       })
 
       this.editDialogVisible = false
@@ -302,7 +302,7 @@ export default {
       const cRow = cloneDeep(row)
 
       forEach(cRow, (itemData, itemKey) => {
-        cRow[itemKey] = this.jsonParams(itemData)
+        cRow[itemKey] = this.jsonParams(itemData, this.column.getJSType(itemKey))
       })
 
       try {
@@ -345,9 +345,13 @@ export default {
       Cookies.set('isShowOverflowTooltip', bool)
     },
 
-    jsonParams(jsonString) {
+    jsonParams(jsonString, columnType) {
       try {
-        return JSONbig.parse(jsonString)
+        if (columnType === 'string') {
+          return jsonString
+        } else {
+          return JSONbig.parse(jsonString)
+        }
       } catch (e) {
         return jsonString
       }
