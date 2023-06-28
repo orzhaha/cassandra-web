@@ -1,5 +1,8 @@
 # cassandra-web
 
+[![latest-tag](https://badgen.net/github/release/orzhaha/cassandra-web)](https://github.com/orzhaha/cassandra-web/releases)
+
+
 ## Demo
 ![index](webui.gif)
 
@@ -75,4 +78,8 @@ docker pull ipushc/cassandra-web
 ## API
 
 API [Doc](./Doc.md)
+
+## Star History
+
+[![Star History Chart](https://api.star-history.com/svg?repos=orzhaha/cassandra-web&type=Date)](https://star-history.com/#orzhaha/cassandra-web&Date)
 
