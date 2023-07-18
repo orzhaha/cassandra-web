@@ -16,7 +16,7 @@ import (
 	"unsafe"
 
 	"github.com/gocql/gocql"
-	"github.com/json-iterator/go"
+	jsoniter "github.com/json-iterator/go"
 	"github.com/labstack/echo"
 	// "github.com/labstack/echo/middleware"
 	"github.com/labstack/gommon/log"
@@ -73,6 +73,7 @@ type envStruct struct {
 	CassandraPort     int    `mapstructure:"CASSANDRA_PORT" json:"CASSANDRA_PORT"`
 	CassandraUsername string `mapstructure:"CASSANDRA_USERNAME" json:"CASSANDRA_USERNAME"`
 	CassandraPassword string `mapstructure:"CASSANDRA_PASSWORD" json:"CASSANDRA_PASSWORD"`
+	AppPath           string `mapstructure:"APP_PATH" json:"APP_PATH"`
 }
 
 func main() {
@@ -161,25 +162,25 @@ func run(c *cli.Context) {
 	// }))
 
 	// 讀靜態檔(前端)
-	e.Static("/static", "client/dist/static")
-	e.File("/", "client/dist/index.html")
+	e.Static(env.AppPath+"/static", "client/dist/static")
+	e.File(env.AppPath+"/", "client/dist/index.html")
 
-	e.POST("/query", h.Query)
-	e.POST("/save", h.Save)
-	e.POST("/delete", h.Delete)
-	e.POST("/find", h.Find)
-	e.POST("/import", h.Import)
-	e.POST("/rowtoken", h.RowToken)
-	e.POST("/truncate", h.Truncate)
+	e.POST(env.AppPath+"/query", h.Query)
+	e.POST(env.AppPath+"/save", h.Save)
+	e.POST(env.AppPath+"/delete", h.Delete)
+	e.POST(env.AppPath+"/find", h.Find)
+	e.POST(env.AppPath+"/import", h.Import)
+	e.POST(env.AppPath+"/rowtoken", h.RowToken)
+	e.POST(env.AppPath+"/truncate", h.Truncate)
 
-	e.GET("/keyspace", h.KeySpace)
-	e.GET("/table", h.Table)
-	e.GET("/row", h.Row)
-	e.GET("/describe", h.Describe)
-	e.GET("/columns", h.Columns)
-	e.GET("/export", h.Export)
-	e.GET("/hostinfo", h.HostInfo)
-	e.GET("/readonly", h.ReadOnlyInfo)
+	e.GET(env.AppPath+"/keyspace", h.KeySpace)
+	e.GET(env.AppPath+"/table", h.Table)
+	e.GET(env.AppPath+"/row", h.Row)
+	e.GET(env.AppPath+"/describe", h.Describe)
+	e.GET(env.AppPath+"/columns", h.Columns)
+	e.GET(env.AppPath+"/export", h.Export)
+	e.GET(env.AppPath+"/hostinfo", h.HostInfo)
+	e.GET(env.AppPath+"/readonly", h.ReadOnlyInfo)
 
 	// Start server
 	e.Logger.Fatal(e.Start(env.HostPort))
