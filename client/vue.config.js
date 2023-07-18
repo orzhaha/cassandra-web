@@ -17,4 +17,6 @@ module.exports = {
       chunks: ['chunk-vendors', 'chunk-common', 'index']
     },
   },
+
+  publicPath: '.'
 }
