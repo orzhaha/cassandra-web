@@ -1,67 +1,68 @@
-export const domain = window.location.origin;
-// export const domain = 'http://localhost:8083'
+export const domain = "";
+// export const domain = window.location.origin+"/";
+// export const domain = 'http://localhost:8083/'
 
 const config = {
   root: {
     find: {
       type: 'POST',
-      url: `${domain}/find`
+      url: `${domain}find`
     },
     query: {
       type: 'POST',
-      url: `${domain}/query`
+      url: `${domain}query`
     },
     save: {
       type: 'POST',
-      url: `${domain}/save`
+      url: `${domain}save`
     },
     delete: {
       type: 'POST',
-      url: `${domain}/delete`
+      url: `${domain}delete`
     },
     import: {
       type: 'POST',
-      url: `${domain}/import`
+      url: `${domain}import`
     },
     rowtoken: {
       type: 'POST',
-      url: `${domain}/rowtoken`
+      url: `${domain}rowtoken`
     },
     truncate: {
       type: 'POST',
-      url: `${domain}/truncate`
+      url: `${domain}truncate`
     },
     keyspace: {
       type: 'GET',
-      url: `${domain}/keyspace`
+      url: `${domain}keyspace`
     },
     table: {
       type: 'GET',
-      url: `${domain}/table`
+      url: `${domain}table`
     },
     row: {
       type: 'GET',
-      url: `${domain}/row`
+      url: `${domain}row`
     },
     columns: {
       type: 'GET',
-      url: `${domain}/columns`
+      url: `${domain}columns`
     },
     describe: {
       type: 'GET',
-      url: `${domain}/describe`
+      url: `${domain}describe`
     },
     export: {
       type: 'GET',
-      url: `${domain}/export`
+      url: `${domain}export`
     },
     hostinfo: {
       type: 'GET',
-      url: `${domain}/hostinfo`
+      url: `${domain}hostinfo`
     },
     readonly: {
       type: 'GET',
-      url: `${domain}/readonly`
+      url: `${domain}readonly`
     }
   }
 }

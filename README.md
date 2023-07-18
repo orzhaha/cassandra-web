@@ -72,6 +72,7 @@ docker pull ipushc/cassandra-web
 * CASSANDRA_PORT: 9042
 * CASSANDRA_USERNAME: username
 * CASSANDRA_PASSWORD: password
+* APP_PATH: path
 
 ---
 
