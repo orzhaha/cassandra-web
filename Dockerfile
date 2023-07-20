@@ -3,7 +3,7 @@ FROM ipushc/golangxnode:1.20.2-v16.15.1 AS build-client-env
 
 RUN cd /go/src/ && git clone https://github.com/orzhaha/cassandra-web.git --depth=1
 
-RUN cd /go/src/cassandra-web/client && npm i && npm run build
+RUN cd /go/src/cassandra-web/client && npm i --force && npm run build
 
 # build server stage
 FROM golang:1.20.2-alpine AS build-server-env
