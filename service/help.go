@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 	"regexp"
+	"time"
 
 	"github.com/spf13/cast"
 )
@@ -319,10 +320,18 @@ func InputTransformType(item map[string]interface{}, schema map[string]string) (
 			itemData = append(itemData, val)
 		case TimestampType:
 			val, err := cast.ToStringE(v)
+
 			if err != nil {
 				return nil, nil, nil, err
 			}
-			itemData = append(itemData, val)
+
+			t, err := time.Parse("2006-01-02T15:04:05.999Z", val)
+
+			if err != nil {
+				return nil, nil, nil, err
+			}
+
+			itemData = append(itemData, t.UnixNano()/int64(time.Millisecond))
 		case TimeuuidType:
 			val, err := cast.ToStringE(v)
 			if err != nil {
