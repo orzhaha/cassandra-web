@@ -80,7 +80,7 @@ type envStruct struct {
 func main() {
 	app := cli.NewApp()
 	app.Name = "Cassandra-Web"
-	app.Version = "1.1.3"
+	app.Version = "1.1.4"
 	app.Flags = []cli.Flag{
 		cli.StringFlag{
 			Name:   "config, c",
