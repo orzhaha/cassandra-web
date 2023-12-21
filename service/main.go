@@ -9,6 +9,7 @@ import (
 	"net/http"
 	"os"
 	"os/exec"
+	"regexp"
 	"sort"
 	"strconv"
 	"strings"
@@ -554,6 +555,16 @@ func (h *Handler) Row(c echo.Context) error {
 func (h *Handler) Describe(c echo.Context) error {
 	table := c.QueryParam("table")
 
+	match, err := regexp.MatchString(`^[A-Za-z0-9_.-]+$`, table)
+
+	if err != nil {
+		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
+	}
+
+	if !match {
+		return echo.NewHTTPError(http.StatusBadRequest, "Invalid table name")
+	}
+
 	cql := fmt.Sprintf("DESCRIBE %s ;", table)
 
 	cmdSlice := make([]string, 0)
@@ -860,6 +871,16 @@ func randStr(n int) string {
 func (h *Handler) Export(c echo.Context) error {
 	table := c.QueryParam("table")
 
+	match, err := regexp.MatchString(`^[A-Za-z0-9_.-]+$`, table)
+
+	if err != nil {
+		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
+	}
+
+	if !match {
+		return echo.NewHTTPError(http.StatusBadRequest, "Invalid table name")
+	}
+
 	rand.Seed(time.Now().UnixNano())
 	rs := randStr(10)
 
@@ -877,7 +898,7 @@ func (h *Handler) Export(c echo.Context) error {
 	cmd.Stdout = &out
 	cmd.Stderr = &stderr
 
-	err := cmd.Run()
+	err = cmd.Run()
 
 	if err != nil {
 		log.Info(stderr.String())
@@ -907,8 +928,19 @@ func (h *Handler) Import(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusForbidden, ReadOnlyMessage)
 	}
 
-	file, err := c.FormFile("file")
 	table := c.FormValue("table")
+
+	match, err := regexp.MatchString(`^[A-Za-z0-9_.-]+$`, table)
+
+	if err != nil {
+		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
+	}
+
+	if !match {
+		return echo.NewHTTPError(http.StatusBadRequest, "Invalid table name")
+	}
+
+	file, err := c.FormFile("file")
 
 	if err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
