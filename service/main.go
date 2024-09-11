@@ -812,8 +812,8 @@ func (h *Handler) Find(c echo.Context) error {
 		}
 	}
 
-	conutCql := fmt.Sprintf("SELECT COUNT(*) FROM %s WHERE %s %s", req.Table, strings.Join(append(partitionCql, clusteringCql...), " AND "), AllowFilter)
-	countIter := h.Session.Query(conutCql, append(partitionValue, clusteringValue...)...).Iter()
+	countCql := fmt.Sprintf("SELECT COUNT(*) FROM %s WHERE %s %s", req.Table, strings.Join(append(partitionCql, clusteringCql...), " AND "), AllowFilter)
+	countIter := h.Session.Query(countCql, append(partitionValue, clusteringValue...)...).Iter()
 	countRet, err := countIter.SliceMap()
 
 	if err != nil {

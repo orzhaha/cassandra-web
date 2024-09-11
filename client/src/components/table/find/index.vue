@@ -319,7 +319,7 @@ export default {
         this.rowCount = res.get('count')
 
         if (isShowMsg) {
-          const message = (res.get() === []) ? 'success' : `conut: ${this.rowCount}`
+          const message = (res.get() === []) ? 'success' : `count: ${this.rowCount}`
 
           this.$message({
             type: 'success',
